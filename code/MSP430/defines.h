@@ -1,4 +1,4 @@
-/*
+/**
  * @file defines.h
  * @date Dec 18, 2013
  */
