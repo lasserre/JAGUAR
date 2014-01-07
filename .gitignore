@@ -1,6 +1,13 @@
+# IAR Workbench files
 *.eww
 *.ewd
 *.ewp
+
+# Code Composer Studio files
 code/MSP430/Debug
 code/MSP430/Release
 code/MSP430/settings
+*.dep
+
+# Mac files
+.DS_Store
