@@ -2,12 +2,16 @@
 *.eww
 *.ewd
 *.ewp
+*.dep
 
 # Code Composer Studio files
 code/MSP430/Debug
 code/MSP430/Release
 code/MSP430/settings
-*.dep
 
 # Mac files
 .DS_Store
+
+# Documentation
+documentation/doxygen/html
+documentation/doxygen/latex
