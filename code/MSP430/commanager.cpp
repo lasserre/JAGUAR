@@ -20,9 +20,9 @@ ComManager::ComManager()
     rotorcraftTxCount = 0;
 
     // initialize route table
-    routeTable[GCS] = 255;
-    routeTable[AIRSHIP] = 1;
-    routeTable[ROTORCRAFT] = 2;
+    routeTable[GCS] = GCS_ID;
+    routeTable[AIRSHIP] = AIRSHIP_ID;
+    routeTable[ROTORCRAFT] = ROTORCRAFT_ID;
 
     InitTimers();
     InitUsci();

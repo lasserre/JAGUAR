@@ -30,4 +30,9 @@
 #define UCA1TXBIT  BIT4
 #define UCA1RXBIT  BIT5
 
+ // ---- Communication ids ---- //
+ const int AIRSHIP_ID = 1;
+ const int ROTORCRAFT_ID = 2;
+ const int GCS_ID = 255;
+
 #endif /* DEFINES_H_ */
