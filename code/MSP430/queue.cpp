@@ -47,7 +47,17 @@ uint8_t Queue::Dequeue(uint16_t headIndex)
     return data;
 }
 
-uint16_t Queue::GetLength(uint16_t headIndex)
+uint8_t Queue::View(uint16_t headIndex, uint16_t dataIndex) const
+{
+    uint16_t index = heads[headIndex] + dataIndex;
+    if (index >= MAX_QUEUE_SIZE)
+    {
+        index -= MAX_QUEUE_SIZE;
+    }
+    return array[index];
+}
+
+uint16_t Queue::GetLength(uint16_t headIndex) const
 {
     uint16_t index = heads[headIndex];
     return (index <= tail) ? (tail - index) : (tail + (MAX_QUEUE_SIZE - index));
@@ -63,19 +73,15 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
     uint8_t destId;
 
     msgIndex = heads[headIndex];
+
     // check if we are aligned at the start of a message
-    while (array[msgIndex] != MAVLINK_STX && IsDataAvailable(msgIndex))
+    AlignWithMessageHeader(headIndex);
+
+    while (GetLength(headIndex) >= MIN_LEN_FOR_ROUTING && IsAtMessageHeader(headIndex) && !foundMsg && !passedTail)
     {
-        // If we get here, one of the enqueued messages is corrupt.
-        // All we can do is search for a start signature and hope
-        // it's the beginning of the next message
-        ++msgIndex;
-    }
-    while (GetLength(headIndex) >= MAVLINK_HEADER_SIZE && !foundMsg && !passedTail)
-    {
-        // check if the message dest ID matches the one we're looking for
-        destId = array[msgIndex + MAVLINK_DEST_OFFSET];
-        if (destId == dest || destId == MAVLINK_DEST_ALL)
+        // check if the message destination ID matches the one we're looking for
+        destId = View(msgIndex, JAGUAR_DEST_OFFSET);
+        if (destId == dest || destId == JAGUAR_DEST_ALL)
         {
             foundMsg = true;
         }
@@ -83,7 +89,7 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
         // find the start of the next message
         if (!foundMsg)
         {
-            totalLen = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + array[msgIndex + MAVLINK_LEN_OFFSET];
+            totalLen = JAGUAR_HEADER_LEN + MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + View(msgIndex, JAGUAR_LEN_OFFSET);
             if (totalLen <= GetLength(headIndex))
             {
                 msgIndex += totalLen;
@@ -92,15 +98,11 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
                     msgIndex -= MAX_QUEUE_SIZE;
                 }
 
-                // check if we are aligned at the start of a message
-                while (array[msgIndex] != MAVLINK_STX && IsDataAvailable(msgIndex))
-                {
-                    // If we get here, one of the enqueued messages is corrupt.
-                    // All we can do is search for a start signature and hope
-                    // it's the beginning of the next message
-                    ++msgIndex;
-                }
                 heads[headIndex] = msgIndex;
+
+                // check if we are aligned at the start of a message
+                AlignWithMessageHeader(headIndex);
+
             }
             else
             {
@@ -111,8 +113,35 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
 
     if (foundMsg)
     {
-        len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + array[msgIndex + MAVLINK_LEN_OFFSET];
+        // pass back the message length
+        len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + View(heads[headIndex], JAGUAR_LEN_OFFSET);
+
+        // skip over the JAGUAR destination header
+        heads[headIndex] += JAGUAR_HEADER_LEN;
     }
 
     return foundMsg;
+}
+
+bool Queue::IsAtMessageHeader(uint16_t headIndex) const
+{
+    return (array[headIndex] == MAVLINK_STX && View(headIndex, JAGUAR_HEADER_LEN) == MAVLINK_STX);
+}
+
+void Queue::AlignWithMessageHeader(uint16_t headIndex)
+{
+    while (GetLength(headIndex) >= MIN_LEN_FOR_ROUTING && !IsAtMessageHeader(headIndex))
+    {
+        // If we get here, one of the enqueued messages is corrupt.
+        // All we can do is search for a start signature and hope
+        // it's the beginning of the next message
+        if (heads[headIndex] == MAX_QUEUE_SIZE - 1)
+        {
+            heads[headIndex] = 0;
+        }
+        else
+        {
+            ++(heads[headIndex]);
+        }
+    }
 }

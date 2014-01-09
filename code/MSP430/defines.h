@@ -8,15 +8,19 @@
 
 #define MAVLINK_STX          0xFE
 
-#define MAVLINK_HEADER_SIZE  7
+#define MAVLINK_HEADER_SIZE  6
 #define MAVLINK_TAIL_SIZE    2
 
-// offsets of bytes in MAVLink header
-#define MAVLINK_LEN_OFFSET   1
-#define MAVLINK_DEST_OFFSET  6
+#define MIN_LEN_FOR_ROUTING  4  // the minimum length of the message needed before we can route it
+
+#define JAGUAR_HEADER_LEN    2  // the length of the destination header prepended to the MAVLink message
+
+// offsets of bytes from beginning of JAGUAR destination header
+#define JAGUAR_LEN_OFFSET    3
+#define JAGUAR_DEST_OFFSET   1
 
 // destination for sending to all receivers in network
-#define MAVLINK_DEST_ALL     0
+#define JAGUAR_DEST_ALL     0
 
 // communication
 #define UCA0PSEL   P3SEL

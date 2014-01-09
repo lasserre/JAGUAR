@@ -77,6 +77,10 @@ void ComManager::Mainloop()
                         foundMsg = gcsQ.FindNextMessage(ROTORCRAFT_LINK_GCS_HEAD, routeTable[GCS], rotorcraftTxLen);
                     }
                 }
+                if (foundMsg)
+                {
+                    rotorcraftTxCount = 0;
+                }
             }
 
             // check if we have a message to send
@@ -126,6 +130,10 @@ void ComManager::Mainloop()
                         gcsFromId = ROTORCRAFT;
                         foundMsg = rotorcraftQ.FindNextMessage(GCS_LINK_ROTORCRAFT_HEAD, routeTable[ROTORCRAFT], gcsTxLen);
                     }
+                }
+                if (foundMsg)
+                {
+                    gcsTxCount = 0;
                 }
             }
 
