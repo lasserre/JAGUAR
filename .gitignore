@@ -15,3 +15,6 @@ code/MSP430/settings
 # Documentation
 documentation/doxygen/html
 documentation/doxygen/latex
+
+# Cool-term settings
+*.stc
