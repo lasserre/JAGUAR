@@ -18,11 +18,16 @@ ComManager::ComManager()
     gcsTxCount = 0;
     airshipTxCount = 0;
     rotorcraftTxCount = 0;
+    isTx[GCS] = false;
+    isTx[AIRSHIP] = false;
+    isTx[ROTORCRAFT] = false;
 
     // initialize route table
     routeTable[GCS] = GCS_ID;
     routeTable[AIRSHIP] = AIRSHIP_ID;
     routeTable[ROTORCRAFT] = ROTORCRAFT_ID;
+
+    _DINT();  // disable interrupts until we go into the main loop
 
     InitTimers();
     InitUsci();
@@ -34,10 +39,22 @@ ComManager::~ComManager()
 
 void ComManager::Mainloop()
 {
-    _EINT(); // global interrupt enable
-
     while (true)
     {
+        _DINT();  // disable interrupts until we go into low-power mode
+
+        UCA0IE |= UCRXIE; // enable USCI A0 RX interrupt
+        UCA1IE |= UCRXIE; // enable USCI A1 RX interrupt
+        if (isTx[ROTORCRAFT])
+        {
+            UCA0IE |= UCTXIE; // enable USCI A0 TX interrupt
+        }
+        if (isTx[GCS])
+        {
+            UCA1IE |= UCTXIE; // enable USCI A1 TX interrupt
+        }
+        //TODO: enable I2C TX interrupt
+
         _BIS_SR(LPM0_bits | GIE); // enter low-power mode with interrupt enable
 
         // check for Rotorcraft (UART A0) RX interrupt
@@ -81,6 +98,7 @@ void ComManager::Mainloop()
                 {
                     rotorcraftTxCount = 0;
                 }
+                isTx[ROTORCRAFT] = foundMsg;
             }
 
             // check if we have a message to send
@@ -135,6 +153,7 @@ void ComManager::Mainloop()
                 {
                     gcsTxCount = 0;
                 }
+                isTx[AIRSHIP] = foundMsg;
             }
 
             // check if we have a message to send
@@ -171,13 +190,21 @@ void ComManager::Mainloop()
 #pragma vector=USCI_A0_VECTOR
 __interrupt void ComManager::USCI_A0_ISR()
 {
-    _BIC_SR_IRQ(CPUOFF); // exit low-power mode
+    // disable TX interrupts
+    UCA0IE &= ~(UCRXIE | UCTXIE);
+    UCA1IE &= ~(UCRXIE | UCTXIE);
+
+    _BIC_SR_IRQ(LPM0_bits); // exit low-power mode
 }
 
 #pragma vector=USCI_A1_VECTOR
 __interrupt void ComManager::USCI_A1_ISR()
 {
-    _BIC_SR_IRQ(CPUOFF); // exit low-power mode
+    // disable RX and TX interrupts
+    UCA0IE &= ~(UCRXIE | UCTXIE);
+    UCA1IE &= ~(UCRXIE | UCTXIE);
+
+    _BIC_SR_IRQ(LPM0_bits); // exit low-power mode
 }
 
 void ComManager::InitTimers()
@@ -197,8 +224,7 @@ void ComManager::InitUsci()
     UCA0BR0 = 18;              // 1,048,576 / 57,600 bits per second
     UCA0BR1 = 0;
     UCA0MCTL = UCBRS_1 | UCBRF_0; // modulation pattern
-    UCA0CTL1 &= ~UCSWRST;      // release reset
-    UCA0IE |= UCTXIE | UCRXIE; // TX and RX interrupt enable
+    UCA0CTL1 &= ~UCSWRST;         // release reset
 
     // initialize UART A1
     UCA1PSEL |= UCA1TXBIT | UCA1RXBIT; // set UCA1TXD and UCA1RXD to transmit and receive data
@@ -208,8 +234,7 @@ void ComManager::InitUsci()
     UCA1BR0 = 18;              // 1,048,576 / 57,600 bits per second
     UCA1BR1 = 0;
     UCA1MCTL = UCBRS_1 | UCBRF_0; // modulation pattern
-    UCA1CTL1 &= ~UCSWRST;      // release reset
-    UCA1IE |= UCTXIE | UCRXIE; // TX and RX interrupt enable
+    UCA1CTL1 &= ~UCSWRST;         // release reset
 
     // TODO: initialize I2C
 }

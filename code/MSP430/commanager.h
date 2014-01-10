@@ -60,6 +60,7 @@ private:
     uint16_t gcsTxCount;             ///< counter for message currently being transmitted to the GCS
     uint16_t airshipTxCount;         ///< counter for message currently being transmitted to the Airship
     uint16_t rotorcraftTxCount;      ///< counter for message currently being transmitted to the Rotorcraft
+    bool isTx[NUM_COM_IDS];          ///< whether data is being transmitted on a link
     uint8_t routeTable[NUM_COM_IDS]; ///< table containing destination IDs
 
     /**
