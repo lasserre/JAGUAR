@@ -47,16 +47,6 @@ uint8_t Queue::Dequeue(uint16_t headIndex)
     return data;
 }
 
-uint8_t Queue::View(uint16_t headIndex, uint16_t dataIndex) const
-{
-    uint16_t index = heads[headIndex] + dataIndex;
-    if (index >= MAX_QUEUE_SIZE)
-    {
-        index -= MAX_QUEUE_SIZE;
-    }
-    return array[index];
-}
-
 uint16_t Queue::GetLength(uint16_t headIndex) const
 {
     uint16_t index = heads[headIndex];
@@ -80,7 +70,7 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
     while (GetLength(headIndex) >= MIN_LEN_FOR_ROUTING && IsAtMessageHeader(headIndex) && !foundMsg && !passedTail)
     {
         // check if the message destination ID matches the one we're looking for
-        destId = View(msgIndex, JAGUAR_DEST_OFFSET);
+        destId = ViewOffset(msgIndex, JAGUAR_DEST_OFFSET);
         if (destId == dest || destId == JAGUAR_DEST_ALL)
         {
             foundMsg = true;
@@ -89,7 +79,7 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
         // find the start of the next message
         if (!foundMsg)
         {
-            totalLen = JAGUAR_HEADER_LEN + MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + View(msgIndex, JAGUAR_LEN_OFFSET);
+            totalLen = JAGUAR_HEADER_LEN + MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(msgIndex, JAGUAR_LEN_OFFSET);
             if (totalLen <= GetLength(headIndex))
             {
                 msgIndex += totalLen;
@@ -114,7 +104,7 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
     if (foundMsg)
     {
         // pass back the message length
-        len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + View(heads[headIndex], JAGUAR_LEN_OFFSET);
+        len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(heads[headIndex], JAGUAR_LEN_OFFSET);
 
         // skip over the JAGUAR destination header
         heads[headIndex] += JAGUAR_HEADER_LEN;
@@ -123,9 +113,19 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
     return foundMsg;
 }
 
+uint8_t Queue::ViewOffset(uint16_t base, uint16_t offset) const
+{
+    uint16_t index = base + offset;
+    if (index >= MAX_QUEUE_SIZE)
+    {
+        index -= MAX_QUEUE_SIZE;
+    }
+    return array[index];
+}
+
 bool Queue::IsAtMessageHeader(uint16_t headIndex) const
 {
-    return (array[headIndex] == MAVLINK_STX && View(headIndex, JAGUAR_HEADER_LEN) == MAVLINK_STX);
+    return (array[heads[headIndex]] == MAVLINK_STX && ViewOffset(heads[headIndex], JAGUAR_HEADER_LEN) == MAVLINK_STX);
 }
 
 void Queue::AlignWithMessageHeader(uint16_t headIndex)

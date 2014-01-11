@@ -18,9 +18,6 @@ ComManager::ComManager()
     gcsTxCount = 0;
     airshipTxCount = 0;
     rotorcraftTxCount = 0;
-    isTx[GCS] = false;
-    isTx[AIRSHIP] = false;
-    isTx[ROTORCRAFT] = false;
 
     // initialize route table
     routeTable[GCS] = GCS_ID;
@@ -45,11 +42,11 @@ void ComManager::Mainloop()
 
         UCA0IE |= UCRXIE; // enable USCI A0 RX interrupt
         UCA1IE |= UCRXIE; // enable USCI A1 RX interrupt
-        if (isTx[ROTORCRAFT])
+        if (rotorcraftTxCount < rotorcraftTxLen)
         {
             UCA0IE |= UCTXIE; // enable USCI A0 TX interrupt
         }
-        if (isTx[GCS])
+        if (gcsTxCount < gcsTxLen)
         {
             UCA1IE |= UCTXIE; // enable USCI A1 TX interrupt
         }
@@ -86,19 +83,18 @@ void ComManager::Mainloop()
                     if (rotorcraftFromId == GCS)
                     {
                         rotorcraftFromId = AIRSHIP;
-                        foundMsg = airshipQ.FindNextMessage(ROTORCRAFT_LINK_AIRSHIP_HEAD, routeTable[AIRSHIP], rotorcraftTxLen);
+                        foundMsg = airshipQ.FindNextMessage(ROTORCRAFT_LINK_AIRSHIP_HEAD, routeTable[ROTORCRAFT], rotorcraftTxLen);
                     }
                     else
                     {
                         rotorcraftFromId = GCS;
-                        foundMsg = gcsQ.FindNextMessage(ROTORCRAFT_LINK_GCS_HEAD, routeTable[GCS], rotorcraftTxLen);
+                        foundMsg = gcsQ.FindNextMessage(ROTORCRAFT_LINK_GCS_HEAD, routeTable[ROTORCRAFT], rotorcraftTxLen);
                     }
                 }
                 if (foundMsg)
                 {
                     rotorcraftTxCount = 0;
                 }
-                isTx[ROTORCRAFT] = foundMsg;
             }
 
             // check if we have a message to send
@@ -141,19 +137,18 @@ void ComManager::Mainloop()
                     if (gcsFromId == GCS)
                     {
                         gcsFromId = AIRSHIP;
-                        foundMsg = airshipQ.FindNextMessage(GCS_LINK_AIRSHIP_HEAD, routeTable[AIRSHIP], gcsTxLen);
+                        foundMsg = airshipQ.FindNextMessage(GCS_LINK_AIRSHIP_HEAD, routeTable[GCS], gcsTxLen);
                     }
                     else
                     {
                         gcsFromId = ROTORCRAFT;
-                        foundMsg = rotorcraftQ.FindNextMessage(GCS_LINK_ROTORCRAFT_HEAD, routeTable[ROTORCRAFT], gcsTxLen);
+                        foundMsg = rotorcraftQ.FindNextMessage(GCS_LINK_ROTORCRAFT_HEAD, routeTable[GCS], gcsTxLen);
                     }
                 }
                 if (foundMsg)
                 {
                     gcsTxCount = 0;
                 }
-                isTx[AIRSHIP] = foundMsg;
             }
 
             // check if we have a message to send

@@ -44,15 +44,6 @@ public:
     uint8_t Dequeue(uint16_t headIndex);
 
     /**
-     * Returns the value at dataIndex from the given queue head.
-     * This does not modify the queue
-     * @param headIndex the queue head to view data from
-     * @param dataIndex the index at which to return data from
-     * @return the data at the given index
-     */
-    uint8_t View(uint16_t headIndex, uint16_t dataIndex) const;
-
-    /**
      * Return length of queue from head specified
      * @param headIndex the queue head to get the length of
      * @return the length of the queue
@@ -85,6 +76,15 @@ private:
     uint16_t heads[NUM_QUEUE_HEADS]; ///< the queue head indices
     uint16_t tail;                   ///< the queue tail index
     uint8_t array[MAX_QUEUE_SIZE];   ///< the queue contents
+
+    /**
+     * Returns the value in the queue at index base + offset correcting
+     * for wrap around if necessary. This does not modify the queue
+     * @param base the base queue index
+     * @param offset the offset of the data from base
+     * @return the data at index base + offset
+     */
+    uint8_t ViewOffset(uint16_t base, uint16_t offset) const;
 
     /**
      * Checks if the queue head is aligned at the beginning
