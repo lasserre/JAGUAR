@@ -18,3 +18,6 @@ documentation/doxygen/latex
 
 # Cool-term settings
 *.stc
+
+# Sublime project settings (for now)
+*.sublime*

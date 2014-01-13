@@ -3,6 +3,7 @@
 # Description:  Test driver to send contents of filename byte-by-byte out to
 #               a serial port. Intended to be used for testing MSP430 routing
 #               software.
+# Command-line args: [filename] [# loops] [delay between bytes]
 
 # Config parameters ----------------------
 SERIAL_PORT = "/dev/cu.usbserial-A600eIjc"
@@ -19,6 +20,10 @@ filename = sys.argv[1]
 
 if (len(sys.argv) >= 3):
 	loops = int(sys.argv[2])
+	if (len(sys.argv) >= 4)
+		delay = sys.argv[3]
+	else:
+		delay = 0
 else:
 	loops = 1
 
@@ -44,7 +49,7 @@ while loops == 0 or count < loops:
 			ser.write(byte)
 			# print "after:", ser.outWaiting()
 			# raw_input("")
-			# time.sleep(0.05)
+			time.sleep(delay)
 			byte = f.read(1)
 	finally:
 		f.close()
