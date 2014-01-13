@@ -14,9 +14,8 @@ extern "C" int _system_pre_init()
 
 int main()
 {
-    ComManager manager;
-    manager.Mainloop();
+    ComManager* managerPtr = ComManager::GetInstance();
+    managerPtr->Mainloop();
 
     return 0;
 }
-

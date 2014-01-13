@@ -12,6 +12,12 @@ Queue ComManager::gcsQ;
 Queue ComManager::airshipQ;
 Queue ComManager::rotorcraftQ;
 
+ComManager* ComManager::GetInstance()
+{
+    static ComManager manager;
+    return &manager;
+}
+
 ComManager::ComManager()
 {
     gcsFromId = AIRSHIP;

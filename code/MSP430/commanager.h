@@ -26,21 +26,17 @@ enum ComId
 
 /**
  * @class ComManager
- * This class manages the communication between
+ * This is a singleton class that manages the communication between
  * the GCS, Airship, and Rotorcraft
  */
 class ComManager
 {
 public:
     /**
-     * Constructor
+     * Get the ComManager instance
+     * @return the ComManager instance
      */
-    ComManager();
-
-    /**
-     * Destructor
-     */
-    ~ComManager();
+    static ComManager* GetInstance();
 
     /**
      * The main loop for processing messages
@@ -61,6 +57,26 @@ private:
     uint16_t airshipTxCount;         ///< counter for message currently being transmitted to the Airship
     uint16_t rotorcraftTxCount;      ///< counter for message currently being transmitted to the Rotorcraft
     uint8_t routeTable[NUM_COM_IDS]; ///< table containing destination IDs
+
+    /**
+     * Constructor
+     */
+    ComManager();
+
+    /**
+     * Destructor
+     */
+    ~ComManager();
+
+    /**
+     * Copy constructor
+     */
+    ComManager(const ComManager& manager);
+
+    /**
+     * Overloaded assignment operator
+     */
+    ComManager* operator=(const ComManager& manager);
 
     /**
      * Interrupt service routine for UART A0
