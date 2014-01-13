@@ -48,9 +48,9 @@ public:
     void Mainloop();
 
 private:
-    Queue gcsQ;                      ///< queue for incoming messages from GCS
-    Queue airshipQ;                  ///< queue for incoming messages from Airship
-    Queue rotorcraftQ;               ///< queue for incoming messages from Rotorcraft
+    static Queue gcsQ;               ///< queue for incoming messages from GCS
+    static Queue airshipQ;           ///< queue for incoming messages from Airship
+    static Queue rotorcraftQ;        ///< queue for incoming messages from Rotorcraft
     ComId gcsFromId;                 ///< ID of the link we're transmitting from to the GCS
     ComId airshipFromId;             ///< ID of the link we're transmitting from to the Airship
     ComId rotorcraftFromId;          ///< ID of the link we're transmitting from to the Rotorcraft

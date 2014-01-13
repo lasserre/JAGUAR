@@ -5,10 +5,15 @@
 #include <msp430.h>
 #include "commanager.h"
 
-int main()
+extern "C" int _system_pre_init()
 {
     WDTCTL = WDTPW | WDTHOLD; // stop watchdog timer
 
+    return 1;
+}
+
+int main()
+{
     ComManager manager;
     manager.Mainloop();
 

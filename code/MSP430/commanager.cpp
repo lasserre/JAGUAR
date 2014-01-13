@@ -7,6 +7,11 @@
 #include <msp430.h>
 #include "defines.h"
 
+// initialize static members
+Queue ComManager::gcsQ;
+Queue ComManager::airshipQ;
+Queue ComManager::rotorcraftQ;
+
 ComManager::ComManager()
 {
     gcsFromId = AIRSHIP;
@@ -40,35 +45,17 @@ void ComManager::Mainloop()
     {
         _DINT();  // disable interrupts until we go into low-power mode
 
-        UCA0IE |= UCRXIE; // enable USCI A0 RX interrupt
-        UCA1IE |= UCRXIE; // enable USCI A1 RX interrupt
-        if (rotorcraftTxCount < rotorcraftTxLen)
+        if (gcsQ.IsDataAvailable(ROTORCRAFT_LINK_GCS_HEAD) || airshipQ.IsDataAvailable(ROTORCRAFT_LINK_AIRSHIP_HEAD))
         {
             UCA0IE |= UCTXIE; // enable USCI A0 TX interrupt
         }
-        if (gcsTxCount < gcsTxLen)
+        if (airshipQ.IsDataAvailable(GCS_LINK_AIRSHIP_HEAD) || rotorcraftQ.IsDataAvailable(GCS_LINK_ROTORCRAFT_HEAD))
         {
             UCA1IE |= UCTXIE; // enable USCI A1 TX interrupt
         }
         //TODO: enable I2C TX interrupt
 
         _BIS_SR(LPM0_bits | GIE); // enter low-power mode with interrupt enable
-
-        // check for Rotorcraft (UART A0) RX interrupt
-        if (UCA0IFG & UCRXIFG)
-        {
-            rotorcraftQ.Enqueue(UCA0RXBUF); // enqueue data
-            //TODO: reset timer
-        }
-
-        // check for GCS (UART A1) RX interrupt
-        if (UCA1IFG & UCRXIFG)
-        {
-            gcsQ.Enqueue(UCA1RXBUF); // enqueue data
-            //TODO: reset timer
-        }
-
-        //TODO: check for Airship (I2C) RX interrupt
 
         // check for Rotorcraft (UART A0) TX interrupt
         if (UCA0IFG & UCTXIFG)
@@ -98,22 +85,23 @@ void ComManager::Mainloop()
             }
 
             // check if we have a message to send
-            if (rotorcraftTxCount != rotorcraftTxLen)
+            if (rotorcraftTxCount < rotorcraftTxLen)
             {
+                uint8_t data;
                 // find which link we're currently receiving data from
                 switch (rotorcraftFromId)
                 {
                 case GCS:
-                    if (gcsQ.IsDataAvailable(ROTORCRAFT_LINK_GCS_HEAD))
+                    if (gcsQ.Dequeue(ROTORCRAFT_LINK_GCS_HEAD, data))
                     {
-                        UCA0TXBUF = gcsQ.Dequeue(ROTORCRAFT_LINK_GCS_HEAD);
+                        UCA0TXBUF = data;
                         ++rotorcraftTxCount;
                     }
                     break;
                 case AIRSHIP:
-                    if (airshipQ.IsDataAvailable(ROTORCRAFT_LINK_AIRSHIP_HEAD))
+                    if (airshipQ.Dequeue(ROTORCRAFT_LINK_AIRSHIP_HEAD, data))
                     {
-                        UCA0TXBUF = airshipQ.Dequeue(ROTORCRAFT_LINK_AIRSHIP_HEAD);
+                        UCA0TXBUF = data;
                         ++rotorcraftTxCount;
                     }
                     break;
@@ -152,22 +140,23 @@ void ComManager::Mainloop()
             }
 
             // check if we have a message to send
-            if (gcsTxCount != gcsTxLen)
+            if (gcsTxCount < gcsTxLen)
             {
+                uint8_t data;
                 // find which link we're currently receiving data from
                 switch (gcsFromId)
                 {
                 case AIRSHIP:
-                    if (airshipQ.IsDataAvailable(GCS_LINK_AIRSHIP_HEAD))
+                    if (airshipQ.Dequeue(GCS_LINK_AIRSHIP_HEAD, data))
                     {
-                        UCA1TXBUF = airshipQ.Dequeue(GCS_LINK_AIRSHIP_HEAD);
+                        UCA1TXBUF = data;
                         ++gcsTxCount;
                     }
                     break;
                 case ROTORCRAFT:
-                    if (rotorcraftQ.IsDataAvailable(GCS_LINK_ROTORCRAFT_HEAD))
+                    if (rotorcraftQ.Dequeue(GCS_LINK_ROTORCRAFT_HEAD, data))
                     {
-                        UCA1TXBUF = rotorcraftQ.Dequeue(GCS_LINK_ROTORCRAFT_HEAD);
+                        UCA1TXBUF = data;
                         ++gcsTxCount;
                     }
                     break;
@@ -179,15 +168,23 @@ void ComManager::Mainloop()
         }
 
         //TODO: check for Airship (I2C) TX interrupt
+
     } // end while (true)
 }
 
 #pragma vector=USCI_A0_VECTOR
 __interrupt void ComManager::USCI_A0_ISR()
 {
+    // check for Rotorcraft (UART A0) RX interrupt
+    if (UCA0IFG & UCRXIFG)
+    {
+        rotorcraftQ.Enqueue(UCA0RXBUF); // enqueue data
+        //TODO: reset timer
+    }
+
     // disable TX interrupts
-    UCA0IE &= ~(UCRXIE | UCTXIE);
-    UCA1IE &= ~(UCRXIE | UCTXIE);
+    UCA0IE &= ~UCTXIE;
+    UCA1IE &= ~UCTXIE;
 
     _BIC_SR_IRQ(LPM0_bits); // exit low-power mode
 }
@@ -195,12 +192,21 @@ __interrupt void ComManager::USCI_A0_ISR()
 #pragma vector=USCI_A1_VECTOR
 __interrupt void ComManager::USCI_A1_ISR()
 {
-    // disable RX and TX interrupts
-    UCA0IE &= ~(UCRXIE | UCTXIE);
-    UCA1IE &= ~(UCRXIE | UCTXIE);
+    // check for GCS (UART A1) RX interrupt
+    if (UCA1IFG & UCRXIFG)
+    {
+        gcsQ.Enqueue(UCA1RXBUF); // enqueue data
+        //TODO: reset timer
+    }
+
+    // disable TX interrupts
+    UCA0IE &= ~UCTXIE;
+    UCA1IE &= ~UCTXIE;
 
     _BIC_SR_IRQ(LPM0_bits); // exit low-power mode
 }
+
+//TODO: check for Airship (I2C) RX and TX interrupts
 
 void ComManager::InitTimers()
 {
@@ -220,6 +226,7 @@ void ComManager::InitUsci()
     UCA0BR1 = 0;
     UCA0MCTL = UCBRS_1 | UCBRF_0; // modulation pattern
     UCA0CTL1 &= ~UCSWRST;         // release reset
+    UCA0IE |= UCRXIE;             // enable USCI A0 RX interrupt
 
     // initialize UART A1
     UCA1PSEL |= UCA1TXBIT | UCA1RXBIT; // set UCA1TXD and UCA1RXD to transmit and receive data
@@ -230,6 +237,7 @@ void ComManager::InitUsci()
     UCA1BR1 = 0;
     UCA1MCTL = UCBRS_1 | UCBRF_0; // modulation pattern
     UCA1CTL1 &= ~UCSWRST;         // release reset
+    UCA1IE |= UCRXIE;             // enable USCI A1 RX interrupt
 
     // TODO: initialize I2C
 }

@@ -34,14 +34,26 @@ public:
      * Enqueue a value
      * @param data value to enqueue
      */
-    void Enqueue(uint8_t data);
+    inline void Enqueue(uint8_t data)
+    {
+        array[tail] = data;
+        if (tail == MAX_QUEUE_SIZE - 1)
+        {
+            tail = 0;
+        }
+        else
+        {
+            ++tail;
+        }
+    }
 
     /**
-     * Dequeue a value from the given queue head
+     * Dequeue a value from the given queue head if there is data available
      * @param headIndex the queue head to dequeue from
-     * @return dequeued value
+     * @param[out] data the data that is dequeued, if the queue is empty data is untouched
+     * @return whether data was dequeued
      */
-    uint8_t Dequeue(uint16_t headIndex);
+    bool Dequeue(uint16_t headIndex, uint8_t& data);
 
     /**
      * Return length of queue from head specified

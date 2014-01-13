@@ -5,6 +5,7 @@
 
 #include "queue.h"
 #include "defines.h"
+#include <msp430.h>
 
 Queue::Queue()
 {
@@ -19,43 +20,39 @@ Queue::~Queue()
 {
 }
 
-void Queue::Enqueue(uint8_t data)
+bool Queue::Dequeue(uint16_t headIndex, uint8_t& data)
 {
-    array[tail] = data;
-    if (tail == MAX_QUEUE_SIZE - 1)
+    bool isData = IsDataAvailable(headIndex);
+    if (isData)
     {
-        tail = 0;
-    }
-    else
-    {
-        ++tail;
-    }
-}
-
-uint8_t Queue::Dequeue(uint16_t headIndex)
-{
-    uint8_t data = array[heads[headIndex]];
-    if (heads[headIndex] == MAX_QUEUE_SIZE - 1)
-    {
-        heads[headIndex] = 0;
-    }
-    else
-    {
-        ++(heads[headIndex]);
+        data = array[heads[headIndex]];
+        if (heads[headIndex] == MAX_QUEUE_SIZE - 1)
+        {
+            heads[headIndex] = 0;
+        }
+        else
+        {
+            ++(heads[headIndex]);
+        }
     }
 
-    return data;
+    return isData;
 }
 
 uint16_t Queue::GetLength(uint16_t headIndex) const
 {
+    _DINT(); // disable interrupts
+
     uint16_t index = heads[headIndex];
-    return (index <= tail) ? (tail - index) : (tail + (MAX_QUEUE_SIZE - index));
+    uint16_t len = (index <= tail) ? (tail - index) : (tail + (MAX_QUEUE_SIZE - index));
+
+    _EINT(); // enable interrupts
+
+    return len;
 }
 
 bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
 {
-    //TODO: does this function need interrupt guards?
     bool foundMsg = false;
     bool passedTail = false;
     uint16_t msgIndex;
