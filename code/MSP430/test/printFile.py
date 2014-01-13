@@ -18,14 +18,12 @@ if (len(sys.argv) < 2):
 	sys.exit(1)
 filename = sys.argv[1]
 
+delay = 0
+loops = 1
 if (len(sys.argv) >= 3):
 	loops = int(sys.argv[2])
-	if (len(sys.argv) >= 4)
-		delay = sys.argv[3]
-	else:
-		delay = 0
-else:
-	loops = 1
+	if (len(sys.argv) >= 4):
+		delay = float(sys.argv[3])
 
 try:
 	ser = serial.Serial(SERIAL_PORT, BAUD)
