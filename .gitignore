@@ -21,3 +21,7 @@ documentation/doxygen/latex
 
 # Sublime project settings (for now)
 *.sublime*
+
+# Qt files
+bin
+*.user
