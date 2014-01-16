@@ -20,7 +20,7 @@ documentation/doxygen/latex
 *.stc
 
 # Sublime project settings (for now)
-*.sublime-workspace
+*.sublime*
 
 # Qt files
 bin
