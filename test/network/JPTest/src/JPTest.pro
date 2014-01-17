@@ -13,8 +13,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        jptmainwindow.cpp
+        jptmainwindow.cpp \
+    jptestport.cpp
 
-HEADERS  += jptmainwindow.h
+HEADERS  += jptmainwindow.h \
+    jptestport.h
 
 FORMS    += jptmainwindow.ui
