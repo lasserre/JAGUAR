@@ -8,6 +8,7 @@
 extern "C" int _system_pre_init()
 {
     WDTCTL = WDTPW | WDTHOLD; // stop watchdog timer
+    //TODO: enable watchdog timer
 
     return 1;
 }

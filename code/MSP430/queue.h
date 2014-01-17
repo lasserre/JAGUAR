@@ -7,6 +7,7 @@
 #define QUEUE_H_
 
 #include <stdint.h>
+#include <msp430.h>
 
 /**
  * @class Queue
@@ -48,19 +49,43 @@ public:
     }
 
     /**
-     * Dequeue a value from the given queue head if there is data available
+     * Dequeue a value from the given queue head. This does NOT check
+     * if there is data in the queue before dequeueing.
      * @param headIndex the queue head to dequeue from
-     * @param[out] data the data that is dequeued, if the queue is empty data is untouched
-     * @return whether data was dequeued
+     * @return the dequeued data
      */
-    bool Dequeue(uint16_t headIndex, uint8_t& data);
+    inline uint8_t Dequeue(uint16_t headIndex)
+    {
+        uint16_t &head = heads[headIndex];
+        uint8_t data = array[head];
+        if (head == MAX_QUEUE_SIZE - 1)
+        {
+            head = 0;
+        }
+        else
+        {
+            ++head;
+        }
+
+        return data;
+    }
 
     /**
      * Return length of queue from head specified
      * @param headIndex the queue head to get the length of
      * @return the length of the queue
      */
-    uint16_t GetLength(uint16_t headIndex) const;
+    inline uint16_t GetLength(uint16_t headIndex) const
+    {
+        _DINT(); // disable interrupts
+
+        const uint16_t &index = heads[headIndex];
+        uint16_t len = (index <= tail) ? (tail - index) : (tail + (MAX_QUEUE_SIZE - index));
+
+        _EINT(); // enable interrupts
+
+        return len;
+    }
 
     /**
      * Return whether there is data to dequeue for the given queue head
@@ -83,6 +108,17 @@ public:
      * @return whether a message was found
      */
     bool FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len);
+
+    /**
+     * Called when we have timed out waiting for the rest of a message to
+     * arrive. We assume the Rx link has gone down and send garbage for
+     * the rest of the message
+     * @param remaining the remaining number of bytes in the message that have not been received
+     */
+    inline void MessageTimeout(uint16_t remaining)
+    {
+        tail += remaining;
+    }
 
 private:
     uint16_t heads[NUM_QUEUE_HEADS]; ///< the queue head indices

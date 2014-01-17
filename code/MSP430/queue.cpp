@@ -5,7 +5,6 @@
 
 #include "queue.h"
 #include "defines.h"
-#include <msp430.h>
 
 Queue::Queue()
 {
@@ -20,37 +19,6 @@ Queue::~Queue()
 {
 }
 
-bool Queue::Dequeue(uint16_t headIndex, uint8_t& data)
-{
-    bool isData = IsDataAvailable(headIndex);
-    if (isData)
-    {
-        data = array[heads[headIndex]];
-        if (heads[headIndex] == MAX_QUEUE_SIZE - 1)
-        {
-            heads[headIndex] = 0;
-        }
-        else
-        {
-            ++(heads[headIndex]);
-        }
-    }
-
-    return isData;
-}
-
-uint16_t Queue::GetLength(uint16_t headIndex) const
-{
-    _DINT(); // disable interrupts
-
-    uint16_t index = heads[headIndex];
-    uint16_t len = (index <= tail) ? (tail - index) : (tail + (MAX_QUEUE_SIZE - index));
-
-    _EINT(); // enable interrupts
-
-    return len;
-}
-
 bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
 {
     bool foundMsg = false;
@@ -58,8 +26,9 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
     uint16_t msgIndex;
     uint16_t totalLen;
     uint8_t destId;
+    uint16_t &head = heads[headIndex];
 
-    msgIndex = heads[headIndex];
+    msgIndex = head;
 
     // check if we are aligned at the start of a message
     AlignWithMessageHeader(headIndex);
@@ -71,10 +40,14 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
         if (destId == dest || destId == JAGUAR_DEST_ALL)
         {
             foundMsg = true;
-        }
 
-        // find the start of the next message
-        if (!foundMsg)
+            // pass back the message length
+            len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(head, JAGUAR_LEN_OFFSET);
+
+            // skip over the JAGUAR destination header
+            head += JAGUAR_HEADER_LEN;
+        }
+        else // find the start of the next message
         {
             totalLen = JAGUAR_HEADER_LEN + MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(msgIndex, JAGUAR_LEN_OFFSET);
             if (totalLen <= GetLength(headIndex))
@@ -85,7 +58,7 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
                     msgIndex -= MAX_QUEUE_SIZE;
                 }
 
-                heads[headIndex] = msgIndex;
+                head = msgIndex;
 
                 // check if we are aligned at the start of a message
                 AlignWithMessageHeader(headIndex);
@@ -96,15 +69,6 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
                 passedTail = true;
             }
         }
-    }
-
-    if (foundMsg)
-    {
-        // pass back the message length
-        len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(heads[headIndex], JAGUAR_LEN_OFFSET);
-
-        // skip over the JAGUAR destination header
-        heads[headIndex] += JAGUAR_HEADER_LEN;
     }
 
     return foundMsg;
@@ -132,13 +96,14 @@ void Queue::AlignWithMessageHeader(uint16_t headIndex)
         // If we get here, one of the enqueued messages is corrupt.
         // All we can do is search for a start signature and hope
         // it's the beginning of the next message
-        if (heads[headIndex] == MAX_QUEUE_SIZE - 1)
+        uint16_t &head = heads[headIndex];
+        if (head == MAX_QUEUE_SIZE - 1)
         {
-            heads[headIndex] = 0;
+            head = 0;
         }
         else
         {
-            ++(heads[headIndex]);
+            ++head;
         }
     }
 }

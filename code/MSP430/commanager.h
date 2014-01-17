@@ -44,19 +44,20 @@ public:
     void Mainloop();
 
 private:
-    static Queue gcsQ;               ///< queue for incoming messages from GCS
-    static Queue airshipQ;           ///< queue for incoming messages from Airship
-    static Queue rotorcraftQ;        ///< queue for incoming messages from Rotorcraft
-    ComId gcsFromId;                 ///< ID of the link we're transmitting from to the GCS
-    ComId airshipFromId;             ///< ID of the link we're transmitting from to the Airship
-    ComId rotorcraftFromId;          ///< ID of the link we're transmitting from to the Rotorcraft
-    uint16_t gcsTxLen;               ///< length of the message currently being transmitted to the GCS
-    uint16_t airshipTxLen;           ///< length of the message currently being transmitted to the Airship
-    uint16_t rotorcraftTxLen;        ///< length of the message currently being transmitted to the Rotorcraft
-    uint16_t gcsTxCount;             ///< counter for message currently being transmitted to the GCS
-    uint16_t airshipTxCount;         ///< counter for message currently being transmitted to the Airship
-    uint16_t rotorcraftTxCount;      ///< counter for message currently being transmitted to the Rotorcraft
-    uint8_t routeTable[NUM_COM_IDS]; ///< table containing destination IDs
+    static Queue gcsQ;                     ///< queue for incoming messages from GCS
+    static Queue airshipQ;                 ///< queue for incoming messages from Airship
+    static Queue rotorcraftQ;              ///< queue for incoming messages from Rotorcraft
+    static uint16_t txTimers[NUM_COM_IDS]; ///< timers to keep track of when outgoing messages have timed out
+    static ComId gcsFromId;                ///< ID of the link we're transmitting from to the GCS
+    static ComId airshipFromId;            ///< ID of the link we're transmitting from to the Airship
+    static ComId rotorcraftFromId;         ///< ID of the link we're transmitting from to the Rotorcraft
+    static uint16_t gcsTxLen;              ///< length of the message currently being transmitted to the GCS
+    static uint16_t airshipTxLen;          ///< length of the message currently being transmitted to the Airship
+    static uint16_t rotorcraftTxLen;       ///< length of the message currently being transmitted to the Rotorcraft
+    static uint16_t gcsTxCount;            ///< counter for message currently being transmitted to the GCS
+    static uint16_t airshipTxCount;        ///< counter for message currently being transmitted to the Airship
+    static uint16_t rotorcraftTxCount;     ///< counter for message currently being transmitted to the Rotorcraft
+    uint8_t routeTable[NUM_COM_IDS];       ///< table containing destination IDs
 
     /**
      * Constructor
@@ -88,13 +89,17 @@ private:
      */
     static __interrupt void USCI_A1_ISR();
 
-    //TODO: add interrupt service routine for timer; discard message if havn't received header, send 0's if have
+    /**
+     * Interrupt service routine for Timer A to
+     * increment Rx message timeout timers
+     */
+    static __interrupt void TIMER0_A0_ISR();
 
     /**
-     * Initialize the timers for signaling when
+     * Initialize the timer for signaling when
      * receiving a message has timed out
      */
-    void InitTimers();
+    void InitTimer();
 
     /**
      * Initialize the UART and I2C interfaces

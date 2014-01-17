@@ -22,6 +22,9 @@
 // destination for sending to all receivers in network
 #define JAGUAR_DEST_ALL     0
 
+// Tx message timeout (timeout will be TX_TIMEOUT * 1.5 seconds)
+#define TX_TIMEOUT          3
+
 // communication
 #define UCA0PSEL   P3SEL
 #define UCA0TXBIT  BIT3
