@@ -6,6 +6,9 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
+// watchdog timer config
+#define WDT_CONFIG  (WDTPW | WDTSSEL__SMCLK | WDTCNTCL | WDTIS_2) // timeout is 8 sec
+
 #define MAVLINK_STX          0xFE
 
 #define MAVLINK_HEADER_SIZE  6

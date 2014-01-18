@@ -34,7 +34,7 @@ class ComManager
 public:
     /**
      * Get the ComManager instance
-     * @return the ComManager instance
+     * @return a pointer to the ComManager instance
      */
     static ComManager* GetInstance();
 
@@ -77,7 +77,7 @@ private:
     /**
      * Overloaded assignment operator
      */
-    ComManager* operator=(const ComManager& manager);
+    ComManager& operator=(const ComManager& manager);
 
     /**
      * Interrupt service routine for UART A0
@@ -91,13 +91,12 @@ private:
 
     /**
      * Interrupt service routine for Timer A to
-     * increment Rx message timeout timers
+     * increment message timeout timers
      */
     static __interrupt void TIMER0_A0_ISR();
 
     /**
-     * Initialize the timer for signaling when
-     * receiving a message has timed out
+     * Initialize the timer module
      */
     void InitTimer();
 

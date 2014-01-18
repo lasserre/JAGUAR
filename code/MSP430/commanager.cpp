@@ -63,6 +63,8 @@ void ComManager::Mainloop()
 
         _BIS_SR(LPM0_bits | GIE); // enter low-power mode with interrupt enable
 
+        WDTCTL = WDT_CONFIG; // pet watchdog
+
         // check for Rotorcraft (UART A0) TX interrupt
         if (UCA0IFG & UCTXIFG)
         {

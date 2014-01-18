@@ -3,15 +3,20 @@
  */
 
 #include <msp430.h>
+#include "defines.h"
 #include "commanager.h"
 
-extern "C" int _system_pre_init()
+extern "C"
 {
-    WDTCTL = WDTPW | WDTHOLD; // stop watchdog timer
-    //TODO: enable watchdog timer
+
+int _system_pre_init()
+{
+    WDTCTL = WDT_CONFIG; // config watchdog timer
 
     return 1;
 }
+
+} // extern "C"
 
 int main()
 {

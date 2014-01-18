@@ -132,7 +132,15 @@ private:
      * @param offset the offset of the data from base
      * @return the data at index base + offset
      */
-    uint8_t ViewOffset(uint16_t base, uint16_t offset) const;
+    inline uint8_t ViewOffset(uint16_t base, uint16_t offset) const
+    {
+        uint16_t index = base + offset;
+        if (index >= MAX_QUEUE_SIZE)
+        {
+            index -= MAX_QUEUE_SIZE;
+        }
+        return array[index];
+    }
 
     /**
      * Checks if the queue head is aligned at the beginning
