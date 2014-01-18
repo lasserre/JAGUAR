@@ -112,12 +112,17 @@ public:
     /**
      * Called when we have timed out waiting for the rest of a message to
      * arrive. We assume the Rx link has gone down and send garbage for
-     * the rest of the message
+     * the rest of the message. This function must have interrupt guards
+     * around it
      * @param remaining the remaining number of bytes in the message that have not been received
      */
     inline void MessageTimeout(uint16_t remaining)
     {
         tail += remaining;
+        if (tail >= MAX_QUEUE_SIZE)
+        {
+            tail -= MAX_QUEUE_SIZE;
+        }
     }
 
 private:
