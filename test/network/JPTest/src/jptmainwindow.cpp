@@ -17,5 +17,6 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
 JPTMainWindow::~JPTMainWindow()
 {
+    delete port;
     delete ui;
 }

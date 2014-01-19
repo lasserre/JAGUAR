@@ -4,6 +4,8 @@ JPTestPort::JPTestPort(QObject* parent /*= 0*/) : QObject(parent)
   , serialPort(new QSerialPort(parent))
 {
     this->SetPortName("UNSET_PORT_NAME");   // Help ourselves out for debugging!
+
+    connect(this->serialPort, SIGNAL(readyRead()), this, SLOT(DataReceivedHandler()));
 }
 
 JPTestPort::~JPTestPort()
@@ -48,4 +50,23 @@ QList<QString> JPTestPort::GetAvailablePortNames()
         portNames.append(portInfo.portName());
     }
     return portNames;
+}
+
+bool JPTestPort::SendData(const QByteArray& payload)
+{
+    this->serialPort->write(payload);
+    return this->serialPort->waitForBytesWritten(SERIAL_CONFIG::WRITETIMEOUT_MSEC);
+}
+
+QByteArray JPTestPort::ReadData()
+{
+    return this->serialPort->readAll();
+}
+
+// --------------- SLOTS -------------------
+
+void JPTestPort::DataReceivedHandler()
+{
+    emit youveGotMail();  // Complete with dial-up sound effects!
+    return;
 }

@@ -13,10 +13,18 @@ namespace SERIAL_CONFIG
     const QSerialPort::Parity PARITY = QSerialPort::NoParity;
     const QSerialPort::StopBits STOP_BITS = QSerialPort::OneStop;
     const QSerialPort::FlowControl FLOW_CTRL = QSerialPort::NoFlowControl;
+    const int WRITETIMEOUT_MSEC = 1000;     // Length of time to wait for a write to serial port to return successfully
 }
 
 class JPTestPort : public QObject
 {
+    Q_OBJECT
+
+signals:
+    void youveGotMail();
+
+public slots:
+    void DataReceivedHandler();
 
 public:
     explicit JPTestPort(QObject* parent = 0);
@@ -24,6 +32,8 @@ public:
     bool OpenPort();
     void SetPortName(const QString& PortName);
     QList<QString> GetAvailablePortNames();
+    bool SendData(const QByteArray &payload);
+    QByteArray ReadData();
 
 protected:
     QSerialPort* serialPort;
