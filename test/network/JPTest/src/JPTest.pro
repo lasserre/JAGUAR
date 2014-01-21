@@ -14,9 +14,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         jptmainwindow.cpp \
-    jptestport.cpp
+    jptestport.cpp \
+    jpacket.cpp \
+    jptest.cpp \
+    jptestcontroller.cpp
 
 HEADERS  += jptmainwindow.h \
-    jptestport.h
+    jptestport.h \
+    jpacket.h \
+    jptest.h \
+    jptestcontroller.h
 
 FORMS    += jptmainwindow.ui

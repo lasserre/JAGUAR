@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "jptestport.h"
+#include "jptest.h"
 
 namespace Ui {
 class JPTMainWindow;
@@ -18,7 +19,6 @@ public:
     
 private:
     Ui::JPTMainWindow *ui;
-    JPTestPort* port;
 };
 
 #endif // JPTMAINWINDOW_H
