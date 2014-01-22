@@ -6,6 +6,8 @@
 #ifndef DEFINES_H_
 #define DEFINES_H_
 
+#include <stdint.h>
+
 // watchdog timer config
 #define WDT_CONFIG  (WDTPW | WDTSSEL__SMCLK | WDTCNTCL | WDTIS_2) // timeout is 8 sec
 
@@ -37,8 +39,8 @@
 #define UCA1RXBIT  BIT5
 
  // ---- Communication ids ---- //
- const int AIRSHIP_ID = 1;
- const int ROTORCRAFT_ID = 2;
- const int GCS_ID = 255;
+ const uint8_t AIRSHIP_ID = 1;
+ const uint8_t ROTORCRAFT_ID = 2;
+ const uint8_t GCS_ID = 255;
 
 #endif /* DEFINES_H_ */

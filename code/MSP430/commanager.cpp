@@ -12,6 +12,7 @@ Queue ComManager::gcsQ;
 Queue ComManager::airshipQ;
 Queue ComManager::rotorcraftQ;
 uint16_t ComManager::txTimers[NUM_COM_IDS] = {0, 0, 0};
+bool ComManager::updateTimers = false;
 ComId ComManager::gcsFromId = AIRSHIP;
 ComId ComManager::airshipFromId = ROTORCRAFT;
 ComId ComManager::rotorcraftFromId = GCS;
@@ -64,6 +65,13 @@ void ComManager::Mainloop()
         _BIS_SR(LPM0_bits | GIE); // enter low-power mode with interrupt enable
 
         WDTCTL = WDT_CONFIG; // pet watchdog
+
+        // decrement timers if needed
+        if (updateTimers)
+        {
+            UpdateTimers();
+            updateTimers = false;
+        }
 
         // check for Rotorcraft (UART A0) TX interrupt
         if (UCA0IFG & UCTXIFG)
@@ -219,79 +227,12 @@ __interrupt void ComManager::USCI_A1_ISR()
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void ComManager::TIMER0_A0_ISR()
 {
-    static uint16_t i = 0;
-    if (i == NUM_COM_IDS - 1)
-    {
-        i = 0;
-    }
-    else
-    {
-        ++i;
-    }
+    updateTimers = true;
 
-    //TODO: some of the following code may need to be moved to Mainloop() if it inhibits our ability to process Rx interrupts
-    uint16_t &timer = txTimers[i];
-    if (timer > 0)
-    {
-        --timer;
-        if (timer == 0)
-        {
-            switch (i)
-            {
-            case GCS:
-                switch (gcsFromId)
-                {
-                case AIRSHIP:
-                    airshipQ.MessageTimeout(gcsTxLen - gcsTxCount);
-                    break;
-                case ROTORCRAFT:
-                    rotorcraftQ.MessageTimeout(gcsTxLen - gcsTxCount);
-                    break;
-                default:
-                    // we should never get here
-                    break;
-                }
-                break;
-            case AIRSHIP:
-                //TODO: evaluate if this is needed as we may wait for the entire message to arrive if it is going to the airship
-                switch (airshipFromId)
-                {
-                case GCS:
-                    gcsQ.MessageTimeout(airshipTxLen - airshipTxCount);
-                    break;
-                case ROTORCRAFT:
-                    rotorcraftQ.MessageTimeout(airshipTxLen - airshipTxCount);
-                    break;
-                default:
-                    // we should never get here
-                    break;
-                }
-                break;
-            case ROTORCRAFT:
-                switch (rotorcraftFromId)
-                {
-                case GCS:
-                    gcsQ.MessageTimeout(rotorcraftTxLen - rotorcraftTxCount);
-                    break;
-                case AIRSHIP:
-                    airshipQ.MessageTimeout(rotorcraftTxLen - rotorcraftTxCount);
-                    break;
-                default:
-                    // we should never get here
-                    break;
-                }
-                break;
-            default:
-                // we should never get here
-                break;
-            }
-
-            // disable TX interrupts and exit low-power mode
-            UCA0IE &= ~UCTXIE;
-            UCA1IE &= ~UCTXIE;
-            _BIC_SR_IRQ(LPM0_bits);
-        }
-    }
+    // disable TX interrupts and exit low-power mode
+    UCA0IE &= ~UCTXIE;
+    UCA1IE &= ~UCTXIE;
+    _BIC_SR_IRQ(LPM0_bits);
 }
 
 void ComManager::InitTimer()

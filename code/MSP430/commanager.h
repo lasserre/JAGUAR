@@ -48,6 +48,7 @@ private:
     static Queue airshipQ;                 ///< queue for incoming messages from Airship
     static Queue rotorcraftQ;              ///< queue for incoming messages from Rotorcraft
     static uint16_t txTimers[NUM_COM_IDS]; ///< timers to keep track of when outgoing messages have timed out
+    static bool updateTimers;              ///< value to determine when to update timers
     static ComId gcsFromId;                ///< ID of the link we're transmitting from to the GCS
     static ComId airshipFromId;            ///< ID of the link we're transmitting from to the Airship
     static ComId rotorcraftFromId;         ///< ID of the link we're transmitting from to the Rotorcraft
@@ -99,6 +100,83 @@ private:
      * Initialize the timer module
      */
     void InitTimer();
+
+    /**
+     * Updates the timers
+     */
+    inline void UpdateTimers()
+    {
+        static uint16_t timerIdx = 0; // index of timer to update on current function call
+
+        // update a different timer on each call, this saves time
+        // rather than updating every timer on every call
+        if (timerIdx == NUM_COM_IDS - 1)
+        {
+            timerIdx = 0;
+        }
+        else
+        {
+            ++timerIdx;
+        }
+
+        uint16_t &timer = txTimers[timerIdx];
+        if (timer > 0)
+        {
+            --timer;
+            if (timer == 0)
+            {
+                switch (timerIdx)
+                {
+                case GCS:
+                    switch (gcsFromId)
+                    {
+                    case AIRSHIP:
+                        airshipQ.MessageTimeout(gcsTxLen - gcsTxCount);
+                        break;
+                    case ROTORCRAFT:
+                        rotorcraftQ.MessageTimeout(gcsTxLen - gcsTxCount);
+                        break;
+                    default:
+                        // we should never get here
+                        break;
+                    }
+                    break;
+                case AIRSHIP:
+                    //TODO: evaluate if this is needed as we may wait for the entire message to arrive if it is going to the airship
+                    switch (airshipFromId)
+                    {
+                    case GCS:
+                        gcsQ.MessageTimeout(airshipTxLen - airshipTxCount);
+                        break;
+                    case ROTORCRAFT:
+                        rotorcraftQ.MessageTimeout(airshipTxLen - airshipTxCount);
+                        break;
+                    default:
+                        // we should never get here
+                        break;
+                    }
+                    break;
+                case ROTORCRAFT:
+                    switch (rotorcraftFromId)
+                    {
+                    case GCS:
+                        gcsQ.MessageTimeout(rotorcraftTxLen - rotorcraftTxCount);
+                        break;
+                    case AIRSHIP:
+                        airshipQ.MessageTimeout(rotorcraftTxLen - rotorcraftTxCount);
+                        break;
+                    default:
+                        // we should never get here
+                        break;
+                    }
+                    break;
+                default:
+                    // we should never get here
+                    break;
+                }
+            }
+        }
+    }
 
     /**
      * Initialize the UART and I2C interfaces
