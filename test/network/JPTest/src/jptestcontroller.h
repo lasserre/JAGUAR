@@ -14,11 +14,12 @@ public:
 
 signals:
     void StartTest(const JPTestOptions& TestOptions);
+    JPTestResults StopTest();
 
 public slots:
 
 protected:
-    JPTest* test;
+    JPTest* currentTest;
     QThread* testRunThread;
 };
 

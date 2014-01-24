@@ -1,7 +1,8 @@
 #ifndef JPACKET_H
 #define JPACKET_H
 
-/*
+/**
+ * \details
  * JPacket Structure
  * ---------------------------------------------------------------------
  * |[STX][DST][STX][LEN][SEQ][SRC][CMP][MSG][--- PAYLOAD ---][CKA][CKB]|
@@ -28,6 +29,11 @@
 #include <QFile>
 #include <QDebug>
 
+/**
+ * @brief JAGPACKET defines important constants at the JAGUAR protocol level
+ *
+ * testing testing
+ */
 namespace JAGPACKET
 {
     // Jaguar header bytes
