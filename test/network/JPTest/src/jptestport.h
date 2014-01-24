@@ -31,9 +31,10 @@ public:
     ~JPTestPort();
     bool OpenPort();
     void SetPortName(const QString& PortName);
-    QList<QString> GetAvailablePortNames();
     bool SendData(const QByteArray &payload);
     QByteArray ReadData();
+
+    static QList<QString> GetAvailablePortNames();
 
 protected:
     QSerialPort* serialPort;

@@ -2,8 +2,7 @@
 #define JPTMAINWINDOW_H
 
 #include <QMainWindow>
-#include "jptestport.h"
-#include "jptest.h"
+#include "jptestcontroller.h"
 
 namespace Ui {
 class JPTMainWindow;
@@ -16,9 +15,13 @@ class JPTMainWindow : public QMainWindow
 public:
     explicit JPTMainWindow(QWidget *parent = 0);
     ~JPTMainWindow();
+
+protected:
+    void RefreshPortList();
     
 private:
     Ui::JPTMainWindow *ui;
+    JPTestController* jptestManager;
 };
 
 #endif // JPTMAINWINDOW_H

@@ -26,3 +26,7 @@ HEADERS  += jptmainwindow.h \
     jptestcontroller.h
 
 FORMS    += jptmainwindow.ui
+
+Release: DESTDIR = ../bin/release
+
+Debug: DESTDIR = ../bin/debug

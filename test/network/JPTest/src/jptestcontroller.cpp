@@ -2,7 +2,7 @@
 
 JPTestController::JPTestController(QObject *parent) :
     QObject(parent)
-  , currentTest(new JPTest(this))
+  , currentTest(new JPTest())   // CLS - don't set a parent, since we are moving to another thread!
   , testRunThread(new QThread(this))
 {
     this->currentTest->moveToThread(testRunThread); // Put currentTest in its own thread

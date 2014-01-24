@@ -5,6 +5,7 @@ JPTest::JPTest(QObject *parent) :
   , port(new JPTestPort(this))
   , testOptions(new JPTestOptions())
   , jpacketLib(new QMap<QString, JPacket>())
+  , jpacketPath(new QString())
   , jptestScript(new QList<QString>())
   , jptestFilename(QString("NoFilenameSpecified"))
   , delaySecs(-1)
@@ -15,10 +16,14 @@ JPTest::JPTest(QObject *parent) :
 
 JPTest::~JPTest()
 {
-    delete this->port;
-    delete this->testOptions;
-    delete this->jpacketLib;
-    delete this->jptestScript;
+    // CLS - getting JPTest malloc error when uncommented...am i trying to delete 2x?
+    // Probably something to do with no parent assignment/moving to QThread...
+
+//    delete this->port;
+//    delete this->testOptions;
+//    delete this->jpacketLib;
+//    delete this->jpacketPath;
+//    delete this->jptestScript;
 }
 
 /**
@@ -97,7 +102,7 @@ QByteArray JPTest::GetJPktPayload(const QString &PacketFilename)
     else
     {
         // Load from file
-        JPacket packet(PacketFilename);
+        JPacket packet(testOptions->JPacketPath + PacketFilename);
         jpacketLib->insert(PacketFilename, packet);
         return packet.GetPayload();
     }

@@ -26,6 +26,10 @@ JPacket::JPacket(const QByteArray &Payload) : payload(new QByteArray(Payload))
     this->SetFieldsFromPayload();
 }
 
+/**
+ * @brief JPacket::JPacket
+ * @param JPFilename must be the *full* path to the file, not just the *.jp filename
+ */
 JPacket::JPacket(const QString &JPFilename) : payload(new QByteArray())
   , DST(0)
   , SRC(0)

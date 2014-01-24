@@ -36,6 +36,7 @@ struct JPTestOptions
 {
     JPTestOptions() : RunMode(RUN)
       , Filename("UnsetFilename")
+      , JPacketPath("UnsetJPacketPath")
       , NumLoops(-1)
       , DelaySecs(-1)
     {
@@ -43,6 +44,7 @@ struct JPTestOptions
 
     JPTestOptions(const JPTestOptions& other) : RunMode(other.RunMode)
       , Filename(other.Filename)
+      , JPacketPath(other.JPacketPath)
       , NumLoops(other.NumLoops)
       , DelaySecs(other.DelaySecs)
     {
@@ -50,6 +52,7 @@ struct JPTestOptions
 
     JPTESTMODE RunMode;
     QString Filename;
+    QString JPacketPath;
     int NumLoops;   // NumLoops -1 => don't loop, 0 => loop forever, n>0 => loop n times
     int DelaySecs;
 };
@@ -73,6 +76,7 @@ protected:
     JPTestPort* port;
     JPTestOptions* testOptions;
     QMap<QString, JPacket>* jpacketLib;
+    QString* jpacketPath;
     QList<QString>* jptestScript;
     QString jptestFilename;
     int delaySecs;
