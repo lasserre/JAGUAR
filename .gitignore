@@ -24,4 +24,4 @@ documentation/doxygen/latex
 
 # Qt files
 bin
-*.user
+*.user*
