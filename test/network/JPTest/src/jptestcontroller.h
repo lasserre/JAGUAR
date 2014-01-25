@@ -11,16 +11,20 @@ class JPTestController : public QObject
 public:
     explicit JPTestController(QObject *parent = 0);
     ~JPTestController();
+    void StartTest(const JPTestOptions &TestOptions);
+    void StopTest();
 
 signals:
-    void StartTest(const JPTestOptions& TestOptions);
-    JPTestResults StopTest();
+    void StartTestSignal(const JPTestOptions& TestOptions);
+    void StopTestSignal();
 
 public slots:
+    void TestEndedHandler();
 
 protected:
     JPTest* currentTest;
-    QThread* testRunThread;
+    QThread* testThreadController;
+    bool testIsRunning;
 };
 
 #endif // JPTESTCONTROLLER_H

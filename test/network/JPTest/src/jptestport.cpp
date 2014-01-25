@@ -15,6 +15,8 @@ JPTestPort::~JPTestPort()
 
 bool JPTestPort::OpenPort()
 {
+    if (this->serialPort->isOpen()) return true;
+
     // Always open in R/W mode
     if (this->serialPort->open(QSerialPort::ReadWrite))
     {
@@ -38,7 +40,9 @@ bool JPTestPort::OpenPort()
 
 void JPTestPort::SetPortName(const QString &PortName)
 {
+    qDebug() << "Before: " << this->serialPort->portName();
     this->serialPort->setPortName(PortName);
+    qDebug() << "Set port name to: " << this->serialPort->portName();
     return;
 }
 

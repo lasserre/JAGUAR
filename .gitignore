@@ -13,8 +13,8 @@ code/MSP430/settings
 .DS_Store
 
 # Documentation
-documentation/doxygen/html
-documentation/doxygen/latex
+documentation/JPTest
+documentation/MSP430
 
 # Cool-term settings
 *.stc

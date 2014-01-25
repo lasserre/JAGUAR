@@ -16,24 +16,31 @@ JPTest::JPTest(QObject *parent) :
 
 JPTest::~JPTest()
 {
-    // CLS - getting JPTest malloc error when uncommented...am i trying to delete 2x?
-    // Probably something to do with no parent assignment/moving to QThread...
-
-//    delete this->port;
-//    delete this->testOptions;
-//    delete this->jpacketLib;
-//    delete this->jpacketPath;
-//    delete this->jptestScript;
+    qDebug() << __FUNCTION__ << " called.";
+    delete this->port;
+    delete this->testOptions;
+    delete this->jpacketLib;
+    delete this->jpacketPath;
+    delete this->jptestScript;
 }
 
 /**
  * @brief JPTest::Run actually runs the test in [another] QThread
  * @param TestOptions
  */
-void JPTest::Run(const JPTestOptions &TestOptions)
+void JPTest::Run(JPTestOptions TestOptions)
 {
-    InitNewRun(TestOptions);
+    qDebug() << "In " << __FUNCTION__;
 
+    // Initialize test, and check for errors
+    JPTESTERROR initResult = InitNewRun(TestOptions);
+    if (initResult != NO_ERROR)
+    {
+        qDebug() << ReportErrorCode(initResult);
+        SetIsRunning(false);
+    }
+
+    // Set up jptestScript iterator, and begin loop
     QList<QString>::iterator currentTestPacket = jptestScript->begin();
 
      // ---------- Run loop ---------- //
@@ -57,6 +64,11 @@ void JPTest::Run(const JPTestOptions &TestOptions)
     }
 
     SetIsRunning(false);
+    qDebug() << __FUNCTION__ << ":" << __LINE__;
+    jpacketLib->clear();
+qDebug() << __FUNCTION__ << ":" << __LINE__;
+    emit TestEnded();
+
     return;
 }
 
@@ -71,7 +83,7 @@ bool JPTest::LoadTestScript()
         ParseJPTestFile(jptestfile);
         success = true;
     }
-    else qDebug() << "Unable to open file " + jptestFilename;
+    else qDebug() << "Unable to open .jptest file " + jptestFilename;
 
     return success;
 }
@@ -82,7 +94,14 @@ bool JPTest::LoadTestScript()
  */
 void JPTest::ParseJPTestFile(QFile &JPTestFile)
 {
-    QList<QByteArray> jptestlist = JPTestFile.readAll().split(',');
+    // Remove spaces in .csv file
+    QList<QByteArray> removeSpaces = JPTestFile.readAll().split(' ');
+    QByteArray noSpaces;
+    for (int i = 0; i < removeSpaces.count(); i++)
+        noSpaces.append(removeSpaces[i]);
+
+    // Create list from comma-separated-values
+    QList<QByteArray> jptestlist = noSpaces.split(',');
     QList<QByteArray>::iterator testIter = jptestlist.begin();
     while (testIter != jptestlist.end())
     {
@@ -113,6 +132,7 @@ QByteArray JPTest::GetJPktPayload(const QString &PacketFilename)
 // gets saved to variable in other thread before we try to use it!
 void JPTest::EndTestEarly()
 {
+    qDebug() << "In " << __FUNCTION__;
     SetIsRunning(false);
     return;
 }
@@ -132,15 +152,14 @@ bool JPTest::Running()
 
 bool JPTest::SetUpPort()
 {
-    bool success = false;
-
     // Set port name
-    // Open port
+    port->SetPortName(this->testOptions->PortName);
 
-    return success;
+    // Open port
+    return port->OpenPort();
 }
 
-int JPTest::InitNewRun(const JPTestOptions &TestOptions)
+JPTESTERROR JPTest::InitNewRun(const JPTestOptions &TestOptions)
 {
     SetIsRunning();
 
@@ -149,13 +168,13 @@ int JPTest::InitNewRun(const JPTestOptions &TestOptions)
     // Assign NumLoops since this won't get checked until after first loop through
     this->RemainingLoops = testOptions->NumLoops;
 
-    if (!SetUpPort()) return 1;    // change to const int PORT_ISSUE;
+    if (!SetUpPort()) return PORT_ERROR;    // change to const int PORT_ISSUE;
 
     // Set filename and load .jptest file
     this->jptestFilename = testOptions->Filename;
-    if (!LoadTestScript()) return 2;      // End test if unable to load script
+    if (!LoadTestScript()) return JPTESTFILE_ERROR;      // End test if unable to load script
 
-    return 0;   // CLS - TODO: take out magic #'s!!
+    return NO_ERROR;   // CLS - TODO: take out magic #'s!!
 }
 
 void JPTest::HandleTestMode()
@@ -195,4 +214,26 @@ bool JPTest::RunTestAgain()
     if (RemainingLoops == 0) return false;
 
     return loopAgain;
+}
+
+QString JPTest::ReportErrorCode(const JPTESTERROR &error)
+{
+    QString errMsg = "JPTest error: ";
+
+    switch(error)
+    {
+    case NO_ERROR:
+        errMsg.append("NO_ERROR");
+        break;
+    case PORT_ERROR:
+        errMsg.append("PORT_ERROR");
+        break;
+    case JPTESTFILE_ERROR:
+        errMsg.append("JPTESTFILE_ERROR");
+        break;
+    default:
+        errMsg.append("UNKNOWN_ERROR_TYPE");
+    }
+
+    return errMsg;
 }

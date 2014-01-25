@@ -67,6 +67,7 @@ public:
     JPacket();
     JPacket(const QByteArray& Payload);
     JPacket(const QString& JPFilename);
+    JPacket(const JPacket& other);
     ~JPacket();
     void SetPayload(const QByteArray& Payload);
     void LoadFromFile(const QString& JPFilename);

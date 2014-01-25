@@ -10,19 +10,12 @@ JPacket::JPacket() : payload(new QByteArray())
 }
 
 /**
- * @brief JPacket destructor
- */
-JPacket::~JPacket()
-{
-    delete this->payload;
-}
-
-/**
  * @brief JPacket::JPacket
  * @param Payload
  */
 JPacket::JPacket(const QByteArray &Payload) : payload(new QByteArray(Payload))
 {
+    qDebug() << __FUNCTION__ << ":" << __LINE__;
     this->SetFieldsFromPayload();
 }
 
@@ -34,7 +27,25 @@ JPacket::JPacket(const QString &JPFilename) : payload(new QByteArray())
   , DST(0)
   , SRC(0)
 {
+    qDebug() << __FUNCTION__ << ":" << __LINE__;
     this->LoadFromFile(JPFilename);
+    this->SetFieldsFromPayload();
+}
+
+JPacket::JPacket(const JPacket &other) : payload(new QByteArray(*other.payload))
+  , DST(other.DST)
+  , SRC(other.SRC)
+{
+    qDebug() << __FUNCTION__ << ":" << __LINE__ << ": copy constructor called!";
+}
+
+/**
+ * @brief JPacket destructor
+ */
+JPacket::~JPacket()
+{
+    qDebug() << __FUNCTION__ << ":" << __LINE__;
+    delete this->payload;
 }
 
 void JPacket::SetPayload(const QByteArray &Payload)
@@ -43,16 +54,24 @@ void JPacket::SetPayload(const QByteArray &Payload)
     return;
 }
 
+/**
+ * @brief JPacket::LoadFromFile loads a JAGUAR packet from a jpacket file (.jp)
+ * @param JPFilename is the name of the file with no extension. LoadFromFile will add
+ * the .jp extension automatically.
+ */
 void JPacket::LoadFromFile(const QString &JPFilename)
 {
-    QFile JPFile(JPFilename);
+    QString jpacketFile = JPFilename;
+    jpacketFile.append(".jp");
+
+    QFile JPFile(jpacketFile);
     if (JPFile.open(QIODevice::ReadOnly))
     {
-        *(this->payload) = JPFile.readAll();
+        SetPayload(JPFile.readAll());
     }
     else
     {
-        qDebug() << "Unable to open file " + JPFilename;
+        qDebug() << "Unable to open jpacket file (.jp)" + jpacketFile;
     }
     return;
 }
