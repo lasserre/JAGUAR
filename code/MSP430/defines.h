@@ -9,9 +9,9 @@
 #include <stdint.h>
 
 // watchdog timer config
-#define WDT_CONFIG  (WDTPW | WDTSSEL__SMCLK | WDTCNTCL | WDTIS_2) // timeout is 8 sec
+#define WDT_CONFIG  (WDTPW | WDTSSEL__ACLK | WDTCNTCL | WDTIS__32K) // timeout is 1 sec
 
-#define MAVLINK_STX          0xFE
+#define MAVLINK_STX          0xFE // the first byte of a MAVLink message
 
 #define MAVLINK_HEADER_SIZE  6
 #define MAVLINK_TAIL_SIZE    2

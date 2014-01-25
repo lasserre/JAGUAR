@@ -19,16 +19,14 @@ Queue::~Queue()
 {
 }
 
-bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
+bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len, bool wholeMsg)
 {
     bool foundMsg = false;
     bool passedTail = false;
-    uint16_t msgIndex;
     uint16_t totalLen;
     uint8_t destId;
     uint16_t &head = heads[headIndex];
-
-    msgIndex = head;
+    uint16_t msgIndex = head;
 
     // check if we are aligned at the start of a message
     AlignWithMessageHeader(headIndex);
@@ -39,16 +37,34 @@ bool Queue::FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len)
         destId = ViewOffset(msgIndex, JAGUAR_DEST_OFFSET);
         if (destId == dest || destId == JAGUAR_DEST_ALL)
         {
-            foundMsg = true;
-
-            // pass back the message length
-            len = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(head, JAGUAR_LEN_OFFSET);
-
-            // skip over the JAGUAR destination header
-            head += JAGUAR_HEADER_LEN;
-            if (head >= MAX_QUEUE_SIZE)
+            uint16_t msgLen = MAVLINK_HEADER_SIZE + MAVLINK_TAIL_SIZE + ViewOffset(head, JAGUAR_LEN_OFFSET);
+            if (wholeMsg)
             {
-                head -= MAX_QUEUE_SIZE;
+                if (GetLength(headIndex) >= msgLen)
+                {
+                    foundMsg = true;
+                }
+                else
+                {
+                    passedTail = true;
+                }
+            }
+            else
+            {
+                foundMsg = true;
+            }
+
+            if (foundMsg)
+            {
+                // pass back the message length
+                len = msgLen;
+
+                // skip over the JAGUAR destination header
+                head += JAGUAR_HEADER_LEN;
+                if (head >= MAX_QUEUE_SIZE)
+                {
+                    head -= MAX_QUEUE_SIZE;
+                }
             }
         }
         else // find the start of the next message

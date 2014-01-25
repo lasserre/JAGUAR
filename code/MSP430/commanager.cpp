@@ -222,7 +222,23 @@ __interrupt void ComManager::USCI_A1_ISR()
     _BIC_SR_IRQ(LPM0_bits); // exit low-power mode
 }
 
-//TODO: check for Airship (I2C) RX and TX interrupts
+#pragma vector=USCI_B1_VECTOR
+__interrupt void ComManager::USCI_B1_ISR()
+{
+    // check for Airship (I2C) RX interrupt
+    if (UCB1IFG & UCRXIFG)
+    {
+        airshipQ.Enqueue(UCB1RXBUF); // enqueue data
+    }
+
+    //TODO: process Airship (I2C) RX and TX interrupts
+
+    // disable TX interrupts
+    UCA0IE &= ~UCTXIE;
+    UCA1IE &= ~UCTXIE;
+
+    _BIC_SR_IRQ(LPM0_bits); // exit low-power mode
+}
 
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void ComManager::TIMER0_A0_ISR()
@@ -238,33 +254,42 @@ __interrupt void ComManager::TIMER0_A0_ISR()
 void ComManager::InitTimer()
 {
     // configure Timer A to generate interrupt every 500 ms
-    TA0CTL = TASSEL__SMCLK | MC__CONTINUOUS | ID__8; // select SMCLK / 8 in continuous mode
-    TA0CCTL0 = CCIE;                                 // Capture/Compare interrupt enable
+    TA0CTL = TASSEL__ACLK | MC__UP | ID__1; // select ACLK / 1 in up mode
+    TA0CCR0 = 16383;                        // 2 Hz
+    TA0CCTL0 = CCIE;                        // Capture/Compare interrupt enable
 }
 
 void ComManager::InitUsci()
 {
     // initialize UART A0
     UCA0PSEL |= UCA0TXBIT | UCA0RXBIT; // set UCA0TXD and UCA0RXD to transmit and receive data
-    UCA0CTL1 |= UCSWRST;       // hold in reset while configuring
+    UCA0CTL1 |= UCSWRST;               // hold in reset while configuring
     UCA0CTL0 = 0;
-    UCA0CTL1 |= UCSSEL__SMCLK; // clock source SMCLK - 1,048,576 Hz
-    UCA0BR0 = 18;              // 1,048,576 / 57,600 bits per second
+    UCA0CTL1 |= UCSSEL__SMCLK;         // clock source SMCLK - 12 MHz
+    UCA0BR0 = 208;                     // 12 MHz / 57,600 bits per second
     UCA0BR1 = 0;
-    UCA0MCTL = UCBRS_1 | UCBRF_0; // modulation pattern
-    UCA0CTL1 &= ~UCSWRST;         // release reset
-    UCA0IE |= UCRXIE;             // enable USCI A0 RX interrupt
+    UCA0MCTL = UCBRS_2 | UCBRF_0;      // modulation pattern
+    UCA0CTL1 &= ~UCSWRST;              // release reset
+    UCA0IE |= UCRXIE;                  // enable USCI A0 RX interrupt
 
     // initialize UART A1
     UCA1PSEL |= UCA1TXBIT | UCA1RXBIT; // set UCA1TXD and UCA1RXD to transmit and receive data
-    UCA1CTL1 |= UCSWRST;       // hold in reset while configuring
+    UCA1CTL1 |= UCSWRST;               // hold in reset while configuring
     UCA1CTL0 = 0;
-    UCA1CTL1 |= UCSSEL__SMCLK; // clock source SMCLK - 1,048,576 Hz
-    UCA1BR0 = 18;              // 1,048,576 / 57,600 bits per second
+    UCA1CTL1 |= UCSSEL__SMCLK;         // clock source SMCLK - 12 MHz
+    UCA1BR0 = 208;                     // 12 MHz / 57,600 bits per second
     UCA1BR1 = 0;
-    UCA1MCTL = UCBRS_1 | UCBRF_0; // modulation pattern
-    UCA1CTL1 &= ~UCSWRST;         // release reset
-    UCA1IE |= UCRXIE;             // enable USCI A1 RX interrupt
+    UCA1MCTL = UCBRS_2 | UCBRF_0;      // modulation pattern
+    UCA1CTL1 &= ~UCSWRST;              // release reset
+    UCA1IE |= UCRXIE;                  // enable USCI A1 RX interrupt
 
     // TODO: initialize I2C
+//    P4SEL |= BIT7 | BIT6;
+//    P1SEL2 |= BIT7 | BIT6;
+//    UCB0CTL1 |= UCSWRST;               // hold in reset while configuring
+//    UCB0CTL0 = UCMODE_3 | UCSYNC;      // 7-bit address (default), single master (default), slave mode (default), I2C mode, sync
+//    UCB0I2COA = I2C_SLAVE_ADDRESS;     // set own I2C address
+//    UCB0CTL1 &= ~UCSWRST;              // release reset
+//    UC0IE |= UCB0TXIE | UCB0RXIE;
+//    UCB0I2CIE |= UCSTTIE;
 }

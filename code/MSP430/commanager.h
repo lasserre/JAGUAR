@@ -91,10 +91,20 @@ private:
     static __interrupt void USCI_A1_ISR();
 
     /**
+     * Interrupt service routine for I2C
+     */
+    static __interrupt void USCI_B1_ISR();
+
+    /**
      * Interrupt service routine for Timer A to
      * increment message timeout timers
      */
     static __interrupt void TIMER0_A0_ISR();
+
+    /**
+     * Initialize the UART and I2C interfaces
+     */
+    void InitUsci();
 
     /**
      * Initialize the timer module
@@ -177,11 +187,6 @@ private:
             }
         }
     }
-
-    /**
-     * Initialize the UART and I2C interfaces
-     */
-    void InitUsci();
 };
 
 #endif /* COMMANAGER_H_ */

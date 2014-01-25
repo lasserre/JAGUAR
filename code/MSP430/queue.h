@@ -105,9 +105,10 @@ public:
      * @param headIndex the queue head to check for a message
      * @param dest destination of message to find
      * @param[out] len the length of the message if it was found, unchanged otherwise
+     * @param wholeMsg whether to wait for the entire message to arrive before returning true
      * @return whether a message was found
      */
-    bool FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len);
+    bool FindNextMessage(uint16_t headIndex, uint8_t dest, uint16_t& len, bool wholeMsg = false);
 
     /**
      * Called when we have timed out waiting for the rest of a message to
