@@ -133,6 +133,10 @@ static void init_ardupilot()
     pinMode(C_LED_PIN, OUTPUT);                         // GPS status LED
     digitalWrite(C_LED_PIN, LED_OFF);
 
+    // config pin for camera control
+    pinMode(AN0, OUTPUT);
+    digitalWrite(AN0, LOW);
+
     relay.init(); 
 
 #if COPTER_LEDS == ENABLED

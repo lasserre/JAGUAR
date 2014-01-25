@@ -51,6 +51,16 @@ static void reset_control_switch()
 // read_aux_switches - checks aux switch positions and invokes configured actions
 static void read_aux_switches()
 {
+    // check for camera switch
+    if (g.rc_6.radio_in >= AUX_SWITCH_PWM_TRIGGER)
+    {
+        digitalWrite(AN0, HIGH);
+    }
+    else
+    {
+        digitalWrite(AN0, LOW);
+    }
+
     // check if ch7 switch has changed position
     if (ap_system.CH7_flag != (g.rc_7.radio_in >= AUX_SWITCH_PWM_TRIGGER)) {
         // set the ch7 flag
