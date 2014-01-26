@@ -3,12 +3,35 @@
 
 JPTMainWindow::JPTMainWindow(QWidget *parent) :
     QMainWindow(parent)
-    , ui(new Ui::JPTMainWindow)
-    , jptestManager(new JPTestController(this))
+  , ui(new Ui::JPTMainWindow)
+  , mainLayout(new QHBoxLayout(this))
+  , upperRightLayout(new QHBoxLayout(this))
+  , leftLayout(new QVBoxLayout(this))
+  , rightLayout(new QVBoxLayout(this))
+  , jptestManager(new JPTestController(this))
   , workingDirectory(new QDir(GetInitialWorkingDir()))
+  , notificationColor(QColor(Qt::blue))
 {
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
+
+    // Set up this->ui and layouts...(have to hack bc designer being ANNOYING)
     ui->setupUi(this);
+
+    leftLayout->addWidget(ui->leftTitleLabel);
+    leftLayout->addWidget(ui->toolBox);
+
+    upperRightLayout->addWidget(ui->scriptFrame, 1);
+    upperRightLayout->addWidget(ui->tabWidget, 3);
+
+    rightLayout->addLayout(upperRightLayout);
+    rightLayout->addWidget(ui->msgsLabel);
+    rightLayout->addWidget(ui->messagesTextBrowser);
+
+    mainLayout->addLayout(leftLayout, 1);
+    mainLayout->addLayout(rightLayout, 3);
+
+    ui->centralWidget->setLayout(mainLayout);
+    ui->tabWidget->tabBar()->setTabTextColor(0, notificationColor);
 
     // Set up port settings page
     ui->portListWidget->setAutoScroll(true);    // ATTN John: this is an exception to the magic # rule...(see fct. name) ;)
@@ -21,9 +44,12 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->startTestButton, SIGNAL(clicked()), this, SLOT(StartTest()));
     connect(this->ui->stopTestButton, SIGNAL(clicked()), this, SLOT(StopTest()));
     connect(this->ui->jptestListWidget, SIGNAL(itemSelectionChanged()), this, SLOT(EnableDisableStartButton()));
+    connect(this->ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(RemoveNotification(int)));
 
     RefreshPortList();
     RefreshTestList();
+
+    ShowStatusMessage("Ready");
 
     qDebug() << workingDirectory->path();
 }
@@ -83,6 +109,7 @@ void JPTMainWindow::RefreshTestList()
 
     // Don't allow start button to be pushed if no tests available!
     EnableDisableStartButton();
+
     return;
 }
 
@@ -112,5 +139,20 @@ void JPTMainWindow::EnableDisableStartButton()
         if (ui->jptestListWidget->selectedItems().count() > 0) enableStartButton = true;
     }
     ui->startTestButton->setEnabled(enableStartButton);
+    return;
+}
+
+void JPTMainWindow::ShowStatusMessage(const QString &msg)
+{
+    this->ui->statusBar->showMessage(msg);
+    return;
+}
+
+void JPTMainWindow::RemoveNotification(int tabIndex)
+{
+    if (ui->tabWidget->tabBar()->tabTextColor(tabIndex) == notificationColor)
+    {
+        ui->tabWidget->tabBar()->setTabTextColor(tabIndex, QColor(Qt::black));
+    }
     return;
 }
