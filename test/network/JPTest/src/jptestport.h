@@ -33,6 +33,7 @@ public:
     void SetPortName(const QString& PortName);
     bool SendData(const QByteArray &payload);
     QByteArray ReadData();
+    bool WaitForData(const int& msecs);
 
     static QList<QString> GetAvailablePortNames();
 

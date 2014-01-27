@@ -28,8 +28,9 @@ JPacket::JPacket(const QString &JPFilename) : payload(new QByteArray())
   , SRC(0)
 {
     qDebug() << __FUNCTION__ << ":" << __LINE__;
-    this->LoadFromFile(JPFilename);
-    this->SetFieldsFromPayload();
+    if (this->LoadFromFile(JPFilename))
+        this->SetFieldsFromPayload();
+    else qDebug() << "ERROR: unable to construct JPacket from " << JPFilename;
 }
 
 JPacket::JPacket(const JPacket &other) : payload(new QByteArray(*other.payload))
@@ -59,21 +60,24 @@ void JPacket::SetPayload(const QByteArray &Payload)
  * @param JPFilename is the name of the file with no extension. LoadFromFile will add
  * the .jp extension automatically.
  */
-void JPacket::LoadFromFile(const QString &JPFilename)
+bool JPacket::LoadFromFile(const QString &JPFilename)
 {
     QString jpacketFile = JPFilename;
-    jpacketFile.append(".jp");
+    jpacketFile += ".jp";
 
     QFile JPFile(jpacketFile);
+
     if (JPFile.open(QIODevice::ReadOnly))
     {
         SetPayload(JPFile.readAll());
+        JPFile.close();
+        return true;
     }
     else
     {
         qDebug() << "Unable to open jpacket file (.jp)" + jpacketFile;
+        return false;
     }
-    return;
 }
 
 void JPacket::SetFieldsFromPayload()

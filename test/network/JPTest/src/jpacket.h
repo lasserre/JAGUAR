@@ -50,7 +50,9 @@ namespace JAGPACKET
 namespace MAVPACKET
 {
     // Use this to offset into mavlink packet
-    const int JHDR_OFFSET = 2;
+    const int JHDR_OFFSET = 2;      // Jaguar header only
+    const int MVHDR_OFFSET = 6;     // Mavelink header only
+    const int tail_CS_OFFSET = 2;   // Checksum offset from tail
     // MAVLINK format
     const int STXBYTE = 0;
     const int LENBYTE = 1;
@@ -70,7 +72,7 @@ public:
     JPacket(const JPacket& other);
     ~JPacket();
     void SetPayload(const QByteArray& Payload);
-    void LoadFromFile(const QString& JPFilename);
+    bool LoadFromFile(const QString& JPFilename);
     QByteArray GetPayload() const;
     int GetSrc() const;
     int GetDst() const;

@@ -6,12 +6,16 @@ JPTest::JPTest(QObject *parent) :
   , testOptions(new JPTestOptions())
   , jpacketLib(new QMap<QString, JPacket>())
   , jpacketPath(new QString())
-  , jptestScript(new QList<QString>())
-  , jptestFilename(QString("NoFilenameSpecified"))
+  , packetOutbox(new QList<QString>())
+  , inbox(new QByteArray())
   , delaySecs(-1)
   , isRunning(false)
+  , testLoaded(false)
   , RemainingLoops(0)
+  , MailReady(false)
+  , UnreadBytes(0)
 {
+    connect(this->port, SIGNAL(youveGotMail()), this, SLOT(GetMailFromPort()));
 }
 
 JPTest::~JPTest()
@@ -21,19 +25,21 @@ JPTest::~JPTest()
     delete this->testOptions;
     delete this->jpacketLib;
     delete this->jpacketPath;
-    delete this->jptestScript;
+    delete this->packetOutbox;
+    delete this->inbox;
 }
 
 /**
- * @brief JPTest::Run actually runs the test in [another] QThread
+ * @brief JPTest::RunServer actually runs the test in [another] QThread
  * @param TestOptions
  */
-void JPTest::Run(JPTestOptions TestOptions)
+void JPTest::RunServer(JPTestOptions TestOptions)
 {
     qDebug() << "In " << __FUNCTION__;
+    qDebug() << "TestOptions.port = " << TestOptions.PortName;
 
     // Initialize test, and check for errors
-    JPTESTERROR initResult = InitNewRun(TestOptions);
+    JPTESTERROR initResult = InitNewServerRun(TestOptions);
     if (initResult != NO_ERROR)
     {
         qDebug() << ReportErrorCode(initResult);
@@ -41,34 +47,76 @@ void JPTest::Run(JPTestOptions TestOptions)
     }
 
     // Set up jptestScript iterator, and begin loop
-    QList<QString>::iterator currentTestPacket = jptestScript->begin();
+    QList<QString>::iterator currentTestPacket = packetOutbox->begin();
 
      // ---------- Run loop ---------- //
-    while((currentTestPacket != jptestScript->end()) && Running())
+    while((currentTestPacket != packetOutbox->end()) && Running())
     {
         // Handle test mode functionality
         HandleTestMode();
 
+        qDebug() << "packet: " << *currentTestPacket;
         if (port->SendData(GetJPktPayload(*currentTestPacket)))
-            ;   //CLS - TODO: emit progress for progress bar!!!
-                //CLS - TODO: refactor to HandlePacket() function (decide to send, delay, or move on)
+        {
+            emit PacketSent(GetJPktPayload(*currentTestPacket));
+        }
+        //CLS - TODO: refactor to HandlePacket() function (decide to send, delay, or move on)
 
         currentTestPacket++;
 
-        if (currentTestPacket == jptestScript->end() && (testOptions->NumLoops > -1))
+        if (currentTestPacket == packetOutbox->end() && (testOptions->NumLoops > -1))
         {
             // Completed one more run.
-            currentTestPacket = jptestScript->begin();  // Reset to beginning of test, in case we need to run again
+            currentTestPacket = packetOutbox->begin();  // Reset to beginning of test, in case we need to run again
             if (!RunTestAgain()) break;
         }
     }
 
     SetIsRunning(false);
-    qDebug() << __FUNCTION__ << ":" << __LINE__;
-    jpacketLib->clear();
-qDebug() << __FUNCTION__ << ":" << __LINE__;
     emit TestEnded();
+    return;
+}
 
+void JPTest::RunClient(JPTestOptions testOptions)
+{
+    JPTESTERROR initResult = InitNewClientRun(testOptions);
+
+    if (initResult != NO_ERROR)
+    {
+        qDebug() << ReportErrorCode(initResult);
+        SetIsRunning(false);
+        emit TestEnded();
+        return;
+    }
+
+    // Listen for server...
+    if (!WaitForServerStart())
+    {
+        qDebug() << "Client run cancelled by user.";
+        emit TestEnded();
+        return;
+    }
+
+    while(Running())
+    {
+        // Do client loop here...assume this is running much faster than we are receiving packets...?
+        if (MailReady)
+        {
+            QByteArray::iterator mailByteIter = inbox->begin();
+            QByteArray newPacket;
+            for (int i = 0; i < UnreadBytes; i++)
+            {
+                if (i == MAVPACKET::SRCBYTE)
+                {
+                    qDebug() << "Source: " << *mailByteIter;
+                }
+                newPacket.append(*mailByteIter);
+            }
+            qDebug() << "newPacket: " << newPacket;
+        }
+    }
+
+    emit TestEnded();
     return;
 }
 
@@ -76,14 +124,14 @@ qDebug() << __FUNCTION__ << ":" << __LINE__;
 bool JPTest::LoadTestScript()
 {
     bool success = false;
-    QFile jptestfile(this->jptestFilename);
+    QFile jptestfile(testOptions->Filename);
 
     if (jptestfile.open(QIODevice::ReadOnly))
     {
         ParseJPTestFile(jptestfile);
         success = true;
     }
-    else qDebug() << "Unable to open .jptest file " + jptestFilename;
+    else qDebug() << "Unable to open .jptest file " + testOptions->Filename;
 
     return success;
 }
@@ -94,21 +142,81 @@ bool JPTest::LoadTestScript()
  */
 void JPTest::ParseJPTestFile(QFile &JPTestFile)
 {
-    // Remove spaces in .csv file
-    QList<QByteArray> removeSpaces = JPTestFile.readAll().split(' ');
-    QByteArray noSpaces;
-    for (int i = 0; i < removeSpaces.count(); i++)
-        noSpaces.append(removeSpaces[i]);
+    packetOutbox->clear();  // Get rid of existing data
 
-    // Create list from comma-separated-values
-    QList<QByteArray> jptestlist = noSpaces.split(',');
+    // Create list from comma-separated-values in our JAGID's section
+    QList<QByteArray> jptestlist = GetServerPacketList(JPTestFile);
+
+    // Put list of packets we must send into packetOutbox
     QList<QByteArray>::iterator testIter = jptestlist.begin();
     while (testIter != jptestlist.end())
     {
-        this->jptestScript->append(QString(*testIter));
+        this->packetOutbox->append(QString(*testIter));
         testIter++;
     }
+
+    // Send list to GUI
+    emit OutboxLoaded(jptestlist);
+
     return;
+}
+
+QList<QByteArray> JPTest::GetServerPacketList(QFile &JPTestFile)
+{
+    QList<QByteArray> packetList = QList<QByteArray>();
+    QByteArray line;
+    QString jagID = testOptions->GetJagIDString();
+    bool found = false;
+
+    // Find <[JAGID]> line that matches our ID
+    while (!JPTestFile.atEnd() && !found)
+    {
+        line = JPTestFile.readLine();   // Get a line
+
+        if (line[0] != '<') continue;   // We want to find <GCS> or similar...
+        else
+        {
+            bool match = true;
+
+            for (int i = 0; i < jagID.length(); i++)
+            {
+                if (line.at(i+1) != jagID.at(i))
+                {
+                    match = false;
+                    break;
+                }
+            }
+
+            if (match) found = true;
+        }
+    }
+
+    // Get lines below it...
+    if (found)
+    {
+        while(!JPTestFile.atEnd())
+        {
+            line = JPTestFile.readLine();
+            if (line[0] != '<')     // Not next ID's section. Take out spaces, split at commas, and keep!
+            {
+                QByteArray noNewlinesLine = RemoveAllOccurrences(line, '\n');
+                QByteArray noSpacesLine = RemoveAllOccurrences(noNewlinesLine, ' ');
+                packetList.append(noSpacesLine.split(','));             // Split at commas, and add to list
+            }
+            else break;     // If we hit a line starting with '<', we're done.
+        }
+    }
+
+    return packetList;
+}
+
+QByteArray JPTest::RemoveAllOccurrences(QByteArray stream, const char& deleteChar)
+{
+    QList<QByteArray> characterRemovedList = stream.split(deleteChar);
+    QByteArray noDeleteChars;
+    for (int i = 0; i < characterRemovedList.count(); i++)
+        noDeleteChars.append(characterRemovedList.at(i));
+    return noDeleteChars;
 }
 
 // If packet exists in RAM, returns payload. Otherwise, load into library and return payload
@@ -159,22 +267,35 @@ bool JPTest::SetUpPort()
     return port->OpenPort();
 }
 
-JPTESTERROR JPTest::InitNewRun(const JPTestOptions &TestOptions)
+JPTESTERROR JPTest::InitNewServerRun(const JPTestOptions &TestOptions)
+{
+    SetIsRunning();
+
+    if (!SetUpPort()) return PORT_ERROR;    // change to const int PORT_ISSUE;
+
+    if (!testLoaded)
+    {
+        qDebug() << "WARNING: Loading test from JPTest::InitNewServerRun...is this intended?";
+
+        *this->testOptions = TestOptions;
+        if (!LoadTestScript()) return JPTESTFILE_ERROR;      // End test if unable to load script
+    }
+
+    // Assign NumLoops since this won't get checked until after first loop through
+    this->RemainingLoops = testOptions->NumLoops;
+
+    return NO_ERROR;   // CLS - TODO: take out magic #'s!!
+}
+
+JPTESTERROR JPTest::InitNewClientRun(const JPTestOptions& TestOptions)
 {
     SetIsRunning();
 
     *this->testOptions = TestOptions;
 
-    // Assign NumLoops since this won't get checked until after first loop through
-    this->RemainingLoops = testOptions->NumLoops;
+    if (!SetUpPort()) return PORT_ERROR;
 
-    if (!SetUpPort()) return PORT_ERROR;    // change to const int PORT_ISSUE;
-
-    // Set filename and load .jptest file
-    this->jptestFilename = testOptions->Filename;
-    if (!LoadTestScript()) return JPTESTFILE_ERROR;      // End test if unable to load script
-
-    return NO_ERROR;   // CLS - TODO: take out magic #'s!!
+    return NO_ERROR;
 }
 
 void JPTest::HandleTestMode()
@@ -236,4 +357,35 @@ QString JPTest::ReportErrorCode(const JPTESTERROR &error)
     }
 
     return errMsg;
+}
+
+void JPTest::GetMailFromPort()
+{
+    qDebug() << "In " << __FUNCTION__;
+    QByteArray mail = port->ReadData();
+    inbox->append(mail);
+    MailReady = true;
+    UnreadBytes += mail.count();
+    return;
+}
+
+/**
+ * @brief JPTest::WaitForServerStart waits for data to come in from the server.
+ * @return true if data received, false if run stopped by user
+ */
+bool JPTest::WaitForServerStart()
+{
+    while (this->Running())
+    {
+        if (!port->WaitForData(1000)) continue;
+        else return true;
+    }
+    return false;
+}
+
+void JPTest::LoadTest(JPTestOptions Options)
+{
+    *this->testOptions = Options;
+    if (LoadTestScript()) this->testLoaded = true;
+    return;
 }

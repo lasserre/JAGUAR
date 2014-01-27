@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>944</width>
-    <height>578</height>
+    <width>1083</width>
+    <height>641</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,10 +33,10 @@
    <widget class="QTabWidget" name="tabWidget">
     <property name="geometry">
      <rect>
-      <x>520</x>
-      <y>30</y>
-      <width>401</width>
-      <height>331</height>
+      <x>340</x>
+      <y>40</y>
+      <width>631</width>
+      <height>311</height>
      </rect>
     </property>
     <property name="tabPosition">
@@ -46,48 +46,247 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>1</number>
     </property>
     <widget class="QWidget" name="sendTab">
      <attribute name="title">
       <string>Outbox</string>
      </attribute>
-     <layout class="QVBoxLayout" name="verticalLayout_4">
-      <item>
-       <widget class="QLabel" name="outboxLabel">
-        <property name="text">
-         <string>Outbox:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QTextBrowser" name="outboxTextBrowser"/>
-      </item>
-     </layout>
+     <widget class="QLabel" name="outboxLabel">
+      <property name="geometry">
+       <rect>
+        <x>294</x>
+        <y>13</y>
+        <width>52</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Outbox:</string>
+      </property>
+     </widget>
+     <widget class="QTextBrowser" name="outboxTextBrowser">
+      <property name="geometry">
+       <rect>
+        <x>294</x>
+        <y>37</y>
+        <width>256</width>
+        <height>192</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="QLabel" name="packetOutboxLabel">
+      <property name="geometry">
+       <rect>
+        <x>21</x>
+        <y>13</y>
+        <width>92</width>
+        <height>16</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>Packet Outbox</string>
+      </property>
+     </widget>
+     <widget class="QListWidget" name="packetOutboxListWidget">
+      <property name="geometry">
+       <rect>
+        <x>21</x>
+        <y>37</y>
+        <width>200</width>
+        <height>192</height>
+       </rect>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>175</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="stepTestButton">
+      <property name="geometry">
+       <rect>
+        <x>170</x>
+        <y>240</y>
+        <width>71</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>75</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Step</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="clearOutboxButton">
+      <property name="geometry">
+       <rect>
+        <x>294</x>
+        <y>239</y>
+        <width>75</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>75</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Clear</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="startTestButton">
+      <property name="geometry">
+       <rect>
+        <x>21</x>
+        <y>239</y>
+        <width>72</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>75</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Start</string>
+      </property>
+     </widget>
+     <widget class="QPushButton" name="stopTestButton">
+      <property name="geometry">
+       <rect>
+        <x>95</x>
+        <y>239</y>
+        <width>71</width>
+        <height>32</height>
+       </rect>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>75</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Stop</string>
+      </property>
+     </widget>
     </widget>
     <widget class="QWidget" name="receiveTab">
      <attribute name="title">
       <string>Inbox</string>
      </attribute>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="3" column="0">
-       <widget class="QTextBrowser" name="textBrowser_2"/>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_7">
-        <property name="text">
-         <string>Quadcopter Inbox:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QTextBrowser" name="textBrowser_3"/>
-      </item>
+     <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Mothership Inbox:</string>
+       <widget class="QSplitter" name="splitter">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
+        <widget class="QFrame" name="p2Frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_6">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_4">
+            <item>
+             <widget class="QLabel" name="p2packetInboxLabel">
+              <property name="text">
+               <string>P2 Packet Inbox:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="p2packetInboxListWidget">
+              <property name="maximumSize">
+               <size>
+                <width>130</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QLabel" name="p2InboxLabel">
+              <property name="text">
+               <string>P2 Inbox:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextBrowser" name="p2Inbox"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QFrame" name="p3Frame">
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QLabel" name="p3packetInboxLabel">
+              <property name="text">
+               <string>P3 Packet Inbox:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="p3packetInboxListWidget">
+              <property name="maximumSize">
+               <size>
+                <width>130</width>
+                <height>16777215</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_8">
+            <item>
+             <widget class="QLabel" name="p3InboxLabel">
+              <property name="text">
+               <string>P3 Inbox:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QTextBrowser" name="p3Inbox"/>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
        </widget>
       </item>
      </layout>
@@ -147,12 +346,12 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>250</width>
-       <height>384</height>
+       <width>123</width>
+       <height>181</height>
       </rect>
      </property>
      <attribute name="label">
-      <string>Port Settings</string>
+      <string>Configure Port</string>
      </attribute>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
@@ -229,54 +428,13 @@
        <x>0</x>
        <y>0</y>
        <width>250</width>
-       <height>388</height>
+       <height>350</height>
       </rect>
      </property>
      <attribute name="label">
-      <string>Test Settings</string>
+      <string>Select JPTest</string>
      </attribute>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QRadioButton" name="jptestServerRButton">
-        <property name="text">
-         <string>JPTest Server</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QRadioButton" name="jptestClientRButton">
-        <property name="text">
-         <string>JPTest Client</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>My JAGUAR ID:</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
-        <item>
-         <widget class="QComboBox" name="JAGIDcomboBox"/>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
-      </item>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
@@ -314,8 +472,111 @@
         <property name="minimumSize">
          <size>
           <width>0</width>
-          <height>135</height>
+          <height>100</height>
          </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QPushButton" name="loadTestButton">
+          <property name="text">
+           <string>Load</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="page">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>160</width>
+       <height>180</height>
+      </rect>
+     </property>
+     <attribute name="label">
+      <string>Configure JPTest</string>
+     </attribute>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>My JAGUAR ID:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QComboBox" name="JAGIDcomboBox"/>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="jptestServerRButton">
+        <property name="text">
+         <string>JPTest Server</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="jptestClientRButton">
+        <property name="text">
+         <string>JPTest Client</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Fixed</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>5</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="Line" name="line">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
@@ -334,7 +595,7 @@
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
-          <height>314</height>
+          <height>167</height>
          </size>
         </property>
        </spacer>
@@ -355,95 +616,38 @@
      <string>Messages:</string>
     </property>
    </widget>
-   <widget class="QFrame" name="scriptFrame">
+   <widget class="QPushButton" name="clearMessagesButton">
     <property name="geometry">
      <rect>
-      <x>280</x>
-      <y>40</y>
-      <width>226</width>
-      <height>284</height>
+      <x>330</x>
+      <y>520</y>
+      <width>90</width>
+      <height>32</height>
      </rect>
     </property>
-    <property name="frameShape">
-     <enum>QFrame::StyledPanel</enum>
+    <property name="maximumSize">
+     <size>
+      <width>90</width>
+      <height>16777215</height>
+     </size>
     </property>
-    <property name="frameShadow">
-     <enum>QFrame::Raised</enum>
+    <property name="text">
+     <string>Clear</string>
     </property>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="testScriptLabel">
-       <property name="text">
-        <string>JPTest Script (packets):</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QListWidget" name="jptestScriptListWidget">
-       <property name="maximumSize">
-        <size>
-         <width>200</width>
-         <height>16777215</height>
-        </size>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QPushButton" name="startTestButton">
-         <property name="text">
-          <string>Start</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="stopTestButton">
-         <property name="text">
-          <string>Stop</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="horizontalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>40</width>
-           <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-    </layout>
-    <zorder>stopTestButton</zorder>
-    <zorder>testScriptLabel</zorder>
-    <zorder>jptestScriptListWidget</zorder>
-    <zorder>testScriptLabel</zorder>
-    <zorder></zorder>
-    <zorder>jptestScriptListWidget</zorder>
-    <zorder>testScriptLabel</zorder>
-    <zorder></zorder>
-    <zorder>jptestScriptListWidget</zorder>
    </widget>
    <zorder>leftTitleLabel</zorder>
    <zorder>toolBox</zorder>
    <zorder>messagesTextBrowser</zorder>
    <zorder>tabWidget</zorder>
    <zorder>msgsLabel</zorder>
-   <zorder></zorder>
-   <zorder>scriptFrame</zorder>
+   <zorder>clearMessagesButton</zorder>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>944</width>
+     <width>1083</width>
      <height>22</height>
     </rect>
    </property>

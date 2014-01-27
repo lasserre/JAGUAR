@@ -9,9 +9,13 @@ JPTestController::JPTestController(QObject *parent) :
     this->currentTest->moveToThread(testThreadController); // Put currentTest in its own thread
 
     connect(this->testThreadController, SIGNAL(finished()), this->currentTest, SLOT(deleteLater()));
-    connect(this, SIGNAL(StartTestSignal(JPTestOptions)), this->currentTest, SLOT(Run(JPTestOptions)));
+    connect(this, SIGNAL(StartServerTestSignal(JPTestOptions)), this->currentTest, SLOT(RunServer(JPTestOptions)));
+    connect(this, SIGNAL(StartClientTestSignal(JPTestOptions)), this->currentTest, SLOT(RunClient(JPTestOptions)));
     connect(this,SIGNAL(StopTestSignal()), this->currentTest, SLOT(EndTestEarly()), Qt::DirectConnection);
     connect(this->currentTest, SIGNAL(TestEnded()), this, SLOT(TestEndedHandler()));
+    connect(this->currentTest, SIGNAL(OutboxLoaded(QList<QByteArray>)), this, SLOT(NewOutboxHandler(QList<QByteArray>)));
+    connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
+    connect(this->currentTest, SIGNAL(PacketSent(QByteArray)), this, SLOT(PacketSentHandler(QByteArray)));
 
     this->testThreadController->start();   // Start thread. Don't call quit() until destructor!
 }
@@ -33,7 +37,10 @@ void JPTestController::StartTest(const JPTestOptions &TestOptions)
 {
     if (!testIsRunning)
     {
-        emit StartTestSignal(TestOptions);
+        if (TestOptions.RunServer)
+            emit StartServerTestSignal(TestOptions);
+        else
+            emit StartClientTestSignal(TestOptions);
         testIsRunning = true;
     }
     else qDebug() << "Test already in progress!";
@@ -53,5 +60,24 @@ void JPTestController::StopTest()
 void JPTestController::TestEndedHandler()
 {
     testIsRunning = false;
+    return;
+}
+
+void JPTestController::NewOutboxHandler(QList<QByteArray> newOutbox)
+{
+    emit OutboxChanged(newOutbox);
+    return;
+}
+
+void JPTestController::LoadTest(const JPTestOptions& Options)
+{
+    emit LoadTestSignal(Options);
+    return;
+}
+
+void JPTestController::PacketSentHandler(QByteArray packet)
+{
+    qDebug() << "In " << __FUNCTION__;
+    emit PacketSent(packet);
     return;
 }

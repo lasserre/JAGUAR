@@ -40,9 +40,9 @@ bool JPTestPort::OpenPort()
 
 void JPTestPort::SetPortName(const QString &PortName)
 {
-    qDebug() << "Before: " << this->serialPort->portName();
+    //qDebug() << "Before: " << this->serialPort->portName();
     this->serialPort->setPortName(PortName);
-    qDebug() << "Set port name to: " << this->serialPort->portName();
+    //qDebug() << "Set port name to: " << this->serialPort->portName();
     return;
 }
 
@@ -73,4 +73,9 @@ void JPTestPort::DataReceivedHandler()
 {
     emit youveGotMail();  // Complete with dial-up sound effects!
     return;
+}
+
+bool JPTestPort::WaitForData(const int &msecs)
+{
+    return this->serialPort->waitForReadyRead(msecs);
 }
