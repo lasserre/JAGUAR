@@ -11,22 +11,24 @@ class JPTestController : public QObject
 public:
     explicit JPTestController(QObject *parent = 0);
     ~JPTestController();
-    void StartTest(const JPTestOptions &TestOptions);
+    void StartTest(const bool &RunServer);
     void StopTest();
     void LoadTest(const JPTestOptions &Options);
 
 signals:
-    void StartServerTestSignal(const JPTestOptions& TestOptions);
-    void StartClientTestSignal(const JPTestOptions& TestOptions);
+    void StartServerTestSignal();
+    void StartClientTestSignal();
     void StopTestSignal();
     void LoadTestSignal(const JPTestOptions& TestOptions);
     void OutboxChanged(QList<QByteArray>);
     void PacketSent(QByteArray);
+    void RawByteReceived(char);
 
 public slots:
     void TestEndedHandler();
     void NewOutboxHandler(QList<QByteArray> newOutbox);
     void PacketSentHandler(QByteArray);
+    void ByteReceivedHandler(char);
 
 protected:
     JPTest* currentTest;

@@ -33,10 +33,11 @@ public slots:
     //void EnableDisableStartButton();
     void LoadTest();
     void RemoveNotification(int tabIndex);
-    void UpdateJaguarID(QString JAGID);
+    void UpdateJaguarIDS(QString JAGID);
     void UpdateTestScript(QList<QByteArray> newScript);
     void UpdatePortSelection(const QString &UnusedPortVar);
     void AppendToOutbox(QByteArray);
+    void AppendToRawByteInbox(char);
     
 private:
     Ui::JPTMainWindow *ui;
@@ -64,7 +65,7 @@ protected:
     void ShowMessageBoxMessage(const QString& msg);
     void LogToMessageArea(const QString& msg);
     QString GetHtmlString(const QString& text, const QString& color);
-    void UpdateP2P3(const QString& p2Name, const QString& p3Name);
+    void UpdateJAGIDStrings(const QString& myName, const QString& p2Name, const QString& p3Name);
     void PostNotification(const int& tabIndex);
 };
 

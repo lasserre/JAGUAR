@@ -38,7 +38,8 @@ struct JPTestOptions
       , NumLoops(-1)
       , DelaySecs(-1)
       , JaguarID(JAGPACKET::GCS)
-      , RunServer(true)
+      , P2ID(JAGPACKET::MS)
+      , P3ID(JAGPACKET::QC)
     {
     }
 
@@ -49,7 +50,8 @@ struct JPTestOptions
       , NumLoops(other.NumLoops)
       , DelaySecs(other.DelaySecs)
       , JaguarID(other.JaguarID)
-      , RunServer(other.RunServer)
+      , P2ID(other.P2ID)
+      , P3ID(other.P3ID)
     {
     }
 
@@ -57,9 +59,39 @@ struct JPTestOptions
     {
     }
 
+    /**
+     * @brief GetJagIDString
+     * @return the string of MY Jaguar ID
+     */
     QString GetJagIDString()
     {
-        switch(JaguarID)
+        return GetIDString(JaguarID);
+    }
+
+    QString GetP2IDString()
+    {
+        return GetIDString(P2ID);
+    }
+
+    QString GetP3IDString()
+    {
+        return GetIDString(P3ID);
+    }
+
+    JPTESTMODE RunMode;
+    QString Filename;
+    QString JPacketPath;
+    QString PortName;
+    int NumLoops;   // NumLoops -1 => don't loop, 0 => loop forever, n>0 => loop n times
+    int DelaySecs;
+    int JaguarID;
+    int P2ID;
+    int P3ID;
+
+protected:
+    QString GetIDString(const int& ID)
+    {
+        switch(ID)
         {
         case JAGPACKET::GCS:
             return "GCS";
@@ -73,15 +105,6 @@ struct JPTestOptions
             return "JPTestOptions: unrecognized JAGUAR ID!";
         }
     }
-
-    JPTESTMODE RunMode;
-    QString Filename;
-    QString JPacketPath;
-    QString PortName;
-    int NumLoops;   // NumLoops -1 => don't loop, 0 => loop forever, n>0 => loop n times
-    int DelaySecs;
-    int JaguarID;
-    bool RunServer;
 };
 
 class JPTest : public QObject
@@ -96,6 +119,7 @@ signals:
     void TestEnded();
     void OutboxLoaded(QList<QByteArray>);
     void PacketSent(QByteArray);
+    void ByteReceived(char);
     void P2InboxLoaded(QList<QByteArray>);
     void P3InboxLoaded(QList<QByteArray>);
     void P2PacketReceived(QByteArray);
@@ -103,39 +127,45 @@ signals:
 
 public slots:
     void LoadTest(JPTestOptions Options);
-    void RunServer(JPTestOptions TestOptions);
-    void RunClient(JPTestOptions testOptions);
+    void RunServer();
+    void RunClient();
     void EndTestEarly();
     void GetMailFromPort();
 
 protected:
-    // Protected members
+    // ----- Protected members ----- //
     JPTestPort* port;
     JPTestOptions* testOptions;
     QMap<QString, JPacket>* jpacketLib;
     QString* jpacketPath;
-    QList<QString>* packetOutbox;
-    QByteArray* inbox;
+    // Inbox/Outbox members
+    QList<QString>* packetOutbox;   // Packet inbox/outboxes
+    QList<QString>* P1packetInbox;
+    QList<QString>* P2packetInbox;
+
+    QByteArray* inbox;              // Raw bytes inbox
+    bool MailReady;
+    int UnreadBytes;
+
     int delaySecs;
     bool isRunning;
     bool testLoaded;
     mutable QMutex isRunningMutex;   // Used to protect acces
     int RemainingLoops;
-    bool MailReady;
-    int UnreadBytes;
 
-    // Protected methods
-    JPTESTERROR InitNewServerRun(const JPTestOptions &TestOptions);
-    JPTESTERROR InitNewClientRun(const JPTestOptions &TestOptions);
+    // ----- Protected methods ----- //
+    JPTESTERROR InitNewRun();
     bool WaitForServerStart();
     bool LoadTestScript();
     void ParseJPTestFile(QFile &JPTestFile);
-    QList<QByteArray> GetServerPacketList(QFile &JPTestFile);
+    QList<QByteArray> GetPacketList(const QString& jagIDString, QFile &JPTestFile);
     QByteArray RemoveAllOccurrences(QByteArray stream, const char &deleteChar);
     QByteArray GetJPktPayload(const QString& PacketFilename);
 
+    void StartRunLoop();
     void HandleTestMode();
     bool RunTestAgain();    // "Looping" test mode handler
+    void CheckMail();
 
     void SetIsRunning(const bool& IsRunning = true);
     bool Running();

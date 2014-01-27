@@ -5,7 +5,7 @@ JPTestPort::JPTestPort(QObject* parent /*= 0*/) : QObject(parent)
 {
     this->SetPortName("UNSET_PORT_NAME");   // Help ourselves out for debugging!
 
-    connect(this->serialPort, SIGNAL(readyRead()), this, SLOT(DataReceivedHandler()));
+    connect(this->serialPort, SIGNAL(readyRead()), this, SLOT(DataReceivedHandler()), Qt::DirectConnection);
 }
 
 JPTestPort::~JPTestPort()
@@ -64,14 +64,22 @@ bool JPTestPort::SendData(const QByteArray& payload)
 
 QByteArray JPTestPort::ReadData()
 {
-    return this->serialPort->readAll();
+    qDebug() << "In " << __FUNCTION__;
+    QByteArray array = this->serialPort->readAll();
+    if (array.count() > 0) qDebug() << "array: " << array;
+    return array;
 }
 
 // --------------- SLOTS -------------------
 
 void JPTestPort::DataReceivedHandler()
 {
+    qDebug() << "In " << __FUNCTION__;
+    QMessageBox mb;
+    mb.setText("Byte received!");
+
     emit youveGotMail();  // Complete with dial-up sound effects!
+
     return;
 }
 

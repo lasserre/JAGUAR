@@ -15,7 +15,6 @@ JPacket::JPacket() : payload(new QByteArray())
  */
 JPacket::JPacket(const QByteArray &Payload) : payload(new QByteArray(Payload))
 {
-    qDebug() << __FUNCTION__ << ":" << __LINE__;
     this->SetFieldsFromPayload();
 }
 
@@ -27,7 +26,6 @@ JPacket::JPacket(const QString &JPFilename) : payload(new QByteArray())
   , DST(0)
   , SRC(0)
 {
-    qDebug() << __FUNCTION__ << ":" << __LINE__;
     if (this->LoadFromFile(JPFilename))
         this->SetFieldsFromPayload();
     else qDebug() << "ERROR: unable to construct JPacket from " << JPFilename;
@@ -37,7 +35,6 @@ JPacket::JPacket(const JPacket &other) : payload(new QByteArray(*other.payload))
   , DST(other.DST)
   , SRC(other.SRC)
 {
-    qDebug() << __FUNCTION__ << ":" << __LINE__ << ": copy constructor called!";
 }
 
 /**
@@ -45,7 +42,6 @@ JPacket::JPacket(const JPacket &other) : payload(new QByteArray(*other.payload))
  */
 JPacket::~JPacket()
 {
-    qDebug() << __FUNCTION__ << ":" << __LINE__;
     delete this->payload;
 }
 
@@ -82,8 +78,8 @@ bool JPacket::LoadFromFile(const QString &JPFilename)
 
 void JPacket::SetFieldsFromPayload()
 {
-    this->DST = payload->at(JAGPACKET::DSTBYTE);
-    this->SRC = payload->at(MAVPACKET::JHDR_OFFSET + MAVPACKET::SRCBYTE);
+    this->DST = (unsigned char) payload->at(JAGPACKET::DSTBYTE);
+    this->SRC = (unsigned char) payload->at(MAVPACKET::JHDR_OFFSET + MAVPACKET::SRCBYTE);
     return;
 }
 

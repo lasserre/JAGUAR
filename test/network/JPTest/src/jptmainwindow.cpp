@@ -81,21 +81,24 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
     // Misc
     connect(this->ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(RemoveNotification(int)));
-    connect(this->ui->JAGIDcomboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(UpdateJaguarID(QString)));
+    connect(this->ui->JAGIDcomboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(UpdateJaguarIDS(QString)));
     connect(this->ui->portListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(UpdatePortSelection(QString)));
 
     // JPTest Controller
     connect(this->jptestManager, SIGNAL(OutboxChanged(QList<QByteArray>)), this, SLOT(UpdateTestScript(QList<QByteArray>)));
     connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
+    connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToRawByteInbox(char)));
     // -------------------------------------------------------------------------------------------------//
 
     // Set initial states
     ui->startTestButton->setEnabled(false);     // Disabled until test is loaded
     ui->toolBox->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
+
     RefreshPortList();
     RefreshTestList();
-    UpdateJaguarID(ui->JAGIDcomboBox->currentText());
+
+    UpdateJaguarIDS(ui->JAGIDcomboBox->currentText());
     ShowStatusBarMessage("Ready");
 
     ui->checkBox->setEnabled(false);    // CLS - TODO: change object name and implement noMSP430 mode!!
@@ -133,7 +136,6 @@ QDir JPTMainWindow::GetInitialWorkingDir()
 
 void JPTMainWindow::BrowseWkDirSlot()
 {
-    qDebug() << this->workingDirectory->path();
     QString directory = QFileDialog::getExistingDirectory(this, "Select working directory", this->workingDirectory->path());
     if (directory != "")
     {
@@ -147,9 +149,6 @@ void JPTMainWindow::BrowseWkDirSlot()
 
 void JPTMainWindow::RefreshTestList()
 {
-    qDebug() << "currentPath " << this->workingDirectory->currentPath();
-    qDebug() << "path " << this->workingDirectory->path();
-
     QStringList nameFilters;
     nameFilters.append("*.jptest");
 
@@ -157,7 +156,6 @@ void JPTMainWindow::RefreshTestList()
     this->ui->jptestListWidget->addItems(this->workingDirectory->entryList(nameFilters, QDir::Files, QDir::Name));
 
     // Don't allow start button to be pushed if no tests available!
-    // EnableDisableStartButton();
 
     return;
 }
@@ -166,13 +164,11 @@ void JPTMainWindow::StartTest()
 {   
     ui->outboxTextBrowser->clear();
 
-    CacheTestOptions();
-
     if (ui->jptestServerRButton->isChecked())
     {
         if (ui->packetOutboxListWidget->count() > 0)
         {
-            this->jptestManager->StartTest(testOptions);
+            this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
             LogToMessageArea("Running " + testOptions.Filename + "...");
         }
         else ShowMessageBoxMessage(GetJptestFilename(false) + " has no outgoing packets for " + testOptions.GetJagIDString());
@@ -180,7 +176,7 @@ void JPTMainWindow::StartTest()
     else
     {
         // Start test as client (begin listening)
-        this->jptestManager->StartTest(testOptions);
+        this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
         LogToMessageArea("Client is listening for JPackets...");
     }
 
@@ -219,39 +215,45 @@ void JPTMainWindow::RemoveNotification(int tabIndex)
     return;
 }
 
-void JPTMainWindow::UpdateJaguarID(QString JAGID)
+void JPTMainWindow::UpdateJaguarIDS(QString JAGID)
 {
     QString P2;
     QString P3;
     if (JAGID == "GCS")
     {
         this->testOptions.JaguarID = JAGPACKET::GCS;
+        this->testOptions.P2ID = JAGPACKET::MS;
+        this->testOptions.P3ID = JAGPACKET::QC;
         P2 = "MS";
         P3 = "QC";
     }
     else if (JAGID == "MS")
     {
         this->testOptions.JaguarID = JAGPACKET::MS;
+        this->testOptions.P2ID = JAGPACKET::QC;
+        this->testOptions.P3ID = JAGPACKET::GCS;
         P2 = "QC";
         P3 = "GCS";
     }
     else if (JAGID == "QC")
     {
         this->testOptions.JaguarID = JAGPACKET::QC;
+        this->testOptions.P2ID = JAGPACKET::GCS;
+        this->testOptions.P3ID = JAGPACKET::MS;
         P2 = "GCS";
-        P3 = "QC";
+        P3 = "MS";
     }
     else if (JAGID == "Broadcast")
     {
         this->testOptions.JaguarID = JAGPACKET::BROADCAST;
+        this->testOptions.P2ID = JAGPACKET::GCS;
+        this->testOptions.P3ID = JAGPACKET::QC;
         P2 = "GCS";     // CLS - picking random 2 for now...
         P3 = "QC";
     }
     else ui->messagesTextBrowser->append("Invalid JAGUAR ID selection!");
 
-    this->setWindowTitle("JPTest - " + testOptions.GetJagIDString());
-    ui->packetOutboxLabel->setText(testOptions.GetJagIDString() + " Packet Outbox");
-    UpdateP2P3(P2, P3);
+    UpdateJAGIDStrings(JAGID, P2, P3);
 
     // Reload test for new JAGUAR ID if already loaded from a selected file
     if (ui->startTestButton->isEnabled()) LoadTest();
@@ -285,6 +287,8 @@ void JPTMainWindow::UpdatePortSelection(const QString& UnusedPortVar)
 
 QString JPTMainWindow::GetJptestFilename(bool IncludeWorkingDir /* = true*/)
 {
+    if (ui->jptestListWidget->selectedItems().empty()) return "JPTMainWindow_NOFILESELECTED";
+
     if (IncludeWorkingDir)
         return this->workingDirectory->path() + "/" + ui->jptestListWidget->selectedItems().at(0)->text();
     else
@@ -331,6 +335,13 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet)
     return;
 }
 
+
+void JPTMainWindow::AppendToRawByteInbox(char newByte)
+{
+    ui->rawByteInboxTextBrowser->insertPlainText(QString(newByte));
+    return;
+}
+
 QString JPTMainWindow::GetJPacketPath()
 {
     return this->workingDirectory->path() + "/jpackets/";
@@ -347,12 +358,15 @@ void JPTMainWindow::CacheTestOptions()
     testOptions.Filename = GetJptestFilename();
     testOptions.JPacketPath = GetJPacketPath();
     testOptions.PortName = GetPortName();
-    testOptions.RunServer = ui->jptestServerRButton->isChecked();
 
-    // CLS - all fields listed here so we can see if we're handling them or not
+    // CLS - all fields listed here so we can verify that we're handling them
 
     //testOptions.DelaySecs
+
     //testOptions.JaguarID      // Set at startup, and updated on every input change
+    //testOptions.P2ID          // Set at startup, and updated on every input change
+    //testOptions.P3ID          // Set at startup, and updated on every input change
+
     //testOptions.NumLoops
 
     return;
@@ -377,11 +391,17 @@ QString JPTMainWindow::GetHtmlString(const QString &text, const QString &color)
     return "<font color=\"" + color + "\">" + text + "</font>";
 }
 
-void JPTMainWindow::UpdateP2P3(const QString &p2Name, const QString &p3Name)
+void JPTMainWindow::UpdateJAGIDStrings(const QString& myName, const QString &p2Name, const QString &p3Name)
 {
+    // Set myID strings
+    this->setWindowTitle("JPTest - " + myName);
+    ui->packetOutboxLabel->setText(myName + " Packet Outbox");
+
+    // Set p2ID strings
     ui->p2InboxLabel->setText(p2Name + " Inbox:");
     ui->p2packetInboxLabel->setText(p2Name + " packets:");
 
+    // Set p3ID strings
     ui->p3InboxLabel->setText(p3Name + " Inbox:");
     ui->p3packetInboxLabel->setText(p3Name + " packets:");
 

@@ -9,13 +9,15 @@ JPTestController::JPTestController(QObject *parent) :
     this->currentTest->moveToThread(testThreadController); // Put currentTest in its own thread
 
     connect(this->testThreadController, SIGNAL(finished()), this->currentTest, SLOT(deleteLater()));
-    connect(this, SIGNAL(StartServerTestSignal(JPTestOptions)), this->currentTest, SLOT(RunServer(JPTestOptions)));
-    connect(this, SIGNAL(StartClientTestSignal(JPTestOptions)), this->currentTest, SLOT(RunClient(JPTestOptions)));
+    connect(this, SIGNAL(StartServerTestSignal()), this->currentTest, SLOT(RunServer()));
+    connect(this, SIGNAL(StartClientTestSignal()), this->currentTest, SLOT(RunClient()));
     connect(this,SIGNAL(StopTestSignal()), this->currentTest, SLOT(EndTestEarly()), Qt::DirectConnection);
+    connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
+    // Connect JPTest signals to controller
     connect(this->currentTest, SIGNAL(TestEnded()), this, SLOT(TestEndedHandler()));
     connect(this->currentTest, SIGNAL(OutboxLoaded(QList<QByteArray>)), this, SLOT(NewOutboxHandler(QList<QByteArray>)));
-    connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
     connect(this->currentTest, SIGNAL(PacketSent(QByteArray)), this, SLOT(PacketSentHandler(QByteArray)));
+    connect(this->currentTest, SIGNAL(ByteReceived(char)), this, SLOT(ByteReceivedHandler(char)), Qt::DirectConnection);
 
     this->testThreadController->start();   // Start thread. Don't call quit() until destructor!
 }
@@ -33,14 +35,14 @@ JPTestController::~JPTestController()
     delete this->testThreadController;  // testThreadController lives in the main thread (so should be deleted)
 }
 
-void JPTestController::StartTest(const JPTestOptions &TestOptions)
+void JPTestController::StartTest(const bool& RunServer)
 {
     if (!testIsRunning)
     {
-        if (TestOptions.RunServer)
-            emit StartServerTestSignal(TestOptions);
+        if (RunServer)
+            emit StartServerTestSignal();
         else
-            emit StartClientTestSignal(TestOptions);
+            emit StartClientTestSignal();
         testIsRunning = true;
     }
     else qDebug() << "Test already in progress!";
@@ -77,7 +79,13 @@ void JPTestController::LoadTest(const JPTestOptions& Options)
 
 void JPTestController::PacketSentHandler(QByteArray packet)
 {
-    qDebug() << "In " << __FUNCTION__;
+    // qDebug() << "In " << __FUNCTION__;
     emit PacketSent(packet);
+    return;
+}
+
+void JPTestController::ByteReceivedHandler(char byte)
+{
+    emit RawByteReceived(byte);
     return;
 }

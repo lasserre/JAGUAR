@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDebug>
 #include <QtSerialPort/QtSerialPort>
+#include <QMessageBox>
 
 // CLS - we can modify this later to be set in a config file, but just putting here for now
 namespace SERIAL_CONFIG
