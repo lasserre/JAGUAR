@@ -40,9 +40,7 @@ bool JPTestPort::OpenPort()
 
 void JPTestPort::SetPortName(const QString &PortName)
 {
-    //qDebug() << "Before: " << this->serialPort->portName();
     this->serialPort->setPortName(PortName);
-    //qDebug() << "Set port name to: " << this->serialPort->portName();
     return;
 }
 
@@ -64,22 +62,14 @@ bool JPTestPort::SendData(const QByteArray& payload)
 
 QByteArray JPTestPort::ReadData()
 {
-    qDebug() << "In " << __FUNCTION__;
-    QByteArray array = this->serialPort->readAll();
-    if (array.count() > 0) qDebug() << "array: " << array;
-    return array;
+    return this->serialPort->readAll();
 }
 
 // --------------- SLOTS -------------------
 
 void JPTestPort::DataReceivedHandler()
 {
-    qDebug() << "In " << __FUNCTION__;
-    QMessageBox mb;
-    mb.setText("Byte received!");
-
     emit youveGotMail();  // Complete with dial-up sound effects!
-
     return;
 }
 

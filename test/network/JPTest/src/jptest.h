@@ -118,10 +118,10 @@ public:
 signals:
     void TestEnded();
     void OutboxLoaded(QList<QByteArray>);
-    void PacketSent(QByteArray);
-    void ByteReceived(char);
     void P2InboxLoaded(QList<QByteArray>);
     void P3InboxLoaded(QList<QByteArray>);
+    void PacketSent(QByteArray);
+    void ByteReceived(char);
     void P2PacketReceived(QByteArray);
     void P3PacketReceived(QByteArray);
 
@@ -138,14 +138,17 @@ protected:
     JPTestOptions* testOptions;
     QMap<QString, JPacket>* jpacketLib;
     QString* jpacketPath;
+
     // Inbox/Outbox members
     QList<QString>* packetOutbox;   // Packet inbox/outboxes
-    QList<QString>* P1packetInbox;
     QList<QString>* P2packetInbox;
+    QList<QString>* P3packetInbox;
+    QList<QString>::iterator P2nextPacket;
+    QList<QString>::iterator P3nextPacket;
 
     QByteArray* inbox;              // Raw bytes inbox
+    int inboxPos;                   // inboxPos keeps our place in inbox.
     bool MailReady;
-    int UnreadBytes;
 
     int delaySecs;
     bool isRunning;

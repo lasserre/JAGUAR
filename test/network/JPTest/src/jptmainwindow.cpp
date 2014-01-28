@@ -86,6 +86,8 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
     // JPTest Controller
     connect(this->jptestManager, SIGNAL(OutboxChanged(QList<QByteArray>)), this, SLOT(UpdateTestScript(QList<QByteArray>)));
+    connect(this->jptestManager, SIGNAL(P2InboxChanged(QList<QByteArray>)), this, SLOT(UpdateP2Script(QList<QByteArray>)));
+    connect(this->jptestManager, SIGNAL(P3InboxChanged(QList<QByteArray>)), this, SLOT(UpdateP3Script(QList<QByteArray>)));
     connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
     connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToRawByteInbox(char)));
     // -------------------------------------------------------------------------------------------------//
@@ -163,6 +165,7 @@ void JPTMainWindow::RefreshTestList()
 void JPTMainWindow::StartTest()
 {   
     ui->outboxTextBrowser->clear();
+    ui->rawByteInboxTextBrowser->clear();
 
     if (ui->jptestServerRButton->isChecked())
     {
@@ -271,6 +274,22 @@ void JPTMainWindow::UpdateTestScript(QList<QByteArray> newScript)
     return;
 }
 
+void JPTMainWindow::UpdateP2Script(QList<QByteArray> newP2Script)
+{
+    ui->p2packetInboxListWidget->clear();
+    for (int i = 0; i < newP2Script.count(); i++)
+        ui->p2packetInboxListWidget->addItem(newP2Script.at(i));
+    return;
+}
+
+void JPTMainWindow::UpdateP3Script(QList<QByteArray> newP3Script)
+{
+    ui->p3packetInboxListWidget->clear();
+    for (int i = 0; i < newP3Script.count(); i++)
+        ui->p3packetInboxListWidget->addItem(newP3Script.at(i));
+    return;
+}
+
 /**
  * @brief JPTMainWindow::UpdatePortSelection
  * @param UnusedPortVar is simply included to match the signal payload type of the list widget
@@ -338,7 +357,9 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet)
 
 void JPTMainWindow::AppendToRawByteInbox(char newByte)
 {
-    ui->rawByteInboxTextBrowser->insertPlainText(QString(newByte));
+    int newByteASCIIValue(newByte);
+    QString hexByte = QString::number(newByteASCIIValue, 16);
+    ui->rawByteInboxTextBrowser->insertPlainText(hexByte.toUpper() + " ");
     return;
 }
 

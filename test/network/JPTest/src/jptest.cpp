@@ -7,9 +7,13 @@ JPTest::JPTest(QObject *parent) :
   , jpacketLib(new QMap<QString, JPacket>())
   , jpacketPath(new QString())
   , packetOutbox(new QList<QString>())
+  , P2packetInbox(new QList<QString>())
+  , P3packetInbox(new QList<QString>())
+  , P2nextPacket(QList<QString>::iterator())
+  , P3nextPacket(QList<QString>::iterator())
   , inbox(new QByteArray())
+  , inboxPos(0)
   , MailReady(false)
-  , UnreadBytes(0)
   , delaySecs(-1)
   , isRunning(false)
   , testLoaded(false)
@@ -25,6 +29,8 @@ JPTest::~JPTest()
     delete this->jpacketLib;
     delete this->jpacketPath;
     delete this->packetOutbox;
+    delete this->P2packetInbox;
+    delete this->P3packetInbox;
     delete this->inbox;
 }
 
@@ -59,11 +65,8 @@ void JPTest::RunServer()
     StartRunLoop();
 
     // Cleanup/reset
-    while (Running()) QCoreApplication::processEvents(); // CLS  - DEBUG TEMP!!! waiting for input bytes...
-
     SetIsRunning(false);
     emit TestEnded();
-
     return;
 }
 
@@ -83,43 +86,51 @@ void JPTest::RunClient()
     if (!WaitForServerStart())
     {
         qDebug() << "Client run cancelled by user.";
+        SetIsRunning(false);
         emit TestEnded();
         return;
     }
 
     StartRunLoop();
 
+    SetIsRunning(false);
     emit TestEnded();
     return;
 }
 
 void JPTest::StartRunLoop()
 {
-    // Set up jptestScript iterator, and begin loop
     QList<QString>::iterator currentTestPacket = packetOutbox->begin();
+    bool IsLoopingRun = (testOptions->NumLoops > -1);
 
-    while((currentTestPacket != packetOutbox->end()) && Running())
+    while(Running() && (currentTestPacket != packetOutbox->end()))
     {
-       HandleTestMode();
+        // Do delays/step/etc...
+        HandleTestMode();
 
-       qDebug() << "packet: " << *currentTestPacket;
-       if (port->SendData(GetJPktPayload(*currentTestPacket)))
-       {
-           emit PacketSent(GetJPktPayload(*currentTestPacket));
-       }
-       //CLS - TODO: refactor to HandlePacket() function (decide to send, delay, or move on)
+        // Send packets
+        if (port->SendData(GetJPktPayload(*currentTestPacket)))
+            emit PacketSent(GetJPktPayload(*currentTestPacket));
 
-       // CheckMail();
-       GetMailFromPort();
+        // Check the mail
+        QCoreApplication::processEvents();
+        CheckMail();
 
-       currentTestPacket++;
+        // Increment packet ptr
+        currentTestPacket++;
 
-       if (currentTestPacket == packetOutbox->end() && (testOptions->NumLoops > -1))
-       {
-           // Completed one more run.
+        if (currentTestPacket == packetOutbox->end() && IsLoopingRun)
+        {
+           // Handle looping
            currentTestPacket = packetOutbox->begin();  // Reset to beginning of test, in case we need to run again
            if (!RunTestAgain()) break;
-       }
+        }
+    }
+
+    // If we're done sending, we may not be done receiving...
+    while (Running())
+    {
+        QCoreApplication::processEvents();
     }
 
     return;
@@ -129,22 +140,28 @@ void JPTest::CheckMail()
 {
     if (MailReady)
     {
-        QByteArray::iterator mailByteIter = inbox->begin();
-        QByteArray newPacket;
-        for (int i = 0; i < UnreadBytes; i++)
-        {
-            if (i == MAVPACKET::SRCBYTE)
-            {
-                qDebug() << "Source: " << *mailByteIter;
-            }
-            newPacket.append(*mailByteIter);
-        }
-        qDebug() << "newPacket: " << newPacket;
+
     }
+
+    // MailReady = false;
 
     return;
 }
 
+void JPTest::GetMailFromPort()
+{
+    qDebug() << "In " << __FUNCTION__;
+
+    QByteArray mail = port->ReadData();
+    inbox->append(mail);
+
+    MailReady = true;
+
+    for (int i = 0; i < mail.count(); i++)
+        emit ByteReceived(mail.at(i));
+
+    return;
+}
 
 /**
  * @brief JPTest::LoadTest assigns the testOptions from Options, and loads the .jptest file.
@@ -183,20 +200,34 @@ bool JPTest::LoadTestScript()
 void JPTest::ParseJPTestFile(QFile &JPTestFile)
 {
     packetOutbox->clear();  // Get rid of existing data
+    P2packetInbox->clear();
+    P3packetInbox->clear();
 
     // Create list from comma-separated-values in our JAGID's section
     QList<QByteArray> jptestlist = GetPacketList(testOptions->GetJagIDString(), JPTestFile);
+    QList<QByteArray> p2testlist = GetPacketList(testOptions->GetP2IDString(), JPTestFile);
+    QList<QByteArray> p3testlist = GetPacketList(testOptions->GetP3IDString(), JPTestFile);
 
     // Put list of packets we must send into packetOutbox
     QList<QByteArray>::iterator testIter = jptestlist.begin();
+    QList<QByteArray>::iterator p2Iter = p2testlist.begin();
+    QList<QByteArray>::iterator p3Iter = p3testlist.begin();
+
     while (testIter != jptestlist.end())
-    {
-        this->packetOutbox->append(QString(*testIter));
-        testIter++;
-    }
+        this->packetOutbox->append(QString(*testIter++));
+    while (p2Iter != p2testlist.end())
+        this->P2packetInbox->append(QString(*p2Iter++));
+    while (p3Iter != p3testlist.end())
+        this->P3packetInbox->append(QString(*p3Iter++));
+
+    // Set packet ptrs to beginning of P2/P3 packet inboxes
+    P2nextPacket = P2packetInbox->begin();
+    P3nextPacket = P3packetInbox->begin();
 
     // Send list to GUI
     emit OutboxLoaded(jptestlist);
+    emit P2InboxLoaded(p2testlist);
+    emit P3InboxLoaded(p3testlist);
 
     return;
 }
@@ -373,22 +404,6 @@ QString JPTest::ReportErrorCode(const JPTESTERROR &error)
     }
 
     return errMsg;
-}
-
-void JPTest::GetMailFromPort()
-{
-    qDebug() << "In " << __FUNCTION__;
-
-    QByteArray mail = port->ReadData();
-    inbox->append(mail);
-
-    MailReady = true;
-    UnreadBytes += mail.count();
-
-    for (int i = 0; i < mail.count(); i++)
-        emit ByteReceived(mail.at(i));
-
-    return;
 }
 
 /**

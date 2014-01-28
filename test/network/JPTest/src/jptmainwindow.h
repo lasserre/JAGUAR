@@ -35,6 +35,8 @@ public slots:
     void RemoveNotification(int tabIndex);
     void UpdateJaguarIDS(QString JAGID);
     void UpdateTestScript(QList<QByteArray> newScript);
+    void UpdateP2Script(QList<QByteArray> newP2Script);
+    void UpdateP3Script(QList<QByteArray> newP3Script);
     void UpdatePortSelection(const QString &UnusedPortVar);
     void AppendToOutbox(QByteArray);
     void AppendToRawByteInbox(char);
