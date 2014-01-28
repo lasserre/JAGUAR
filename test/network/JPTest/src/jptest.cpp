@@ -131,6 +131,7 @@ void JPTest::StartRunLoop()
     while (Running())
     {
         QCoreApplication::processEvents();
+        CheckMail();
     }
 
     return;
