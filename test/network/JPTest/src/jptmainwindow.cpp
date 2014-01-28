@@ -18,6 +18,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 {
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
+    qRegisterMetaType<QList<int> >("QList<int>");
 
     ui->setupUi(this);
 
@@ -299,6 +300,8 @@ void JPTMainWindow::UpdateP2Script(QList<QByteArray> newP2Script)
 
 void JPTMainWindow::UpdateP3Script(QList<QByteArray> newP3Script)
 {
+    qDebug() << __FUNCTION__;
+    qDebug() << "newp3script.count(): " << newP3Script.count();
     ui->p3packetInboxListWidget->clear();
     for (int i = 0; i < newP3Script.count(); i++)
         ui->p3packetInboxListWidget->addItem(newP3Script.at(i));

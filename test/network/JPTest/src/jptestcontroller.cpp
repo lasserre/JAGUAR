@@ -115,12 +115,15 @@ void JPTestController::ByteReceivedHandler(char byte)
 
 void JPTestController::P2PacketReceivedHandler(QByteArray packet, QList<int> diffs)
 {
+    qDebug() << __FUNCTION__;
     emit P2PacketReceived(packet, diffs);
     return;
 }
 
 void JPTestController::P3PacketReceivedHandler(QByteArray packet, QList<int> diffs)
 {
+    qDebug() << __FUNCTION__;
+
     emit P3PacketReceived(packet, diffs);
     return;
 }
