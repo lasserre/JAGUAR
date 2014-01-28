@@ -9,8 +9,8 @@ JPTest::JPTest(QObject *parent) :
   , packetOutbox(new QList<QString>())
   , P2packetInbox(new QList<QString>())
   , P3packetInbox(new QList<QString>())
-  , P2nextPacket(QList<QString>::iterator())
-  , P3nextPacket(QList<QString>::iterator())
+  , P2nextPacket(0)
+  , P3nextPacket(0)
   , inbox(new QByteArray())
   , MailReady(false)
   , JaguarHeaderOffset(0)
@@ -137,7 +137,7 @@ void JPTest::StartRunLoop()
     {
         QCoreApplication::processEvents();
         CheckMail();
-        if (P2nextPacket == P2packetInbox->end() && P3nextPacket == P3packetInbox->end())
+        if (P2nextPacket == P2packetInbox->count() && P3nextPacket == P3packetInbox->count())
             break;
     }
 
@@ -179,17 +179,20 @@ void JPTest::ProcessCurrentPacket()
     QList<int> conflictList;
     QByteArray receivedPacket = inbox->mid(JaguarHeaderOffset, currentPacketLen);
 
-    if (currentPacketSrc == testOptions->P2ID && P2nextPacket != P2packetInbox->end())
+    if (currentPacketSrc == testOptions->P2ID && P2nextPacket < P2packetInbox->count())
     {
-        conflictList = DiffByteArrays(GetJPktPayload(*P2nextPacket), receivedPacket);
+        conflictList = DiffByteArrays(GetJPktPayload(P2packetInbox->at(P2nextPacket++)), receivedPacket);
         emit P2PacketReceived(receivedPacket, conflictList);
-        P2nextPacket++;
     }
-    else if (currentPacketSrc == testOptions->P3ID && P3nextPacket != P3packetInbox->end())
+    else if ((currentPacketSrc == testOptions->P3ID))
     {
-        conflictList = DiffByteArrays(GetJPktPayload(*P3nextPacket), receivedPacket);
-        emit P3PacketReceived(receivedPacket, conflictList);
-        P3nextPacket++;
+        qDebug() << "p3packetInbox.count(): " << P3packetInbox->count();
+
+        if ((P3nextPacket < P3packetInbox->count()))
+        {
+            conflictList = DiffByteArrays(GetJPktPayload(P3packetInbox->at(P3nextPacket++)), receivedPacket);
+            emit P3PacketReceived(receivedPacket, conflictList);
+        }
     }
     else
     {
@@ -311,26 +314,35 @@ void JPTest::ParseJPTestFile(QFile &JPTestFile)
     P2packetInbox->clear();
     P3packetInbox->clear();
 
+    qDebug() << "p3packetInbox.count(): " << P3packetInbox->count();
+    qDebug() << "p3idstring: " << testOptions->GetP3IDString();
+
     // Create list from comma-separated-values in our JAGID's section
     QList<QByteArray> jptestlist = GetPacketList(testOptions->GetJagIDString(), JPTestFile);
     QList<QByteArray> p2testlist = GetPacketList(testOptions->GetP2IDString(), JPTestFile);
     QList<QByteArray> p3testlist = GetPacketList(testOptions->GetP3IDString(), JPTestFile);
 
+    qDebug() << "p3testlist.count(): " << p3testlist.count();
+
     // Put list of packets we must send into packetOutbox
     QList<QByteArray>::iterator testIter = jptestlist.begin();
     QList<QByteArray>::iterator p2Iter = p2testlist.begin();
-    QList<QByteArray>::iterator p3Iter = p3testlist.begin();
+    //QList<QByteArray>::iterator p3Iter = p3testlist.begin();
 
     while (testIter != jptestlist.end())
         this->packetOutbox->append(QString(*testIter++));
     while (p2Iter != p2testlist.end())
         this->P2packetInbox->append(QString(*p2Iter++));
-    while (p3Iter != p3testlist.end())
-        this->P3packetInbox->append(QString(*p3Iter++));
+//    while (p3Iter != p3testlist.end())
+//        this->P3packetInbox->append(QString(*p3Iter++));
+    for (int i = 0; i < p3testlist.count(); i++)
+        P3packetInbox->append(QString(p3testlist.at(i)));
+
+    qDebug() << "p3packetInbox.count(): " << P3packetInbox->count();
 
     // Set packet ptrs to beginning of P2/P3 packet inboxes
-    P2nextPacket = P2packetInbox->begin();
-    P3nextPacket = P3packetInbox->begin();
+    P2nextPacket = 0;
+    P3nextPacket = 0;
 
     // Send list to GUI
     emit OutboxLoaded(jptestlist);
@@ -392,6 +404,8 @@ QList<QByteArray> JPTest::GetPacketList(const QString& jagIDString, QFile &JPTes
     }
 
     JPTestFile.seek(0); // Reset to beginning of file for future function calls.
+    if (JPTestFile.atEnd())
+        qDebug() << "File at end after seek() call!";
 
     return packetList;
 }

@@ -43,6 +43,7 @@ public slots:
     void AppendToP2Inbox(QByteArray, QList<int> diffs);
     void AppendToP3Inbox(QByteArray packet, QList<int> diffs);
     void HandleGarbage(QByteArray garbagePacket);
+    void CacheTestOptions();
     
 private:
     Ui::JPTMainWindow *ui;
@@ -65,7 +66,6 @@ protected:
     QString GetJptestFilename(bool IncludeWorkingDir = true);
     QString GetJPacketPath();
     QString GetPortName();
-    void CacheTestOptions();
     void ShowStatusBarMessage(const QString& msg);
     void ShowMessageBoxMessage(const QString& msg);
     void LogToMessageArea(const QString& msg);

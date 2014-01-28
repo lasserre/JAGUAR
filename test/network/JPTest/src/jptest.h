@@ -147,8 +147,8 @@ protected:
     QList<QString>* packetOutbox;   // Packet inbox/outboxes
     QList<QString>* P2packetInbox;
     QList<QString>* P3packetInbox;
-    QList<QString>::iterator P2nextPacket;
-    QList<QString>::iterator P3nextPacket;
+    int P2nextPacket;
+    int P3nextPacket;
 
     QByteArray* inbox;              // Raw bytes inbox
     bool MailReady;

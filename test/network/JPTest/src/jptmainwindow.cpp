@@ -83,6 +83,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(RemoveNotification(int)));
     connect(this->ui->JAGIDcomboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(UpdateJaguarIDS(QString)));
     connect(this->ui->portListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(UpdatePortSelection(QString)));
+    connect(this->ui->noMSP430checkBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
 
     // JPTest Controller
     connect(this->jptestManager, SIGNAL(OutboxChanged(QList<QByteArray>)), this, SLOT(UpdateTestScript(QList<QByteArray>)));
@@ -110,8 +111,6 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
     UpdateJaguarIDS(ui->JAGIDcomboBox->currentText());
     ShowStatusBarMessage("Ready");
-
-    ui->noMSP430checkBox->setEnabled(false);
 
     qDebug() << workingDirectory->path();
 }
@@ -189,6 +188,7 @@ void JPTMainWindow::StartTest()
             this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
             LogToMessageArea("Running " + testOptions.Filename + "...");
         }
+        // CLS - server needs to send at least 1 msg since that signals the clients to start!
         else ShowMessageBoxMessage(GetJptestFilename(false) + " has no outgoing packets for " + testOptions.GetJagIDString());
     }
     else
@@ -374,6 +374,7 @@ void JPTMainWindow::AppendToRawByteInbox(char newByte)
 {
     int newByteASCIIValue(newByte);
     QString hexByte = QString::number(newByteASCIIValue, 16);
+    if (hexByte.length() < 2) hexByte.prepend('0');
     ui->rawByteInboxTextBrowser->insertPlainText(hexByte.toUpper() + " ");
     return;
 }
@@ -432,7 +433,19 @@ void JPTMainWindow::AppendToP3Inbox(QByteArray packet, QList<int> diffs)
 
 void JPTMainWindow::HandleGarbage(QByteArray garbagePacket)
 {
-    LogToMessageArea("Garbage packet detected: " + QString(garbagePacket));
+    QByteArray hex = garbagePacket.toHex();
+    QString outputString;
+
+    for (int i = 0; i < hex.count(); i++)
+    {
+        QString hexValue(hex.at(i));
+        hexValue.append(hex.at(i));
+        outputString.append(hexValue.toUpper() + " ");
+        i++;    // Account for second nibble
+    }
+
+    LogToMessageArea("Garbage packet detected: " + outputString);
+
     return;
 }
 
