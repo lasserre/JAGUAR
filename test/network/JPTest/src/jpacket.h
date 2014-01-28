@@ -45,6 +45,9 @@ namespace JAGPACKET
     const int MS = 1;
     const int QC = 2;
     const int GCS = 255;
+
+    // Jaguar start byte contents
+    const int STXVALUE = 254;
 }
 
 namespace MAVPACKET
@@ -61,6 +64,9 @@ namespace MAVPACKET
     const int CMPBYTE = 4;
     const int MSGBYTE = 5;
     const int PAYLOADSTART = 6;
+
+    // MAVLINK start byte contents
+    const int STXVALUE = 254;
 }
 
 class JPacket

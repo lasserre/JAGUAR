@@ -25,6 +25,9 @@ signals:
     void P3InboxChanged(QList<QByteArray>);
     void PacketSent(QByteArray);
     void RawByteReceived(char);
+    void P2PacketReceived(QByteArray, QList<int>);
+    void P3PacketReceived(QByteArray, QList<int>);
+    void GarbagePacketReceived(QByteArray);
 
 public slots:
     void TestEndedHandler();
@@ -33,6 +36,9 @@ public slots:
     void NewP3InboxHandler(QList<QByteArray> newP3Inbox);
     void PacketSentHandler(QByteArray);
     void ByteReceivedHandler(char);
+    void P2PacketReceivedHandler(QByteArray packet, QList<int> diffs);
+    void P3PacketReceivedHandler(QByteArray, QList<int>);
+    void GarbagePacketReceivedHandler(QByteArray);
 
 protected:
     JPTest* currentTest;

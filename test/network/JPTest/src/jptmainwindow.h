@@ -40,6 +40,9 @@ public slots:
     void UpdatePortSelection(const QString &UnusedPortVar);
     void AppendToOutbox(QByteArray);
     void AppendToRawByteInbox(char);
+    void AppendToP2Inbox(QByteArray, QList<int> diffs);
+    void AppendToP3Inbox(QByteArray packet, QList<int> diffs);
+    void HandleGarbage(QByteArray garbagePacket);
     
 private:
     Ui::JPTMainWindow *ui;

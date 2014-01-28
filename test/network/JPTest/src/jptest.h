@@ -40,6 +40,7 @@ struct JPTestOptions
       , JaguarID(JAGPACKET::GCS)
       , P2ID(JAGPACKET::MS)
       , P3ID(JAGPACKET::QC)
+      , MSP430ModeOn(true)
     {
     }
 
@@ -52,6 +53,7 @@ struct JPTestOptions
       , JaguarID(other.JaguarID)
       , P2ID(other.P2ID)
       , P3ID(other.P3ID)
+      , MSP430ModeOn(other.MSP430ModeOn)
     {
     }
 
@@ -87,6 +89,7 @@ struct JPTestOptions
     int JaguarID;
     int P2ID;
     int P3ID;
+    bool MSP430ModeOn;
 
 protected:
     QString GetIDString(const int& ID)
@@ -122,8 +125,9 @@ signals:
     void P3InboxLoaded(QList<QByteArray>);
     void PacketSent(QByteArray);
     void ByteReceived(char);
-    void P2PacketReceived(QByteArray);
-    void P3PacketReceived(QByteArray);
+    void P2PacketReceived(QByteArray, QList<int>);
+    void P3PacketReceived(QByteArray, QList<int>);
+    void GarbagePacketReceived(QByteArray);
 
 public slots:
     void LoadTest(JPTestOptions Options);
@@ -147,8 +151,10 @@ protected:
     QList<QString>::iterator P3nextPacket;
 
     QByteArray* inbox;              // Raw bytes inbox
-    int inboxPos;                   // inboxPos keeps our place in inbox.
     bool MailReady;
+    int JaguarHeaderOffset;
+    int currentPacketSrc;
+    int currentPacketLen;
 
     int delaySecs;
     bool isRunning;
@@ -169,6 +175,10 @@ protected:
     void HandleTestMode();
     bool RunTestAgain();    // "Looping" test mode handler
     void CheckMail();
+    void ProcessInbox();
+    void ProcessCurrentPacket();
+    QList<int> DiffByteArrays(const QByteArray& first, const QByteArray& second);
+    void FindGoodPacketStart();
 
     void SetIsRunning(const bool& IsRunning = true);
     bool Running();

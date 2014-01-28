@@ -12,8 +12,10 @@ JPTest::JPTest(QObject *parent) :
   , P2nextPacket(QList<QString>::iterator())
   , P3nextPacket(QList<QString>::iterator())
   , inbox(new QByteArray())
-  , inboxPos(0)
   , MailReady(false)
+  , JaguarHeaderOffset(0)
+  , currentPacketSrc(-1)
+  , currentPacketLen(-1)
   , delaySecs(-1)
   , isRunning(false)
   , testLoaded(false)
@@ -42,6 +44,9 @@ JPTESTERROR JPTest::InitNewRun()
 
     // Assign NumLoops since this won't get checked until after first loop through
     this->RemainingLoops = testOptions->NumLoops;
+
+    if (testOptions->MSP430ModeOn) JaguarHeaderOffset = 0;
+    else JaguarHeaderOffset = MAVPACKET::JHDR_OFFSET;
 
     return NO_ERROR;   // CLS - TODO: take out magic #'s!!
 }
@@ -132,6 +137,8 @@ void JPTest::StartRunLoop()
     {
         QCoreApplication::processEvents();
         CheckMail();
+        if (P2nextPacket == P2packetInbox->end() && P3nextPacket == P3packetInbox->end())
+            break;
     }
 
     return;
@@ -139,14 +146,114 @@ void JPTest::StartRunLoop()
 
 void JPTest::CheckMail()
 {
-    if (MailReady)
-    {
+    if (MailReady) ProcessInbox();
 
-    }
-
-    // MailReady = false;
+    MailReady = false;
 
     return;
+}
+
+void JPTest::ProcessInbox()
+{
+    if (currentPacketSrc == -1)
+    {
+        // Get src byte of packet, if it has come in yet
+        if (inbox->count() > (MAVPACKET::SRCBYTE + JaguarHeaderOffset))
+        {
+            currentPacketSrc = (unsigned char) inbox->at(JaguarHeaderOffset + MAVPACKET::SRCBYTE);
+            currentPacketLen = (unsigned char) inbox->at(JaguarHeaderOffset + MAVPACKET::LENBYTE);  // Get payload length
+            currentPacketLen += MAVPACKET::MVHDR_OFFSET + MAVPACKET::tail_CS_OFFSET;    // Account for header and tail
+        }
+        else return;    // Not enough data in yet...wait until we get at least up to the SRC byte
+    }
+
+    ProcessCurrentPacket();
+
+    return;
+}
+
+void JPTest::ProcessCurrentPacket()
+{
+    if (inbox->count() < (currentPacketLen + JaguarHeaderOffset)) return;
+
+    QList<int> conflictList;
+    QByteArray receivedPacket = inbox->mid(JaguarHeaderOffset, currentPacketLen);
+
+    if (currentPacketSrc == testOptions->P2ID && P2nextPacket != P2packetInbox->end())
+    {
+        conflictList = DiffByteArrays(GetJPktPayload(*P2nextPacket), receivedPacket);
+        emit P2PacketReceived(receivedPacket, conflictList);
+        P2nextPacket++;
+    }
+    else if (currentPacketSrc == testOptions->P3ID && P3nextPacket != P3packetInbox->end())
+    {
+        conflictList = DiffByteArrays(GetJPktPayload(*P3nextPacket), receivedPacket);
+        emit P3PacketReceived(receivedPacket, conflictList);
+        P3nextPacket++;
+    }
+    else
+    {
+        // Packet SRC is wrong!! Handle garbage here (send bytes up to LEN byte marked as garbage)
+        emit GarbagePacketReceived(inbox->mid(JaguarHeaderOffset, MAVPACKET::LENBYTE));
+
+        FindGoodPacketStart();
+
+        currentPacketLen = -1;
+        currentPacketSrc = -1;
+
+        return;
+    }
+
+    inbox->remove(0, JaguarHeaderOffset + receivedPacket.length());
+    currentPacketLen = -1;
+    currentPacketSrc = -1;
+
+    return;
+}
+
+void JPTest::FindGoodPacketStart()
+{
+    int goodPacketIndex = -1;
+
+    for (int i = 0; i < (inbox->count() - 2); i++)
+    {
+        int jagStx = (unsigned char) inbox->at(i);
+        if (jagStx == MAVPACKET::STXVALUE)
+        {
+            int mavStx = (unsigned char) inbox->at(i+2);
+            if (mavStx == MAVPACKET::STXVALUE)
+            {
+                goodPacketIndex = i;
+                break;
+            }
+        }
+    }
+
+    if (goodPacketIndex != -1)
+        inbox->remove(0, (inbox->length() - ++goodPacketIndex));
+    else
+        inbox->clear();
+    return;
+}
+
+QList<int> JPTest::DiffByteArrays(const QByteArray &first, const QByteArray &second)
+{
+    QList<int> conflictIndices;
+    int maxDiffLength = first.count();
+
+    if (second.count() != first.count())
+    {
+        qDebug() << "Number of bytes in packet diff do NOT match!";
+        if (second.count() < first.count()) maxDiffLength = second.count();
+    }
+
+    for (int i = 0; i < maxDiffLength; i++)
+    {
+        if (first.at(i) != second.at(i))
+            conflictIndices.append(i);
+    }
+
+    return conflictIndices;
 }
 
 void JPTest::GetMailFromPort()

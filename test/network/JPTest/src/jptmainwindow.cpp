@@ -4,13 +4,13 @@
 JPTMainWindow::JPTMainWindow(QWidget *parent) :
     QMainWindow(parent)
   , ui(new Ui::JPTMainWindow)
-  , mainLayout(new QHBoxLayout(this))
-  , commandButtonLayout(new QHBoxLayout(this))
-  , outboxTabPacketListLayout(new QVBoxLayout(this))
-  , outboxTabOutboxLayout(new QVBoxLayout(this))
-  , outboxTabLayout(new QHBoxLayout(this))
-  , leftLayout(new QVBoxLayout(this))
-  , rightLayout(new QVBoxLayout(this))
+  , mainLayout(new QHBoxLayout())
+  , commandButtonLayout(new QHBoxLayout())
+  , outboxTabPacketListLayout(new QVBoxLayout())
+  , outboxTabOutboxLayout(new QVBoxLayout())
+  , outboxTabLayout(new QHBoxLayout())
+  , leftLayout(new QVBoxLayout())
+  , rightLayout(new QVBoxLayout())
   , jptestManager(new JPTestController(this))
   , workingDirectory(new QDir(GetInitialWorkingDir()))
   , notificationColor(QColor(Qt::blue))
@@ -90,6 +90,14 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->jptestManager, SIGNAL(P3InboxChanged(QList<QByteArray>)), this, SLOT(UpdateP3Script(QList<QByteArray>)));
     connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
     connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToRawByteInbox(char)));
+
+    connect(this->jptestManager, SIGNAL(P2PacketReceived(QByteArray,QList<int>)),
+            this, SLOT(AppendToP2Inbox(QByteArray,QList<int>)));
+
+    connect(this->jptestManager, SIGNAL(P3PacketReceived(QByteArray,QList<int>)),
+            this, SLOT(AppendToP3Inbox(QByteArray,QList<int>)));
+
+    connect(this->jptestManager, SIGNAL(GarbagePacketReceived(QByteArray)), this, SLOT(HandleGarbage(QByteArray)));
     // -------------------------------------------------------------------------------------------------//
 
     // Set initial states
@@ -103,7 +111,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     UpdateJaguarIDS(ui->JAGIDcomboBox->currentText());
     ShowStatusBarMessage("Ready");
 
-    ui->checkBox->setEnabled(false);    // CLS - TODO: change object name and implement noMSP430 mode!!
+    ui->noMSP430checkBox->setEnabled(false);
 
     qDebug() << workingDirectory->path();
 }
@@ -112,6 +120,13 @@ JPTMainWindow::~JPTMainWindow()
 {
     delete ui;
     delete jptestManager;
+    delete mainLayout;
+    delete commandButtonLayout;
+    delete outboxTabPacketListLayout;
+    delete outboxTabOutboxLayout;
+    delete outboxTabLayout;
+    delete leftLayout;
+    delete rightLayout;
 }
 
 void JPTMainWindow::RefreshPortList()
@@ -363,6 +378,64 @@ void JPTMainWindow::AppendToRawByteInbox(char newByte)
     return;
 }
 
+void JPTMainWindow::AppendToP2Inbox(QByteArray packet, QList<int> diffs)
+{
+    int asciiByte;
+    QString hexByte;
+    QString colorString;
+
+    for (int i = 0; i < packet.count(); i++)
+    {
+        // Format into hex value string
+        asciiByte = (unsigned char) packet.at(i);
+        hexByte = QString::number(asciiByte, 16);
+
+        // Check pass/fail
+        if (!diffs.empty() && diffs.first() == i)
+            colorString = "red";
+        else
+            colorString = "green";
+
+        ui->p2Inbox->insertHtml(GetHtmlString(hexByte.toUpper(), colorString));
+    }
+
+    ui->p2Inbox->insertPlainText("\n");
+
+    return;
+}
+
+void JPTMainWindow::AppendToP3Inbox(QByteArray packet, QList<int> diffs)
+{
+    int asciiByte;
+    QString hexByte;
+    QString colorString;
+
+    for (int i = 0; i < packet.count(); i++)
+    {
+        // Format into hex value string
+        asciiByte = (unsigned char) packet.at(i);
+        hexByte = QString::number(asciiByte, 16);
+
+        // Check pass/fail
+        if (!diffs.empty() && diffs.first() == i)
+            colorString = "red";
+        else
+            colorString = "green";
+
+        ui->p3Inbox->insertHtml(GetHtmlString(hexByte.toUpper(), colorString));
+    }
+
+    ui->p3Inbox->insertPlainText("\n");
+
+    return;
+}
+
+void JPTMainWindow::HandleGarbage(QByteArray garbagePacket)
+{
+    LogToMessageArea("Garbage packet detected: " + QString(garbagePacket));
+    return;
+}
+
 QString JPTMainWindow::GetJPacketPath()
 {
     return this->workingDirectory->path() + "/jpackets/";
@@ -379,6 +452,7 @@ void JPTMainWindow::CacheTestOptions()
     testOptions.Filename = GetJptestFilename();
     testOptions.JPacketPath = GetJPacketPath();
     testOptions.PortName = GetPortName();
+    testOptions.MSP430ModeOn = (!ui->noMSP430checkBox->isChecked());
 
     // CLS - all fields listed here so we can verify that we're handling them
 
