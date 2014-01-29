@@ -60,6 +60,8 @@ protected:
     QDir* workingDirectory;
     QColor notificationColor;
     JPTestOptions testOptions;
+    int p2InboxPassFailIndex;
+    int p3InboxPassFailIndex;
 
     // Methods
     QDir GetInitialWorkingDir();    // CLS - needed to account for OS X .app files

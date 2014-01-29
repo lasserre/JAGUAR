@@ -15,6 +15,8 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
   , workingDirectory(new QDir(GetInitialWorkingDir()))
   , notificationColor(QColor(Qt::blue))
   , testOptions(JPTestOptions())
+  , p2InboxPassFailIndex(0)
+  , p3InboxPassFailIndex(0)
 {
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
@@ -118,15 +120,15 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
 JPTMainWindow::~JPTMainWindow()
 {
-    delete ui;
-    delete jptestManager;
-    delete mainLayout;
     delete commandButtonLayout;
     delete outboxTabPacketListLayout;
     delete outboxTabOutboxLayout;
     delete outboxTabLayout;
     delete leftLayout;
     delete rightLayout;
+    delete mainLayout;
+    delete ui;
+    delete jptestManager;
 }
 
 void JPTMainWindow::RefreshPortList()
@@ -181,6 +183,8 @@ void JPTMainWindow::StartTest()
 {   
     ui->outboxTextBrowser->clear();
     ui->rawByteInboxTextBrowser->clear();
+    p2InboxPassFailIndex = 0;
+    p3InboxPassFailIndex = 0;
 
     if (ui->jptestServerRButton->isChecked())
     {
@@ -387,12 +391,21 @@ void JPTMainWindow::AppendToP2Inbox(QByteArray packet, QList<int> diffs)
     int asciiByte;
     QString hexByte;
     QString colorString;
+    QColor successColor;
+
+    qDebug() << "# diffs: " << diffs.count();
+
+    if (diffs.empty()) successColor = Qt::green;
+    else successColor = Qt::red;
+
+    ui->p2packetInboxListWidget->item(p2InboxPassFailIndex++)->setBackgroundColor(successColor);
 
     for (int i = 0; i < packet.count(); i++)
     {
         // Format into hex value string
         asciiByte = (unsigned char) packet.at(i);
         hexByte = QString::number(asciiByte, 16);
+        if (hexByte.length() < 2) hexByte.prepend("0");
 
         // Check pass/fail
         if (!diffs.empty() && diffs.first() == i)
@@ -400,6 +413,7 @@ void JPTMainWindow::AppendToP2Inbox(QByteArray packet, QList<int> diffs)
         else
             colorString = "green";
 
+        if (!diffs.empty()) diffs.removeFirst();
         ui->p2Inbox->insertHtml(GetHtmlString(hexByte.toUpper(), colorString));
     }
 
@@ -413,12 +427,21 @@ void JPTMainWindow::AppendToP3Inbox(QByteArray packet, QList<int> diffs)
     int asciiByte;
     QString hexByte;
     QString colorString;
+    QColor successColor;
+
+    qDebug() << "# diffs: " << diffs.count();
+
+    if (diffs.empty()) successColor = Qt::green;
+    else successColor = Qt::red;
+
+    ui->p3packetInboxListWidget->item(p3InboxPassFailIndex++)->setBackgroundColor(successColor);
 
     for (int i = 0; i < packet.count(); i++)
     {
         // Format into hex value string
         asciiByte = (unsigned char) packet.at(i);
         hexByte = QString::number(asciiByte, 16);
+        if (hexByte.length() < 2) hexByte.prepend("0");
 
         // Check pass/fail
         if (!diffs.empty() && diffs.first() == i)
@@ -426,10 +449,12 @@ void JPTMainWindow::AppendToP3Inbox(QByteArray packet, QList<int> diffs)
         else
             colorString = "green";
 
-        ui->p3Inbox->insertHtml(GetHtmlString(hexByte.toUpper(), colorString));
+        if (!diffs.empty()) diffs.removeFirst();
+        ui->p3Inbox->insertHtml(GetHtmlString(hexByte.toUpper() + " ", colorString));
     }
 
     ui->p3Inbox->insertPlainText("\n");
+
 
     return;
 }
