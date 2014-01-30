@@ -28,5 +28,13 @@ HEADERS  += jptmainwindow.h \
 FORMS    += jptmainwindow.ui
 
 Release: DESTDIR = ../bin/release
+Release: OBJECTS_DIR = $${DESTDIR}
+Release: MOC_DIR = $${DESTDIR}
+Release: RCC_DIR = $${DESTDIR}
+Release: UI_DIR = $${DESTDIR}
 
 Debug: DESTDIR = ../bin/debug
+Debug: OBJECTS_DIR = $${DESTDIR}
+Debug: MOC_DIR = $${DESTDIR}
+Debug: RCC_DIR = $${DESTDIR}
+Debug: UI_DIR = $${DESTDIR}
