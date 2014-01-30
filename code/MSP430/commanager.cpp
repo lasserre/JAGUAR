@@ -139,7 +139,7 @@ void ComManager::Mainloop()
                 // check both links to see if there is a message to send
                 for (int i = 0; !foundMsg && i < 2; ++i)
                 {
-                    if (gcsFromId == GCS)
+                    if (gcsFromId == ROTORCRAFT)
                     {
                         gcsFromId = AIRSHIP;
                         foundMsg = airshipQ.FindNextMessage(GCS_LINK_AIRSHIP_HEAD, routeTable[GCS], gcsTxLen);
@@ -225,13 +225,18 @@ __interrupt void ComManager::USCI_A1_ISR()
 #pragma vector=USCI_B1_VECTOR
 __interrupt void ComManager::USCI_B1_ISR()
 {
-    // check for Airship (I2C) RX interrupt
-    if (UCB1IFG & UCRXIFG)
+    // check for Airship (I2C) interrupts
+    switch (__even_in_range(UCB1IV, USCI_I2C_UCTXIFG))
     {
+    case USCI_I2C_UCRXIFG:
         airshipQ.Enqueue(UCB1RXBUF); // enqueue data
+        break;
+    case USCI_I2C_UCTXIFG:
+        //TODO: dequeue data
+        break;
+    default:
+        break;
     }
-
-    //TODO: process Airship (I2C) RX and TX interrupts
 
     // disable TX interrupts
     UCA0IE &= ~UCTXIE;
@@ -283,13 +288,11 @@ void ComManager::InitUsci()
     UCA1CTL1 &= ~UCSWRST;              // release reset
     UCA1IE |= UCRXIE;                  // enable USCI A1 RX interrupt
 
-    // TODO: initialize I2C
-//    P4SEL |= BIT7 | BIT6;
-//    P1SEL2 |= BIT7 | BIT6;
-//    UCB0CTL1 |= UCSWRST;               // hold in reset while configuring
-//    UCB0CTL0 = UCMODE_3 | UCSYNC;      // 7-bit address (default), single master (default), slave mode (default), I2C mode, sync
-//    UCB0I2COA = I2C_SLAVE_ADDRESS;     // set own I2C address
-//    UCB0CTL1 &= ~UCSWRST;              // release reset
-//    UC0IE |= UCB0TXIE | UCB0RXIE;
-//    UCB0I2CIE |= UCSTTIE;
+    // initialize I2C
+    P4SEL |= BIT2 | BIT1;
+    UCB1CTL1 |= UCSWRST;               // hold in reset while configuring
+    UCB1CTL0 = UCMODE_3 | UCSYNC;      // 7-bit address (default), single master (default), slave mode (default), I2C mode, sync
+    UCB1I2COA = I2C_SLAVE_ADDRESS;     // set own I2C address
+    UCB1CTL1 &= ~UCSWRST;              // release reset
+    UCB1IE |= UCRXIE;
 }

@@ -38,6 +38,10 @@
 #define UCA1TXBIT  BIT4
 #define UCA1RXBIT  BIT5
 
+// I2C IDs
+#define I2C_MASTER_ADDRESS  0x08
+#define I2C_SLAVE_ADDRESS   0x09
+
  // ---- Communication ids ---- //
  const uint8_t AIRSHIP_ID = 1;
  const uint8_t ROTORCRAFT_ID = 2;
