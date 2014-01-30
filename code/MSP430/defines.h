@@ -38,6 +38,11 @@
 #define UCA1TXBIT  BIT4
 #define UCA1RXBIT  BIT5
 
+// interrupt pin
+#define AIRSHIP_INT_PDIR    P3DIR
+#define AIRSHIP_INT_POUT    P3OUT
+#define AIRSHIP_INT_BIT     BIT7
+
 // I2C IDs
 #define I2C_MASTER_ADDRESS  0x08
 #define I2C_SLAVE_ADDRESS   0x09

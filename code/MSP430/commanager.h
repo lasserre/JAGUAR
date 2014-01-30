@@ -16,6 +16,8 @@
 #define ROTORCRAFT_LINK_GCS_HEAD        0
 #define ROTORCRAFT_LINK_AIRSHIP_HEAD    1
 
+const bool AIRSHIP_FIND_WHOLE_MSG = true;
+
 enum ComId
 {
     GCS,

@@ -60,7 +60,6 @@ void ComManager::Mainloop()
         {
             UCA1IE |= UCTXIE; // enable USCI A1 TX interrupt
         }
-        //TODO: enable I2C TX interrupt
 
         _BIS_SR(LPM0_bits | GIE); // enter low-power mode with interrupt enable
 
@@ -185,7 +184,32 @@ void ComManager::Mainloop()
             }
         }
 
-        //TODO: check for Airship (I2C) TX interrupt
+        // check for Airship (I2C) TX interrupt
+        if (airshipTxCount == airshipTxLen) // check if we have finished sending a message
+        {
+            bool foundMsg = false;
+            // check both links to see if there is a message to send
+            for (int i = 0; !foundMsg && i < 2; ++i)
+            {
+                if (airshipFromId == GCS)
+                {
+                    airshipFromId = ROTORCRAFT;
+                    foundMsg = rotorcraftQ.FindNextMessage(AIRSHIP_LINK_ROTORCRAFT_HEAD, routeTable[AIRSHIP], airshipTxLen, AIRSHIP_FIND_WHOLE_MSG);
+                }
+                else
+                {
+                    airshipFromId = GCS;
+                    foundMsg = gcsQ.FindNextMessage(AIRSHIP_LINK_GCS_HEAD, routeTable[AIRSHIP], airshipTxLen, AIRSHIP_FIND_WHOLE_MSG);
+                }
+            }
+            if (foundMsg)
+            {
+                airshipTxCount = 0;
+
+                // send interrupt to Airship
+                AIRSHIP_INT_POUT |= AIRSHIP_INT_BIT;
+            }
+        }
 
     } // end while (true)
 }
@@ -232,7 +256,44 @@ __interrupt void ComManager::USCI_B1_ISR()
         airshipQ.Enqueue(UCB1RXBUF); // enqueue data
         break;
     case USCI_I2C_UCTXIFG:
-        //TODO: dequeue data
+        // find which link we're currently receiving data from
+        switch (airshipFromId)
+        {
+        case GCS:
+            if (gcsQ.IsDataAvailable(AIRSHIP_LINK_GCS_HEAD))
+            {
+                UCB1TXBUF = gcsQ.Dequeue(AIRSHIP_LINK_GCS_HEAD);
+                txTimers[AIRSHIP] = TX_TIMEOUT; // reset timer
+                ++airshipTxCount;
+            }
+            else
+            {
+                // if there is no data available, the airship must erroneously
+                // be asking us to transmit, so we'll just send it 0
+                UCB1TXBUF = 0;
+            }
+            break;
+        case ROTORCRAFT:
+            if (rotorcraftQ.IsDataAvailable(AIRSHIP_LINK_ROTORCRAFT_HEAD))
+            {
+                UCB1TXBUF = rotorcraftQ.Dequeue(AIRSHIP_LINK_ROTORCRAFT_HEAD);
+                txTimers[AIRSHIP] = TX_TIMEOUT; // reset timer
+                ++airshipTxCount;
+            }
+            else
+            {
+                // if there is no data available, the airship must erroneously
+                // be asking us to transmit, so we'll just send it 0
+                UCB1TXBUF = 0;
+            }
+            break;
+        default:
+            // we should never get here
+            break;
+        }
+
+        // clear interrupt
+        AIRSHIP_INT_POUT &= ~AIRSHIP_INT_BIT;
         break;
     default:
         break;
@@ -294,5 +355,9 @@ void ComManager::InitUsci()
     UCB1CTL0 = UCMODE_3 | UCSYNC;      // 7-bit address (default), single master (default), slave mode (default), I2C mode, sync
     UCB1I2COA = I2C_SLAVE_ADDRESS;     // set own I2C address
     UCB1CTL1 &= ~UCSWRST;              // release reset
-    UCB1IE |= UCRXIE;
+    UCB1IE |= UCTXIE | UCRXIE;         // enable USCI B1 TX and RX interrupts
+
+    // initialize interrupt pin to inform the Airship to read from I2C
+    AIRSHIP_INT_PDIR |= AIRSHIP_INT_BIT;
+    AIRSHIP_INT_POUT &= ~AIRSHIP_INT_BIT;
 }
