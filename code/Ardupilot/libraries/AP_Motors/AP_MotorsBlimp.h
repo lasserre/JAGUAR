@@ -12,7 +12,7 @@
 #include "AP_MotorsMatrix.h"    // Parent Motors Matrix library
 
 /// @class      AP_MotorsBlimp
-class AP_MotorsBlimp : public AP_MotorsMatrix {
+class AP_MotorsBlimp : public AP_MotorsMatrix_Blimp {
 public:
 
     /// Constructor
