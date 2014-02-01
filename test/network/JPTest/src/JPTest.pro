@@ -17,24 +17,14 @@ SOURCES += main.cpp\
     jptestport.cpp \
     jpacket.cpp \
     jptest.cpp \
-    jptestcontroller.cpp
+    jptestcontroller.cpp \
+    jptestoptions.cpp
 
 HEADERS  += jptmainwindow.h \
     jptestport.h \
     jpacket.h \
     jptest.h \
-    jptestcontroller.h
+    jptestcontroller.h \
+    jptestoptions.h
 
 FORMS    += jptmainwindow.ui
-
-Release: DESTDIR = ../bin/release
-Release: OBJECTS_DIR = $${DESTDIR}
-Release: MOC_DIR = $${DESTDIR}
-Release: RCC_DIR = $${DESTDIR}
-Release: UI_DIR = $${DESTDIR}
-
-Debug: DESTDIR = ../bin/debug
-Debug: OBJECTS_DIR = $${DESTDIR}
-Debug: MOC_DIR = $${DESTDIR}
-Debug: RCC_DIR = $${DESTDIR}
-Debug: UI_DIR = $${DESTDIR}

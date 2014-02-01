@@ -8,107 +8,8 @@
 #include <QMutexLocker>
 #include "jptestport.h"
 #include "jpacket.h"
+#include "jptestoptions.h"
 
-/**
- * @brief The JPTESTMODE enum specifies the test mode for a given JPTest.
- * @enum RUN mode is normal run mode. Packets are sent out sequentially as normal.
- * @enum STEP mode allows the user to step through test, packet by packet.
- * @enum DELAY mode inserts a specified delay in between the sending of each packet
- */
-enum JPTESTMODE
-{
-    RUN,
-    STEP,
-    DELAY
-};
-
-enum JPTESTERROR
-{
-    NO_ERROR,
-    PORT_ERROR,
-    JPTESTFILE_ERROR
-};
-
-struct JPTestOptions
-{
-    JPTestOptions() : RunMode(RUN)
-      , Filename("UnsetFilename")
-      , JPacketPath("UnsetJPacketPath")
-      , PortName("UnsetPortName")
-      , NumLoops(-1)
-      , DelaySecs(-1)
-      , JaguarID(JAGPACKET::GCS)
-      , P2ID(JAGPACKET::MS)
-      , P3ID(JAGPACKET::QC)
-      , MSP430ModeOn(true)
-    {
-    }
-
-    JPTestOptions(const JPTestOptions& other) : RunMode(other.RunMode)
-      , Filename(other.Filename)
-      , JPacketPath(other.JPacketPath)
-      , PortName(other.PortName)
-      , NumLoops(other.NumLoops)
-      , DelaySecs(other.DelaySecs)
-      , JaguarID(other.JaguarID)
-      , P2ID(other.P2ID)
-      , P3ID(other.P3ID)
-      , MSP430ModeOn(other.MSP430ModeOn)
-    {
-    }
-
-    ~JPTestOptions()
-    {
-    }
-
-    /**
-     * @brief GetJagIDString
-     * @return the string of MY Jaguar ID
-     */
-    QString GetJagIDString()
-    {
-        return GetIDString(JaguarID);
-    }
-
-    QString GetP2IDString()
-    {
-        return GetIDString(P2ID);
-    }
-
-    QString GetP3IDString()
-    {
-        return GetIDString(P3ID);
-    }
-
-    JPTESTMODE RunMode;
-    QString Filename;
-    QString JPacketPath;
-    QString PortName;
-    int NumLoops;   // NumLoops -1 => don't loop, 0 => loop forever, n>0 => loop n times
-    int DelaySecs;
-    int JaguarID;
-    int P2ID;
-    int P3ID;
-    bool MSP430ModeOn;
-
-protected:
-    QString GetIDString(const int& ID)
-    {
-        switch(ID)
-        {
-        case JAGPACKET::GCS:
-            return "GCS";
-        case JAGPACKET::MS:
-            return "MS";
-        case JAGPACKET::QC:
-            return "QC";
-        case JAGPACKET::BROADCAST:
-            return "Broadcast";
-        default:
-            return "JPTestOptions: unrecognized JAGUAR ID!";
-        }
-    }
-};
 
 class JPTest : public QObject
 {
@@ -165,17 +66,24 @@ protected:
     // ----- Protected methods ----- //
     JPTESTERROR InitNewRun();
     bool WaitForServerStart();
+
+    // Loading from files...
     bool LoadTestScript();
     void ParseJPTestFile(QFile &JPTestFile);
     QList<QByteArray> GetPacketList(const QString& jagIDString, QFile &JPTestFile);
     QByteArray RemoveAllOccurrences(QByteArray stream, const char &deleteChar);
     QByteArray GetJPktPayload(const QString& PacketFilename);
 
+    // Running...
     void StartRunLoop();
     void HandleTestMode();
     bool RunTestAgain();    // "Looping" test mode handler
+
+    // Get mail...
     void CheckMail();
     void ProcessInbox();
+
+    // Interpret incoming bytes...
     void ProcessCurrentPacket();
     QList<int> DiffByteArrays(const QByteArray& first, const QByteArray& second);
     void FindGoodPacketStart();

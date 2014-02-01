@@ -184,15 +184,10 @@ void JPTest::ProcessCurrentPacket()
         conflictList = DiffByteArrays(GetJPktPayload(P2packetInbox->at(P2nextPacket++)), receivedPacket);
         emit P2PacketReceived(receivedPacket, conflictList);
     }
-    else if ((currentPacketSrc == testOptions->P3ID))
+    else if ((currentPacketSrc == testOptions->P3ID) && P3nextPacket < P3packetInbox->count())
     {
-        qDebug() << "p3packetInbox.count(): " << P3packetInbox->count();
-
-        if ((P3nextPacket < P3packetInbox->count()))
-        {
             conflictList = DiffByteArrays(GetJPktPayload(P3packetInbox->at(P3nextPacket++)), receivedPacket);
             emit P3PacketReceived(receivedPacket, conflictList);
-        }
     }
     else
     {
