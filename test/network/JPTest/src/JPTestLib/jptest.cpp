@@ -22,6 +22,7 @@ JPTest::JPTest(QObject *parent) :
   , RemainingLoops(0)
 {
     connect(this->port, SIGNAL(youveGotMail()), this, SLOT(GetMailFromPort()), Qt::DirectConnection);
+
 }
 
 JPTest::~JPTest()
