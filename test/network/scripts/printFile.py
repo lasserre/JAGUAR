@@ -32,7 +32,7 @@ if len(sys.argv) >= 5:
 
 try:
 	ser = serial.Serial(SERIAL_PORT, BAUD)
-	# time.sleep(4) # this needs to be uncommented when talking to an Arduino to wait for it to reset :P
+	time.sleep(4) # this needs to be uncommented when talking to an Arduino to wait for it to reset :P
 except(OSError):
 	print "Error! Could not connect to port \"" + SERIAL_PORT + "\""
 	sys.exit(1)
