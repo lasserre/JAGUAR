@@ -281,7 +281,7 @@ void JPTMainWindow::UpdateJaguarIDS(QString JAGID)
     // Reload test for new JAGUAR ID if already loaded from a selected file
     if (ui->startTestButton->isEnabled()) LoadTest();
 
-    LogToMessageArea("Configured as " + testOptions.GetJagIDString());
+    LogToMessageArea("Configured as " + testOptions.GetJagIDString() + " (" + testOptions.JaguarID + ")");
 
     return;
 }
