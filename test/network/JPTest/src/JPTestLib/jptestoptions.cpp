@@ -36,22 +36,22 @@ JPTestOptions::~JPTestOptions()
  * @brief GetJagIDString
  * @return the string of MY Jaguar ID
  */
-QString JPTestOptions::GetJagIDString()
+QString JPTestOptions::GetJagIDString() const
 {
     return GetIDString(JaguarID);
 }
 
-QString JPTestOptions::GetP2IDString()
+QString JPTestOptions::GetP2IDString() const
 {
     return GetIDString(P2ID);
 }
 
-QString JPTestOptions::GetP3IDString()
+QString JPTestOptions::GetP3IDString() const
 {
     return GetIDString(P3ID);
 }
 
-QString JPTestOptions::GetIDString(const int& ID)
+QString JPTestOptions::GetIDString(const int& ID) const
 {
     switch(ID)
     {

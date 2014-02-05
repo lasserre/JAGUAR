@@ -30,9 +30,9 @@ struct JPTestOptions
     JPTestOptions(const JPTestOptions& other);
     ~JPTestOptions();
 
-    QString GetJagIDString();
-    QString GetP2IDString();
-    QString GetP3IDString();
+    QString GetJagIDString() const;
+    QString GetP2IDString() const;
+    QString GetP3IDString() const;
 
     JPTESTMODE RunMode;
     QString Filename;
@@ -46,7 +46,7 @@ struct JPTestOptions
     bool MSP430ModeOn;
 
 protected:
-    QString GetIDString(const int& ID);
+    QString GetIDString(const int& ID) const;
 };
 
 #endif // JPTESTOPTIONS_H

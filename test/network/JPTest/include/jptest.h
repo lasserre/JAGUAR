@@ -9,6 +9,8 @@
 #include "jptestport.h"
 #include "jpacket.h"
 #include "jptestoptions.h"
+#include "jpoutbox.h"
+#include "jptestcoordinator.h"
 
 
 class JPTest : public QObject
@@ -43,6 +45,8 @@ protected:
     JPTestOptions* testOptions;
     QMap<QString, JPacket>* jpacketLib;
     QString* jpacketPath;
+    JPTestCoordinator* testCoordinator;
+    JPOutbox* outbox;
 
     // Inbox/Outbox members
     QList<QString>* packetOutbox;   // Packet inbox/outboxes
@@ -59,7 +63,6 @@ protected:
 
     int delaySecs;
     bool isRunning;
-    bool testLoaded;
     mutable QMutex isRunningMutex;   // Used to protect acces
     int RemainingLoops;
 
@@ -70,8 +73,6 @@ protected:
     // Loading from files...
     bool LoadTestScript();
     void ParseJPTestFile(QFile &JPTestFile);
-    QList<QByteArray> GetPacketList(const QString& jagIDString, QFile &JPTestFile);
-    QByteArray RemoveAllOccurrences(QByteArray stream, const char &deleteChar);
     QByteArray GetJPktPayload(const QString& PacketFilename);
 
     // Running...

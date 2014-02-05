@@ -6,6 +6,8 @@ JPTest::JPTest(QObject *parent) :
   , testOptions(new JPTestOptions())
   , jpacketLib(new QMap<QString, JPacket>())
   , jpacketPath(new QString())
+  , testCoordinator(new JPTestCoordinator())
+  , outbox(new JPOutbox())
   , packetOutbox(new QList<QString>())
   , P2packetInbox(new QList<QString>())
   , P3packetInbox(new QList<QString>())
@@ -18,7 +20,6 @@ JPTest::JPTest(QObject *parent) :
   , currentPacketLen(-1)
   , delaySecs(-1)
   , isRunning(false)
-  , testLoaded(false)
   , RemainingLoops(0)
 {
     connect(this->port, SIGNAL(youveGotMail()), this, SLOT(GetMailFromPort()), Qt::DirectConnection);
@@ -31,6 +32,8 @@ JPTest::~JPTest()
     delete this->testOptions;
     delete this->jpacketLib;
     delete this->jpacketPath;
+    delete this->testCoordinator;
+    delete this->outbox;
     delete this->packetOutbox;
     delete this->P2packetInbox;
     delete this->P3packetInbox;
@@ -276,15 +279,20 @@ void JPTest::GetMailFromPort()
  */
 void JPTest::LoadTest(JPTestOptions Options)
 {
+    // Copy test options
     *this->testOptions = Options;
 
-    if (LoadTestScript())
-        this->testLoaded = true;
+    // Load test
+    testCoordinator->LoadTest(*testOptions);
 
     return;
 }
 
 // Construct test script from .jptest file
+/**
+ * @brief JPTest::LoadTestScript
+ * @return true if Load succesfully
+ */
 bool JPTest::LoadTestScript()
 {
     bool success = false;
@@ -314,9 +322,9 @@ void JPTest::ParseJPTestFile(QFile &JPTestFile)
     qDebug() << "p3idstring: " << testOptions->GetP3IDString();
 
     // Create list from comma-separated-values in our JAGID's section
-    QList<QByteArray> jptestlist = GetPacketList(testOptions->GetJagIDString(), JPTestFile);
-    QList<QByteArray> p2testlist = GetPacketList(testOptions->GetP2IDString(), JPTestFile);
-    QList<QByteArray> p3testlist = GetPacketList(testOptions->GetP3IDString(), JPTestFile);
+    QList<QByteArray> jptestlist;// = GetPacketList(testOptions->GetJagIDString(), JPTestFile);
+    QList<QByteArray> p2testlist;// = GetPacketList(testOptions->GetP2IDString(), JPTestFile);
+    QList<QByteArray> p3testlist;// = GetPacketList(testOptions->GetP3IDString(), JPTestFile);
 
     qDebug() << "p3testlist.count(): " << p3testlist.count();
 
@@ -346,73 +354,6 @@ void JPTest::ParseJPTestFile(QFile &JPTestFile)
     emit P3InboxLoaded(p3testlist);
 
     return;
-}
-
-/**
- * @brief JPTest::GetPacketList
- * @param jagIDString
- * @param JPTestFile is the .jptest QFile object. JPTestFile is reset to the beginning of the file.
- * @return
- */
-QList<QByteArray> JPTest::GetPacketList(const QString& jagIDString, QFile &JPTestFile)
-{
-    QList<QByteArray> packetList = QList<QByteArray>();
-    QByteArray line;
-    bool found = false;
-
-    // Find <[JAGID]> line that matches our ID
-    while (!JPTestFile.atEnd() && !found)
-    {
-        line = JPTestFile.readLine();   // Get a line
-
-        if (line[0] != '<') continue;   // We want to find <GCS> or similar...
-        else
-        {
-            bool match = true;
-
-            for (int i = 0; i < jagIDString.length(); i++)
-            {
-                if (line.at(i+1) != jagIDString.at(i))
-                {
-                    match = false;
-                    break;
-                }
-            }
-
-            if (match) found = true;
-        }
-    }
-
-    // Get lines below it...
-    if (found)
-    {
-        while(!JPTestFile.atEnd())
-        {
-            line = JPTestFile.readLine();
-            if (line[0] != '<')     // Not next ID's section. Take out spaces, split at commas, and keep!
-            {
-                QByteArray noNewlinesLine = RemoveAllOccurrences(line, '\n');
-                QByteArray noSpacesLine = RemoveAllOccurrences(noNewlinesLine, ' ');
-                packetList.append(noSpacesLine.split(','));             // Split at commas, and add to list
-            }
-            else break;     // If we hit a line starting with '<', we're done.
-        }
-    }
-
-    JPTestFile.seek(0); // Reset to beginning of file for future function calls.
-    if (JPTestFile.atEnd())
-        qDebug() << "File at end after seek() call!";
-
-    return packetList;
-}
-
-QByteArray JPTest::RemoveAllOccurrences(QByteArray stream, const char& deleteChar)
-{
-    QList<QByteArray> characterRemovedList = stream.split(deleteChar);
-    QByteArray noDeleteChars;
-    for (int i = 0; i < characterRemovedList.count(); i++)
-        noDeleteChars.append(characterRemovedList.at(i));
-    return noDeleteChars;
 }
 
 // If packet exists in RAM, returns payload. Otherwise, load into library and return payload

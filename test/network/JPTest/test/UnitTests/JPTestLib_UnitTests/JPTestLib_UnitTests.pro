@@ -12,8 +12,8 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-
-SOURCES += tst_jptestfilereader_ut.cpp
+SOURCES += tst_jptestfilereader_ut.cpp \
+    main.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 # -----------------------------------------------------------------------
@@ -24,3 +24,14 @@ MOC_DIR = build
 RCC_DIR = build
 UI_DIR = build
 # -----------------------------------------------------------------------
+
+HEADERS += \
+    tst_jptestfilereader_ut.h
+
+unix|win32: LIBS += -L$$PWD/../../../lib/ -lJPTestLib
+
+INCLUDEPATH += $$PWD/../../../include
+DEPENDPATH += $$PWD/../../../include
+
+win32: PRE_TARGETDEPS += $$PWD/../../../lib/JPTestLib.lib
+else:unix|win32-g++: PRE_TARGETDEPS += $$PWD/../../../lib/libJPTestLib.a

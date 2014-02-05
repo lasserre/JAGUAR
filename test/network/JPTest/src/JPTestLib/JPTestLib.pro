@@ -15,14 +15,24 @@ SOURCES += \
     jptest.cpp \
     jptestcontroller.cpp \
     jptestoptions.cpp \
-    jptestport.cpp
+    jptestport.cpp \
+    jptestfilereader.cpp \
+    jptestcoordinator.cpp \
+    jpoutbox.cpp \
+    jpinbox.cpp \
+    jpacketchecker.cpp
 
 HEADERS += \
     ../../include/jpacket.h \
     ../../include/jptest.h \
     ../../include/jptestcontroller.h \
     ../../include/jptestoptions.h \
-    ../../include/jptestport.h
+    ../../include/jptestport.h \
+    ../../include/jptestfilereader.h \
+    ../../include/jptestcoordinator.h \
+    ../../include/jpoutbox.h \
+    ../../include/jpinbox.h \
+    ../../include/jpacketchecker.h
 unix {
     target.path = /usr/lib
     INSTALLS += target
