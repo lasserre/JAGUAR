@@ -53,5 +53,7 @@ while loops == 0 or count < loops:
 		f.close()
 
 	count += 1
+	time.sleep(0.5)
+	print(count)
 
 ser.close()
