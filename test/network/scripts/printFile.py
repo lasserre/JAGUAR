@@ -58,11 +58,6 @@ while loops == 0 or count < loops:
 
 	f.close()
 	count += 1
-<<<<<<< HEAD:code/MSP430/test/printFile.py
-	time.sleep(0.5)
-	print(count)
-=======
 	time.sleep(msgDelay)
->>>>>>> 1e17b0f6b87a541753b444a604f4fa4a8785b048:test/network/scripts/printFile.py
 
 ser.close()
