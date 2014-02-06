@@ -26,6 +26,7 @@ documentation/MSP430
 bin
 *.user*
 .qmake*
-Makefile
+Makefile*
 build
 *.a
+object_script*

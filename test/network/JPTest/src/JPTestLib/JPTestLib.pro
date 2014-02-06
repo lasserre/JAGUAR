@@ -6,7 +6,8 @@
 
 QT       += widgets gui serialport
 
-TARGET = ../../lib/JPTestLib
+win32: TARGET = ../../../lib/JPTestLib
+unix: TARGET = ../../lib/JPTestLib
 TEMPLATE = lib
 CONFIG += staticlib
 

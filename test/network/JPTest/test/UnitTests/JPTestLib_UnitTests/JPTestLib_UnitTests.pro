@@ -6,7 +6,8 @@
 
 QT       += widgets testlib
 
-TARGET = ../bin/tst_jptestfilereader_ut
+win32: TARGET = ../../bin/JPTestLib_UnitTests
+unix: TARGET = ../bin/JPTestLib_UnitTests
 CONFIG   += console
 CONFIG   -= app_bundle
 
@@ -33,5 +34,4 @@ unix|win32: LIBS += -L$$PWD/../../../lib/ -lJPTestLib
 INCLUDEPATH += $$PWD/../../../include
 DEPENDPATH += $$PWD/../../../include
 
-win32: PRE_TARGETDEPS += $$PWD/../../../lib/JPTestLib.lib
-else:unix|win32-g++: PRE_TARGETDEPS += $$PWD/../../../lib/libJPTestLib.a
+PRE_TARGETDEPS += $$PWD/../../../lib/libJPTestLib.a
