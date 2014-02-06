@@ -13,10 +13,9 @@ public:
     static QStringList GetPacketList(const QString& JAGID, QFile& JPTestFile);
 
 protected:
-    static QByteArray RemoveAllOccurrences(QByteArray stream, const char &deleteChar);
     static QList<QByteArray> GetFileLinesForJAGID(const QString& JAGID, QFile& JPTestFile);
     static QStringList ConvertFileLinesToPacketList(const QList<QByteArray>& FileLines);
-    static QStringList ParseLine(const QByteArray &LineWithoutSpaces);
+    static QStringList ParseLine(const QByteArray &FileLine);
 };
 
 #endif // JPTESTFILEREADER_H

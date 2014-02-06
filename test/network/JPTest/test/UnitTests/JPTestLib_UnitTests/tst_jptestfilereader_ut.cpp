@@ -22,9 +22,6 @@ void JPTestFileReader_UT::GetPacketList_CorrectJptestFile_OneListPerJAGID_data()
 
 void JPTestFileReader_UT::GetPacketList_CorrectJptestFile_OneListPerJAGID()
 {
-    // Verify our current directory is in the test/UnitTests/bin directory
-    qDebug() << QDir::currentPath();
-
     QFile jptestfile("../../../jptestfiles/CorrectJptestFile.jptest");
     jptestfile.open(QFile::ReadOnly);
 

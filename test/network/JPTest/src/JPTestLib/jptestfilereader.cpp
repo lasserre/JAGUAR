@@ -16,15 +16,6 @@ QStringList JPTestFileReader::GetPacketList(const QString &JAGID, QFile &JPTestF
     return packetList;
 }
 
-QByteArray JPTestFileReader::RemoveAllOccurrences(QByteArray stream, const char& deleteChar)
-{
-    QList<QByteArray> characterRemovedList = stream.split(deleteChar);
-    QByteArray noDeleteChars;
-    for (int i = 0; i < characterRemovedList.count(); i++)
-        noDeleteChars.append(characterRemovedList.at(i));
-    return noDeleteChars;
-}
-
 /**
  * @brief JPTestFileReader::GetFileLinesForJAGID reads the lines listing the outgoing packets for a given JAGUAR ID.
  * @param JAGID
@@ -81,21 +72,23 @@ QStringList JPTestFileReader::ConvertFileLinesToPacketList(const QList<QByteArra
 
     for (int i = 0; i < FileLines.count(); i++)
     {
-        QByteArray lineWithoutSpaces = RemoveAllOccurrences(FileLines[i], ' ');
-        packetList << ParseLine(lineWithoutSpaces);
+        //QByteArray lineWithoutSpaces = RemoveAllOccurrences(FileLines[i], ' ');
+        packetList << ParseLine(FileLines[i]);
     }
 
     return packetList;
 }
 
-QStringList JPTestFileReader::ParseLine(const QByteArray& LineWithoutSpaces)
+QStringList JPTestFileReader::ParseLine(const QByteArray& FileLine)
 {
     QStringList packetsFromLine;
     bool compactNotation = false;
 
-    if (LineWithoutSpaces.contains(':')) compactNotation = true;
+    if (FileLine.contains(':')) compactNotation = true;
 
-    QList<QByteArray> csvList = LineWithoutSpaces.split(',');
+    QList<QByteArray> csvList = FileLine.split(',');
+    for (int i = 0; i < csvList.length(); i++)
+        csvList[i] = csvList[i].trimmed();      // Remove all whitespace characters (including \n, \t, etc.)
 
     if (compactNotation)
     {
