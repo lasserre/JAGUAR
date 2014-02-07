@@ -6,15 +6,22 @@
 #include "jptestoptions.h"
 #include "jptestfilereader.h"
 
-class JPTestCoordinator
+class JPTestCoordinator : public QObject
 {
+    Q_OBJECT
+
 public:
-    JPTestCoordinator();
+    explicit JPTestCoordinator(QObject* parent = 0);
     ~JPTestCoordinator();
     bool LoadTest(const JPTestOptions& Options);
     JPacket GetNextOutgoingPacket();
     JPacket GetNextP2IncomingPacket();
     JPacket GetNextP3IncomingPacket();
+
+signals:
+    void OutboxLoaded(QStringList);
+    void P2InboxLoaded(QStringList);
+    void P3InboxLoaded(QStringList);
 
 protected:
     QStringList* myOutbox;

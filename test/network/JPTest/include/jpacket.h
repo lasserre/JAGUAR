@@ -80,7 +80,7 @@ public:
     JPacket& operator=(const JPacket& other);
     void SetPayload(const QByteArray& Payload);
     bool LoadFromFile(const QString& JPFilename);
-    QByteArray GetPayload() const;
+    QByteArray GetPayload(const bool RemoveJaguarHeader = false) const;
     int GetSrc() const;
     int GetDst() const;
 

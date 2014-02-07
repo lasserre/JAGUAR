@@ -10,6 +10,7 @@
 #include "jpacket.h"
 #include "jptestoptions.h"
 #include "jpoutbox.h"
+#include "jpinbox.h"
 #include "jptestcoordinator.h"
 
 
@@ -37,7 +38,6 @@ public slots:
     void RunServer();
     void RunClient();
     void EndTestEarly();
-    void GetMailFromPort();
 
 protected:
     // ----- Protected members ----- //
@@ -45,46 +45,21 @@ protected:
     JPTestOptions* testOptions;
     JPTestCoordinator* testCoordinator;
     JPOutbox* outbox;
+    JPInbox* inbox;
 
-    // Inbox/Outbox members
-    QList<QString>* packetOutbox;   // Packet inbox/outboxes
-    QList<QString>* P2packetInbox;
-    QList<QString>* P3packetInbox;
-    int P2nextPacket;
-    int P3nextPacket;
-
-    QByteArray* inbox;              // Raw bytes inbox
-    bool MailReady;
     int JaguarHeaderOffset;
-    int currentPacketSrc;
-    int currentPacketLen;
 
     int delaySecs;
     bool isRunning;
     mutable QMutex isRunningMutex;   // Used to protect acces
-    int RemainingLoops;
 
     // ----- Protected methods ----- //
     JPTESTERROR InitNewRun();
     bool WaitForServerStart();
 
-    // Loading from files...
-    bool LoadTestScript();
-    void ParseJPTestFile(QFile &JPTestFile);
-
     // Running...
     void StartRunLoop();
     void HandleTestMode();
-    bool RunTestAgain();    // "Looping" test mode handler
-
-    // Get mail...
-    void CheckMail();
-    void ProcessInbox();
-
-    // Interpret incoming bytes...
-    void ProcessCurrentPacket();
-    QList<int> DiffByteArrays(const QByteArray& first, const QByteArray& second);
-    void FindGoodPacketStart();
 
     void SetIsRunning(const bool& IsRunning = true);
     bool Running();

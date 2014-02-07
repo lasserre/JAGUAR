@@ -95,9 +95,12 @@ void JPacket::SetFieldsFromPayload()
     return;
 }
 
-QByteArray JPacket::GetPayload() const
+QByteArray JPacket::GetPayload(const bool RemoveJaguarHeader /* = false */) const
 {
-    return *(this->payload);
+    if (RemoveJaguarHeader)
+        return this->payload->remove(0, MAVPACKET::JHDR_OFFSET);
+    else
+        return *(this->payload);
 }
 
 int JPacket::GetDst() const

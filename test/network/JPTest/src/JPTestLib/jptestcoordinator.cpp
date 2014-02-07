@@ -1,6 +1,6 @@
 #include "jptestcoordinator.h"
 
-JPTestCoordinator::JPTestCoordinator() : myOutbox(new QStringList())
+JPTestCoordinator::JPTestCoordinator(QObject *parent) : myOutbox(new QStringList())
   , P2Inbox(new QStringList())
   , P3Inbox(new QStringList())
   , jpacketLib(new QMap<QString, JPacket>())
@@ -45,6 +45,10 @@ void JPTestCoordinator::LoadTestScript(const JPTestOptions& Options, QFile &JPTe
     *myOutbox = JPTestFileReader::GetPacketList(testOptions->GetJagIDString(), JPTestFile);
     *P2Inbox = JPTestFileReader::GetPacketList(testOptions->GetP2IDString(), JPTestFile);
     *P3Inbox = JPTestFileReader::GetPacketList(testOptions->GetP3IDString(), JPTestFile);
+
+    emit OutboxLoaded(*myOutbox);
+    emit P2InboxLoaded(*P2Inbox);
+    emit P3InboxLoaded(*P3Inbox);
 
     return;
 }
