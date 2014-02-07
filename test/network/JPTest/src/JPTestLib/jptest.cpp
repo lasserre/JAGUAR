@@ -4,8 +4,6 @@ JPTest::JPTest(QObject *parent) :
     QObject(parent)
   , port(new JPTestPort(this))
   , testOptions(new JPTestOptions())
-  , jpacketLib(new QMap<QString, JPacket>())
-  , jpacketPath(new QString())
   , testCoordinator(new JPTestCoordinator())
   , outbox(new JPOutbox())
   , packetOutbox(new QList<QString>())
@@ -30,8 +28,6 @@ JPTest::~JPTest()
 {
     delete this->port;
     delete this->testOptions;
-    delete this->jpacketLib;
-    delete this->jpacketPath;
     delete this->testCoordinator;
     delete this->outbox;
     delete this->packetOutbox;
@@ -118,8 +114,8 @@ void JPTest::StartRunLoop()
         HandleTestMode();
 
         // Send packets
-        if (port->SendData(GetJPktPayload(*currentTestPacket)))
-            emit PacketSent(GetJPktPayload(*currentTestPacket));
+        //if (port->SendData(GetJPktPayload(*currentTestPacket)))
+          //  emit PacketSent(GetJPktPayload(*currentTestPacket));
 
         // Check the mail
         QCoreApplication::processEvents();
@@ -185,12 +181,12 @@ void JPTest::ProcessCurrentPacket()
 
     if (currentPacketSrc == testOptions->P2ID && P2nextPacket < P2packetInbox->count())
     {
-        conflictList = DiffByteArrays(GetJPktPayload(P2packetInbox->at(P2nextPacket++)), receivedPacket);
+        //conflictList = DiffByteArrays(GetJPktPayload(P2packetInbox->at(P2nextPacket++)), receivedPacket);
         emit P2PacketReceived(receivedPacket, conflictList);
     }
     else if ((currentPacketSrc == testOptions->P3ID) && P3nextPacket < P3packetInbox->count())
     {
-            conflictList = DiffByteArrays(GetJPktPayload(P3packetInbox->at(P3nextPacket++)), receivedPacket);
+            //conflictList = DiffByteArrays(GetJPktPayload(P3packetInbox->at(P3nextPacket++)), receivedPacket);
             emit P3PacketReceived(receivedPacket, conflictList);
     }
     else
@@ -354,22 +350,6 @@ void JPTest::ParseJPTestFile(QFile &JPTestFile)
     emit P3InboxLoaded(p3testlist);
 
     return;
-}
-
-// If packet exists in RAM, returns payload. Otherwise, load into library and return payload
-QByteArray JPTest::GetJPktPayload(const QString &PacketFilename)
-{
-    if (this->jpacketLib->contains(PacketFilename))
-    {
-        return jpacketLib->value(PacketFilename).GetPayload();
-    }
-    else
-    {
-        // Load from file
-        JPacket packet(testOptions->JPacketPath + PacketFilename);
-        jpacketLib->insert(PacketFilename, packet);
-        return packet.GetPayload();
-    }
 }
 
 // If this is called, the user chose to stop the test before completion

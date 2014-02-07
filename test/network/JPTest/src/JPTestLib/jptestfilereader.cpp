@@ -4,6 +4,14 @@ JPTestFileReader::JPTestFileReader()
 {
 }
 
+/**
+ * @brief JPTestFileReader::GetPacketList returns the list of packet names for a given JAGID and .jptest file.
+ * Note that GetPacketList resets the QFile& that is passed in back to the beginning of the file and does not
+ * close it.
+ * @param JAGID
+ * @param JPTestFile
+ * @return QStringList of packets
+ */
 QStringList JPTestFileReader::GetPacketList(const QString &JAGID, QFile &JPTestFile)
 {
     QList<QByteArray> linesToParse = GetFileLinesForJAGID(JAGID, JPTestFile);

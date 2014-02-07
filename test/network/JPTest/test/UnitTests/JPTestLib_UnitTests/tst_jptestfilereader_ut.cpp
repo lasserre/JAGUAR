@@ -33,7 +33,3 @@ void JPTestFileReader_UT::GetPacketList_CorrectJptestFile_OneListPerJAGID()
     // QVERIFY2()
     QCOMPARE(JPTestFileReader::GetPacketList(JAGID, jptestfile), Result);
 }
-
-//QTEST_APPLESS_MAIN(JPTestFileReader_UT)
-
-//#include "tst_jptestfilereader_ut.moc"

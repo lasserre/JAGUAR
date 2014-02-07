@@ -46,6 +46,17 @@ JPacket::~JPacket()
     delete this->payload;
 }
 
+JPacket& JPacket::operator=(const JPacket& other)
+{
+    delete this->payload;
+
+    this->payload = new QByteArray(*other.payload);
+    this->DST = other.DST;
+    this->SRC = other.SRC;
+
+    return *this;
+}
+
 void JPacket::SetPayload(const QByteArray &Payload)
 {
     *(this->payload) = Payload;

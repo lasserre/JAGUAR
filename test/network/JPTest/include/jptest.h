@@ -43,8 +43,6 @@ protected:
     // ----- Protected members ----- //
     JPTestPort* port;
     JPTestOptions* testOptions;
-    QMap<QString, JPacket>* jpacketLib;
-    QString* jpacketPath;
     JPTestCoordinator* testCoordinator;
     JPOutbox* outbox;
 
@@ -73,7 +71,6 @@ protected:
     // Loading from files...
     bool LoadTestScript();
     void ParseJPTestFile(QFile &JPTestFile);
-    QByteArray GetJPktPayload(const QString& PacketFilename);
 
     // Running...
     void StartRunLoop();

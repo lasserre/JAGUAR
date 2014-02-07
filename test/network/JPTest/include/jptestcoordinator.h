@@ -12,16 +12,20 @@ public:
     JPTestCoordinator();
     ~JPTestCoordinator();
     bool LoadTest(const JPTestOptions& Options);
+    JPacket GetNextOutgoingPacket();
+    JPacket GetNextP2IncomingPacket();
+    JPacket GetNextP3IncomingPacket();
 
 protected:
     QStringList* myOutbox;
     QStringList* P2Inbox;
     QStringList* P3Inbox;
     QMap<QString, JPacket>* jpacketLib;
-    JPTestFileReader* fileReader;
+    JPTestOptions* testOptions;
 
     // Protected methods
     void LoadTestScript(const JPTestOptions &Options, QFile& JPTestFile);
+    JPacket GetJPkt(const QString &PacketFilename);
 };
 
 #endif // JPTESTCOORDINATOR_H

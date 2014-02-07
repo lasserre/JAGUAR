@@ -1,4 +1,5 @@
 #include "tst_jptestfilereader_ut.h"
+#include "tst_jptestcoordinator_ut.h"
 
 int main(int argc, char *argv[])
 {
@@ -6,6 +7,9 @@ int main(int argc, char *argv[])
 
     JPTestFileReader_UT fileReaderUT;
     QTest::qExec(&fileReaderUT, argc, argv);
+
+    JPTestCoordinator_UT testCoordinatorUT;
+    QTest::qExec(&testCoordinatorUT, argc, argv);
 
     return 0;
 }
