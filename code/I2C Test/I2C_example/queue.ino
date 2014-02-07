@@ -51,3 +51,8 @@ uint8_t Queue::View(uint offset)
   return buff[index];
 }
 
+void Queue::Clear()
+{
+  head = tail;
+}
+

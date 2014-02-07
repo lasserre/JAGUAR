@@ -14,6 +14,7 @@ public:
   uint8_t Dequeue();
   uint Length();
   uint8_t View(uint offset);
+  void Clear();
 
   static const uint BUFF_LEN = MAX_MESSAGE_LEN * 2;
 
