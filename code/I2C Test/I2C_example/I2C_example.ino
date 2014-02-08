@@ -112,7 +112,7 @@ bool readI2c()
   // request rest of message
   if (ok)
   {
-    uint msgLen = fromRouterQ.View(MAVLINK_LEN_OFFSET) - MIN_LEN_FOR_RX;
+    uint msgLen = MAVLINK_HEADER_LEN + MAVLINK_TAIL_LEN + fromRouterQ.View(MAVLINK_LEN_OFFSET) - MIN_LEN_FOR_RX;
     rxCount = Wire.requestFrom(I2C_SLAVE_ADDRESS, msgLen);
     if (rxCount == msgLen)
     {
