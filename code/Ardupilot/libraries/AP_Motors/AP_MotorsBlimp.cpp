@@ -6,7 +6,7 @@
 
 #include "AP_MotorsBlimp.h"
 
-// setup_motors - configures the motors for a blmip
+// setup_motors - configures the motors for a blimp
 void AP_MotorsBlimp::setup_motors()
 {
     // call parent

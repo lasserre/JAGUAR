@@ -15,12 +15,13 @@ RC_Channel rc1(0), rc2(1), rc3(2), rc4(3);
 
 // uncomment the row below depending upon what frame you are using
 //AP_MotorsTri  motors(&rc1, &rc2, &rc3, &rc4);
-AP_MotorsQuad   motors(&rc1, &rc2, &rc3, &rc4);
+//AP_MotorsQuad   motors(&rc1, &rc2, &rc3, &rc4);
 //AP_MotorsHexa motors(&rc1, &rc2, &rc3, &rc4);
 //AP_MotorsY6 motors(&rc1, &rc2, &rc3, &rc4);
 //AP_MotorsOcta motors(&rc1, &rc2, &rc3, &rc4);
 //AP_MotorsOctaQuad motors(&rc1, &rc2, &rc3, &rc4);
 //AP_MotorsHeli motors(&rc1, &rc2, &rc3, &rc4);
+AP_MotorsBlimp motors(&rc1, &rc2, &rc3, &rc4);
 
 
 // setup
