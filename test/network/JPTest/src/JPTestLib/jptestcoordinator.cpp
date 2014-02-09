@@ -5,7 +5,11 @@ JPTestCoordinator::JPTestCoordinator(QObject *parent) : myOutbox(new QStringList
   , P3Inbox(new QStringList())
   , jpacketLib(new QMap<QString, JPacket>())
   , testOptions(new JPTestOptions())
+  , outbox(new JPOutbox())
+  , inbox(new JPInbox())
+  , port(new JPTestPort())
 {
+    connect(this->port, SIGNAL(youveGotMail()), this, SLOT(GetMailFromPort()));
 }
 
 JPTestCoordinator::~JPTestCoordinator()
@@ -15,27 +19,84 @@ JPTestCoordinator::~JPTestCoordinator()
     delete P3Inbox;
     delete jpacketLib;
     delete testOptions;
+    delete outbox;
+    delete inbox;
+    delete port;
 }
 
-bool JPTestCoordinator::LoadTest(const JPTestOptions &Options)
+void JPTestCoordinator::SendNextPacket()
 {
-    bool success = false;
+    port->SendData(outbox->GetSendNextPacket());
+    return;
+}
+
+void JPTestCoordinator::CheckMail()
+{
+    UpdateInbox();      // Make sure inbox is up-to-date
+    JPacketDiffResults diffResults = inbox->CheckMail();
+
+    return;
+}
+
+bool JPTestCoordinator::MoreToSend()
+{
+    bool MoreDataToSend = false;
+
+    if (outbox->MoreToSend())   // Data still ready to be sent from outbox
+        MoreDataToSend =  true;
+    else
+    {
+        JPacket nextPacket = GetNextOutgoingPacket();
+        if (!nextPacket.GetPayload().isEmpty())
+        {
+            MoreDataToSend = true;
+            outbox->SetNextPacket(nextPacket.GetPayload());
+        }
+    }
+
+    return MoreDataToSend;
+}
+
+bool JPTestCoordinator::MoreToReceive() const
+{
+    bool MoreDataToReceive;
+
+    // If inbox is still waiting for incoming data, there's more to receive
+
+    if (inbox->WaitingOnP2Data() || inbox->WaitingOnP3Data())
+        MoreDataToReceive = true;
+    else
+    {
+        // Inbox not waiting on anybody...check internal testlist
+        if (this->P2Inbox->empty() && this->P3Inbox->empty())
+            MoreDataToReceive = false;
+        else
+            MoreDataToReceive = true;
+    }
+
+    return MoreDataToReceive;
+}
+
+QList<QStringList> JPTestCoordinator::LoadTest(const JPTestOptions &Options)
+{
+    QList<QStringList> LoadedMailboxes;
+
     QFile jptestfile(Options.Filename);
 
     if (jptestfile.open(QIODevice::ReadOnly))
     {
-        LoadTestScript(Options, jptestfile);
-        success = true;
+        *testOptions = Options;     // Save test options
+
+        if (SetUpPort())
+            LoadedMailboxes = LoadTestScript(Options, jptestfile);
     }
     else qDebug() << "Unable to open .jptest file " + Options.Filename;
 
-    return success;
+    return LoadedMailboxes;
 }
 
-void JPTestCoordinator::LoadTestScript(const JPTestOptions& Options, QFile &JPTestFile)
+QList<QStringList> JPTestCoordinator::LoadTestScript(const JPTestOptions& Options, QFile &JPTestFile)
 {
-    *testOptions = Options;     // Save test options
-
     // Get rid of existing items, if any
     myOutbox->clear();
     P2Inbox->clear();
@@ -46,11 +107,22 @@ void JPTestCoordinator::LoadTestScript(const JPTestOptions& Options, QFile &JPTe
     *P2Inbox = JPTestFileReader::GetPacketList(testOptions->GetP2IDString(), JPTestFile);
     *P3Inbox = JPTestFileReader::GetPacketList(testOptions->GetP3IDString(), JPTestFile);
 
-    emit OutboxLoaded(*myOutbox);
-    emit P2InboxLoaded(*P2Inbox);
-    emit P3InboxLoaded(*P3Inbox);
+    QList<QStringList> mailboxes;
+    mailboxes << *myOutbox << *P2Inbox << *P3Inbox;
 
-    return;
+    return mailboxes;
+}
+
+bool JPTestCoordinator::SetUpPort()
+{
+    if (port->IsOpen())   // Port can't be changed once is open (for now)
+        return true;
+
+    // Set port name
+    port->SetPortName(this->testOptions->PortName);
+
+    // Open port
+    return port->OpenPort();
 }
 
 JPacket JPTestCoordinator::GetNextOutgoingPacket()
@@ -103,4 +175,31 @@ JPacket JPTestCoordinator::GetJPkt(const QString &PacketFilename)
         jpacketLib->insert(PacketFilename, packet);
         return packet;
     }
+}
+
+void JPTestCoordinator::GetMailFromPort()
+{
+    QByteArray mail = port->ReadData();
+    inbox->AddToInbox(mail);
+
+    for (int i = 0; i < mail.count(); i++)
+        //emit ByteReceived(mail.at(i));
+        //CLS - where to put this???? Inbox needs to emit with diff per byte...
+
+    return;
+}
+
+bool JPTestCoordinator::WaitForDataReceived(const int& msecs)
+{
+    if (port->WaitForData(msecs)) return true;
+    return false;
+}
+
+void JPTestCoordinator::UpdateInbox()
+{
+    if (!P2Inbox->empty() && !inbox->WaitingOnP2Data())
+    {
+
+    }
+    return;
 }

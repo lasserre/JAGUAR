@@ -2,38 +2,39 @@
 
 JPTest::JPTest(QObject *parent) :
     QObject(parent)
-  , port(new JPTestPort(this))
   , testOptions(new JPTestOptions())
   , testCoordinator(new JPTestCoordinator())
-  , outbox(new JPOutbox())
-  , inbox(new JPInbox())
   , JaguarHeaderOffset(0)
   , delaySecs(-1)
+  , testLoaded(false)
   , isRunning(false)
 {
-    connect(this->port, SIGNAL(youveGotMail()), this, SLOT(GetMailFromPort()), Qt::DirectConnection);
-
+    connect(this->testCoordinator, SIGNAL(ByteReceived(char)), this, SLOT(PassBytesReceived(char)));
 }
 
 JPTest::~JPTest()
 {
-    delete this->port;
     delete this->testOptions;
     delete this->testCoordinator;
-    delete this->outbox;
-    delete this->inbox;
 }
 
-JPTESTERROR JPTest::InitNewRun()
+bool JPTest::InitNewRun()
 {
+    if (!testLoaded)
+        return false;
+
     SetIsRunning();
+    return true;
+}
 
-    if (!SetUpPort()) return PORT_ERROR;    // change to const int PORT_ISSUE;
+void JPTest::FinishRun()
+{
+    testLoaded = false;
+    SetIsRunning(false);
 
-    if (testOptions->MSP430ModeOn) JaguarHeaderOffset = 0;
-    else JaguarHeaderOffset = MAVPACKET::JHDR_OFFSET;
+    emit TestEnded();
 
-    return NO_ERROR;   // CLS - TODO: take out magic #'s!!
+    return;
 }
 
 /**
@@ -45,30 +46,24 @@ void JPTest::RunServer()
     qDebug() << "In " << __FUNCTION__;
 
     // Initialize test, and check for errors
-    JPTESTERROR initResult = InitNewRun();
-    if (initResult != NO_ERROR)
+    if (!InitNewRun())
     {
-        qDebug() << ReportErrorCode(initResult);
-        SetIsRunning(false);
+        qDebug() << "Test not loaded!";
+        return;
     }
 
     StartRunLoop();
 
     // Cleanup/reset
-    SetIsRunning(false);
-    emit TestEnded();
+    FinishRun();
     return;
 }
 
 void JPTest::RunClient()
 {
-    JPTESTERROR initResult = InitNewRun();
-
-    if (initResult != NO_ERROR)
+    if (!InitNewRun())
     {
-        qDebug() << ReportErrorCode(initResult);
-        SetIsRunning(false);
-        emit TestEnded();
+        qDebug() << "Test not loaded!";
         return;
     }
 
@@ -76,15 +71,14 @@ void JPTest::RunClient()
     if (!WaitForServerStart())
     {
         qDebug() << "Client run cancelled by user.";
-        SetIsRunning(false);
-        emit TestEnded();
+
+        FinishRun();
         return;
     }
 
     StartRunLoop();
 
-    SetIsRunning(false);
-    emit TestEnded();
+    FinishRun();
     return;
 }
 
@@ -93,24 +87,26 @@ void JPTest::StartRunLoop()
     bool IsLoopingRun = (testOptions->NumLoops > -1);
 
     // Send/receive
-    while(Running() && outbox->MoreToSend())
+    while(Running() && testCoordinator->MoreToSend())
     {
         // Do delays/step/etc...
         HandleTestMode();
 
         // Send packets
-        outbox->SendNextPacket();
+        testCoordinator->SendNextPacket();
+
+        // Get all incoming data and send outgoing data
+        QCoreApplication::processEvents();
 
         // Check the mail
-        QCoreApplication::processEvents();
-        inbox->CheckMail();
+        testCoordinator->CheckMail();
     }
 
     // Finish receiving
-    while (Running() && inbox->MoreToReceive())
+    while (Running() && testCoordinator->MoreToReceive())
     {
         QCoreApplication::processEvents();
-        inbox->CheckMail();
+        testCoordinator->CheckMail();
     }
 
     return;
@@ -122,11 +118,22 @@ void JPTest::StartRunLoop()
  */
 void JPTest::LoadTest(JPTestOptions Options)
 {
+    testLoaded = false;
+
     // Copy test options
     *this->testOptions = Options;
 
     // Load test
-    testCoordinator->LoadTest(*testOptions);
+    QList<QStringList> LoadedMailboxes = testCoordinator->LoadTest(*testOptions);
+
+    if (!LoadedMailboxes.isEmpty())
+    {
+        emit OutboxLoaded(LoadedMailboxes.at(0));
+        emit P2InboxLoaded(LoadedMailboxes.at(1));
+        emit P3InboxLoaded(LoadedMailboxes.at(2));
+
+        testLoaded = true;
+    }
 
     return;
 }
@@ -154,15 +161,6 @@ bool JPTest::Running()
     return this->isRunning;
 }
 
-bool JPTest::SetUpPort()
-{
-    // Set port name
-    port->SetPortName(this->testOptions->PortName);
-
-    // Open port
-    return port->OpenPort();
-}
-
 void JPTest::HandleTestMode()
 {
     switch(testOptions->RunMode)
@@ -187,35 +185,42 @@ void JPTest::HandleTestMode()
     return;
 }
 
-QString JPTest::ReportErrorCode(const JPTESTERROR &error)
-{
-    QString errMsg = "JPTest error: ";
+//QString JPTest::ReportErrorCode(const JPTESTERROR &error)
+//{
+//    QString errMsg = "JPTest error: ";
 
-    switch(error)
-    {
-    case NO_ERROR:
-        errMsg.append("NO_ERROR");
-        break;
-    case PORT_ERROR:
-        errMsg.append("PORT_ERROR");
-        break;
-    case JPTESTFILE_ERROR:
-        errMsg.append("JPTESTFILE_ERROR");
-        break;
-    default:
-        errMsg.append("UNKNOWN_ERROR_TYPE");
-    }
+//    switch(error)
+//    {
+//    case NO_ERROR:
+//        errMsg.append("NO_ERROR");
+//        break;
+//    case PORT_ERROR:
+//        errMsg.append("PORT_ERROR");
+//        break;
+//    case JPTESTFILE_ERROR:
+//        errMsg.append("JPTESTFILE_ERROR");
+//        break;
+//    default:
+//        errMsg.append("UNKNOWN_ERROR_TYPE");
+//    }
 
-    return errMsg;
-}
+//    return errMsg;
+//}
 
 /**
  * @brief JPTest::WaitForServerStart waits for data to come in from the server.
  * @return true if data received, false if run stopped by user
  */
+
 bool JPTest::WaitForServerStart()
 {
     while (this->Running())
-        if (port->WaitForData(1000)) return true;
+        if (testCoordinator->WaitForDataReceived(1000)) return true;
     return false;
+}
+
+void JPTest::PassBytesReceived(char byte)
+{
+    emit ByteReceived(byte);
+    return;
 }

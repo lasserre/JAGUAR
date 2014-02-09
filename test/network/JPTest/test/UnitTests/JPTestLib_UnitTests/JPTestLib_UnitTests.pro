@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += widgets testlib
+QT       += widgets testlib serialport
 
 win32: TARGET = ../../bin/JPTestLib_UnitTests
 unix: TARGET = ../bin/JPTestLib_UnitTests

@@ -1,18 +1,46 @@
 #include "jpinbox.h"
 
-JPInbox::JPInbox() : moreDataToReceive(false)
+JPInbox::JPInbox(QObject* parent) : packetInspector(new JPacketChecker())
+  , moreP2DataToReceive(false)
+  , moreP3DataToReceive(false)
+  , byteInbox(QByteArray())
 {
 }
 
-void JPInbox::CheckMail()
+JPInbox::~JPInbox()
 {
-    qDebug() << "Need to implement "  << __FUNCTION__;
+    delete packetInspector;
+}
+
+JPacketDiffResults JPInbox::CheckMail()
+{
+    return packetInspector->CheckNewBytes(byteInbox.remove(0, byteInbox.length()));
+}
+
+bool JPInbox::WaitingOnP2Data() const
+{
+    return moreP2DataToReceive;
+}
+
+bool JPInbox::WaitingOnP3Data() const
+{
+    return moreP3DataToReceive;
+}
+
+void JPInbox::AddToInbox(const QByteArray &Bytes)
+{
+    byteInbox.append(Bytes);
     return;
 }
 
-bool JPInbox::MoreToReceive() const
+void JPInbox::GetNextP2ExpectedPacket(const JPacket &NextP2Packet)
 {
-    return moreDataToReceive;
+    return;
+}
+
+void JPInbox::GetNextP3ExpectedPacket(const JPacket &NextP3Packet)
+{
+    return;
 }
 
 //void JPTest::ProcessInbox()
@@ -102,20 +130,5 @@ bool JPInbox::MoreToReceive() const
 //        inbox->remove(0, (inbox->length() - ++goodPacketIndex));
 //    else
 //        inbox->clear();
-//    return;
-//}
-
-//void JPTest::GetMailFromPort()
-//{
-//    qDebug() << "In " << __FUNCTION__;
-
-//    QByteArray mail = port->ReadData();
-//    inbox->append(mail);
-
-//    MailReady = true;
-
-//    for (int i = 0; i < mail.count(); i++)
-//        emit ByteReceived(mail.at(i));
-
 //    return;
 //}

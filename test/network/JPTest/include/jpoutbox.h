@@ -1,15 +1,21 @@
 #ifndef JPOUTBOX_H
 #define JPOUTBOX_H
 
-class JPOutbox
+#include <QDebug>
+#include <QByteArray>
+
+class JPOutbox : public QObject
 {
+    Q_OBJECT
+
 public:
-    JPOutbox();
+    explicit JPOutbox(QObject* parent = 0);
     bool MoreToSend() const;
-    void SendNextPacket();
+    QByteArray GetSendNextPacket();
+    void SetNextPacket(const QByteArray& NextPacket);
 
 protected:
-    bool moreDataToSend;
+    QByteArray currentPacketData;
 };
 
 #endif // JPOUTBOX_H

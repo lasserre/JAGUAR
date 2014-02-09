@@ -15,9 +15,9 @@ JPTestController::JPTestController(QObject *parent) :
     connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
     // Connect JPTest signals to controller
     connect(this->currentTest, SIGNAL(TestEnded()), this, SLOT(TestEndedHandler()));
-    connect(this->currentTest, SIGNAL(OutboxLoaded(QList<QByteArray>)), this, SLOT(NewOutboxHandler(QList<QByteArray>)));
-    connect(this->currentTest, SIGNAL(P2InboxLoaded(QList<QByteArray>)), this, SLOT(NewP2InboxHandler(QList<QByteArray>)));
-    connect(this->currentTest, SIGNAL(P3InboxLoaded(QList<QByteArray>)), this, SLOT(NewP3InboxHandler(QList<QByteArray>)));
+    connect(this->currentTest, SIGNAL(OutboxLoaded(QStringList)), this, SLOT(NewOutboxHandler(QStringList)));
+    connect(this->currentTest, SIGNAL(P2InboxLoaded(QStringList)), this, SLOT(NewP2InboxHandler(QStringList)));
+    connect(this->currentTest, SIGNAL(P3InboxLoaded(QStringList)), this, SLOT(NewP3InboxHandler(QStringList)));
     connect(this->currentTest, SIGNAL(PacketSent(QByteArray)), this, SLOT(PacketSentHandler(QByteArray)));
     connect(this->currentTest, SIGNAL(ByteReceived(char)), this, SLOT(ByteReceivedHandler(char)), Qt::DirectConnection);
 
@@ -76,19 +76,19 @@ void JPTestController::TestEndedHandler()
     return;
 }
 
-void JPTestController::NewOutboxHandler(QList<QByteArray> newOutbox)
+void JPTestController::NewOutboxHandler(QStringList newOutbox)
 {
     emit OutboxChanged(newOutbox);
     return;
 }
 
-void JPTestController::NewP2InboxHandler(QList<QByteArray> newP2Inbox)
+void JPTestController::NewP2InboxHandler(QStringList newP2Inbox)
 {
     emit P2InboxChanged(newP2Inbox);
     return;
 }
 
-void JPTestController::NewP3InboxHandler(QList<QByteArray> newP3Inbox)
+void JPTestController::NewP3InboxHandler(QStringList newP3Inbox)
 {
     emit P3InboxChanged(newP3Inbox);
     return;

@@ -5,23 +5,33 @@
 #include "jpacket.h"
 #include "jptestoptions.h"
 #include "jptestfilereader.h"
+#include "jpoutbox.h"
+#include "jpinbox.h"
+#include "jptestport.h"
+
+class JPTestCoordinator_UT;
 
 class JPTestCoordinator : public QObject
 {
     Q_OBJECT
 
+    friend class JPTestCoordinator_UT;
+
 public:
     explicit JPTestCoordinator(QObject* parent = 0);
     ~JPTestCoordinator();
-    bool LoadTest(const JPTestOptions& Options);
-    JPacket GetNextOutgoingPacket();
-    JPacket GetNextP2IncomingPacket();
-    JPacket GetNextP3IncomingPacket();
+    QList<QStringList> LoadTest(const JPTestOptions& Options);
+    bool WaitForDataReceived(const int &msecs);
+    void SendNextPacket();
+    void CheckMail();
+    bool MoreToSend();
+    bool MoreToReceive() const;
+
+public slots:
+    void GetMailFromPort();
 
 signals:
-    void OutboxLoaded(QStringList);
-    void P2InboxLoaded(QStringList);
-    void P3InboxLoaded(QStringList);
+    void ByteReceived(char);
 
 protected:
     QStringList* myOutbox;
@@ -29,10 +39,18 @@ protected:
     QStringList* P3Inbox;
     QMap<QString, JPacket>* jpacketLib;
     JPTestOptions* testOptions;
+    JPOutbox* outbox;
+    JPInbox* inbox;
+    JPTestPort* port;
 
     // Protected methods
-    void LoadTestScript(const JPTestOptions &Options, QFile& JPTestFile);
+    QList<QStringList> LoadTestScript(const JPTestOptions &Options, QFile& JPTestFile);
+    bool SetUpPort();
     JPacket GetJPkt(const QString &PacketFilename);
+    JPacket GetNextOutgoingPacket();
+    JPacket GetNextP2IncomingPacket();
+    JPacket GetNextP3IncomingPacket();
+    void UpdateInbox();
 };
 
 #endif // JPTESTCOORDINATOR_H

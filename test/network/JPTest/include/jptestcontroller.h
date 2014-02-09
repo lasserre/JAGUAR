@@ -20,9 +20,9 @@ signals:
     void StartClientTestSignal();
     void StopTestSignal();
     void LoadTestSignal(const JPTestOptions& TestOptions);
-    void OutboxChanged(QList<QByteArray>);
-    void P2InboxChanged(QList<QByteArray>);
-    void P3InboxChanged(QList<QByteArray>);
+    void OutboxChanged(QStringList);
+    void P2InboxChanged(QStringList);
+    void P3InboxChanged(QStringList);
     void PacketSent(QByteArray);
     void RawByteReceived(char);
     void P2PacketReceived(QByteArray, QList<int>);
@@ -31,9 +31,9 @@ signals:
 
 public slots:
     void TestEndedHandler();
-    void NewOutboxHandler(QList<QByteArray> newOutbox);
-    void NewP2InboxHandler(QList<QByteArray> newP2Inbox);
-    void NewP3InboxHandler(QList<QByteArray> newP3Inbox);
+    void NewOutboxHandler(QStringList newOutbox);
+    void NewP2InboxHandler(QStringList newP2Inbox);
+    void NewP3InboxHandler(QStringList newP3Inbox);
     void PacketSentHandler(QByteArray);
     void ByteReceivedHandler(char);
     void P2PacketReceivedHandler(QByteArray packet, QList<int> diffs);

@@ -38,6 +38,11 @@ bool JPTestPort::OpenPort()
     }
 }
 
+bool JPTestPort::IsOpen() const
+{
+    return serialPort->isOpen();
+}
+
 void JPTestPort::SetPortName(const QString &PortName)
 {
     this->serialPort->setPortName(PortName);

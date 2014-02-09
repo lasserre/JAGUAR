@@ -31,6 +31,7 @@ public:
     explicit JPTestPort(QObject* parent = 0);
     ~JPTestPort();
     bool OpenPort();
+    bool IsOpen() const;
     void SetPortName(const QString& PortName);
     bool SendData(const QByteArray &payload);
     QByteArray ReadData();

@@ -17,12 +17,12 @@ enum JPTESTMODE
     DELAY
 };
 
-enum JPTESTERROR
-{
-    NO_ERROR,
-    PORT_ERROR,
-    JPTESTFILE_ERROR
-};
+//enum JPTESTERROR
+//{
+//    NO_ERROR,
+//    PORT_ERROR,
+//    JPTESTFILE_ERROR
+//};
 
 struct JPTestOptions
 {

@@ -9,8 +9,6 @@
 #include "jptestport.h"
 #include "jpacket.h"
 #include "jptestoptions.h"
-#include "jpoutbox.h"
-#include "jpinbox.h"
 #include "jptestcoordinator.h"
 
 
@@ -24,9 +22,9 @@ public:
 
 signals:
     void TestEnded();
-    void OutboxLoaded(QList<QByteArray>);
-    void P2InboxLoaded(QList<QByteArray>);
-    void P3InboxLoaded(QList<QByteArray>);
+    void OutboxLoaded(QStringList);
+    void P2InboxLoaded(QStringList);
+    void P3InboxLoaded(QStringList);
     void PacketSent(QByteArray);
     void ByteReceived(char);
     void P2PacketReceived(QByteArray, QList<int>);
@@ -38,23 +36,22 @@ public slots:
     void RunServer();
     void RunClient();
     void EndTestEarly();
+    void PassBytesReceived(char);
 
 protected:
     // ----- Protected members ----- //
-    JPTestPort* port;
     JPTestOptions* testOptions;
     JPTestCoordinator* testCoordinator;
-    JPOutbox* outbox;
-    JPInbox* inbox;
 
     int JaguarHeaderOffset;
-
     int delaySecs;
+    bool testLoaded;
     bool isRunning;
     mutable QMutex isRunningMutex;   // Used to protect acces
 
     // ----- Protected methods ----- //
-    JPTESTERROR InitNewRun();
+    bool InitNewRun();
+    void FinishRun();
     bool WaitForServerStart();
 
     // Running...
@@ -64,8 +61,7 @@ protected:
     void SetIsRunning(const bool& IsRunning = true);
     bool Running();
 
-    bool SetUpPort();
-    QString ReportErrorCode(const JPTESTERROR& error);
+    //QString ReportErrorCode(const JPTESTERROR& error);
 };
 
 #endif // JPTEST_H
