@@ -9,7 +9,7 @@ JPTest::JPTest(QObject *parent) :
   , testLoaded(false)
   , isRunning(false)
 {
-    connect(this->testCoordinator, SIGNAL(ByteReceived(char)), this, SLOT(PassBytesReceived(char)));
+    //connect(this->testCoordinator, SIGNAL(ByteReceived(char)), this, SLOT(PassBytesReceived(char)));
 }
 
 JPTest::~JPTest()
@@ -49,6 +49,8 @@ void JPTest::RunServer()
     if (!InitNewRun())
     {
         qDebug() << "Test not loaded!";
+
+        FinishRun();
         return;
     }
 
@@ -64,6 +66,8 @@ void JPTest::RunClient()
     if (!InitNewRun())
     {
         qDebug() << "Test not loaded!";
+
+        FinishRun();
         return;
     }
 
@@ -84,7 +88,7 @@ void JPTest::RunClient()
 
 void JPTest::StartRunLoop()
 {
-    bool IsLoopingRun = (testOptions->NumLoops > -1);
+    //bool IsLoopingRun = (testOptions->NumLoops > -1);
 
     // Send/receive
     while(Running() && testCoordinator->MoreToSend())
@@ -99,14 +103,14 @@ void JPTest::StartRunLoop()
         QCoreApplication::processEvents();
 
         // Check the mail
-        testCoordinator->CheckMail();
+        emit SendDiffResults(testCoordinator->CheckMail());
     }
 
     // Finish receiving
     while (Running() && testCoordinator->MoreToReceive())
     {
         QCoreApplication::processEvents();
-        testCoordinator->CheckMail();
+        emit SendDiffResults(testCoordinator->CheckMail());
     }
 
     return;
@@ -144,7 +148,7 @@ void JPTest::LoadTest(JPTestOptions Options)
 void JPTest::EndTestEarly()
 {
     qDebug() << "In " << __FUNCTION__;
-    SetIsRunning(false);
+    FinishRun();
     return;
 }
 
@@ -219,8 +223,8 @@ bool JPTest::WaitForServerStart()
     return false;
 }
 
-void JPTest::PassBytesReceived(char byte)
-{
-    emit ByteReceived(byte);
-    return;
-}
+//void JPTest::PassBytesReceived(char byte)
+//{
+//    emit ByteReceived(byte);
+//    return;
+//}

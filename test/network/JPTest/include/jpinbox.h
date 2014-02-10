@@ -16,13 +16,11 @@ public:
     bool WaitingOnP2Data() const;
     bool WaitingOnP3Data() const;
     void AddToInbox(const QByteArray& Bytes);
-    void GetNextP2ExpectedPacket(const JPacket& NextP2Packet);
-    void GetNextP3ExpectedPacket(const JPacket& NextP3Packet);
+    void SetNextP2ExpectedPacket(const JPacket& NextP2Packet);
+    void SetNextP3ExpectedPacket(const JPacket& NextP3Packet);
 
 protected:
     JPacketChecker* packetInspector;
-    bool moreP2DataToReceive;
-    bool moreP3DataToReceive;
     QByteArray byteInbox;
 };
 

@@ -23,7 +23,7 @@ public:
     QList<QStringList> LoadTest(const JPTestOptions& Options);
     bool WaitForDataReceived(const int &msecs);
     void SendNextPacket();
-    void CheckMail();
+    JPacketDiffResults CheckMail();
     bool MoreToSend();
     bool MoreToReceive() const;
 
@@ -44,7 +44,7 @@ protected:
     JPTestPort* port;
 
     // Protected methods
-    QList<QStringList> LoadTestScript(const JPTestOptions &Options, QFile& JPTestFile);
+    QList<QStringList> LoadTestScript(QFile& JPTestFile);
     bool SetUpPort();
     JPacket GetJPkt(const QString &PacketFilename);
     JPacket GetNextOutgoingPacket();

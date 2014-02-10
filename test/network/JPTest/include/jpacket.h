@@ -84,6 +84,9 @@ public:
     int GetSrc() const;
     int GetDst() const;
 
+    static int ByteToIntValue(const char& byte);
+    static char IntValueToChar(const short& intValue);
+
 protected:
     QByteArray* payload;
     int DST;

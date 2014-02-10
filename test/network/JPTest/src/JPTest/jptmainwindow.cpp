@@ -21,6 +21,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
     qRegisterMetaType<QList<int> >("QList<int>");
+    qRegisterMetaType<JPacketDiffResults>("JPacketDiffResults");
 
     ui->setupUi(this);
 
@@ -89,11 +90,11 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->noMSP430checkBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
 
     // JPTest Controller
-    connect(this->jptestManager, SIGNAL(OutboxChanged(QList<QByteArray>)), this, SLOT(UpdateTestScript(QList<QByteArray>)));
-    connect(this->jptestManager, SIGNAL(P2InboxChanged(QList<QByteArray>)), this, SLOT(UpdateP2Script(QList<QByteArray>)));
-    connect(this->jptestManager, SIGNAL(P3InboxChanged(QList<QByteArray>)), this, SLOT(UpdateP3Script(QList<QByteArray>)));
+    connect(this->jptestManager, SIGNAL(OutboxChanged(QStringList)), this, SLOT(UpdateTestScript(QStringList)));
+    connect(this->jptestManager, SIGNAL(P2InboxChanged(QStringList)), this, SLOT(UpdateP2Script(QStringList)));
+    connect(this->jptestManager, SIGNAL(P3InboxChanged(QStringList)), this, SLOT(UpdateP3Script(QStringList)));
     connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
-    connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToRawByteInbox(char)));
+    connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToStagingArea(char)));
 
     connect(this->jptestManager, SIGNAL(P2PacketReceived(QByteArray,QList<int>)),
             this, SLOT(AppendToP2Inbox(QByteArray,QList<int>)));
@@ -182,7 +183,7 @@ void JPTMainWindow::RefreshTestList()
 void JPTMainWindow::StartTest()
 {   
     ui->outboxTextBrowser->clear();
-    ui->rawByteInboxTextBrowser->clear();
+    ui->garbageInbox->clear();
     p2InboxPassFailIndex = 0;
     p3InboxPassFailIndex = 0;
 
@@ -286,7 +287,7 @@ void JPTMainWindow::UpdateJaguarIDS(QString JAGID)
     return;
 }
 
-void JPTMainWindow::UpdateTestScript(QList<QByteArray> newScript)
+void JPTMainWindow::UpdateTestScript(QStringList newScript)
 {
     this->ui->packetOutboxListWidget->clear();
     for (int i = 0; i < newScript.count(); i++)
@@ -294,7 +295,7 @@ void JPTMainWindow::UpdateTestScript(QList<QByteArray> newScript)
     return;
 }
 
-void JPTMainWindow::UpdateP2Script(QList<QByteArray> newP2Script)
+void JPTMainWindow::UpdateP2Script(QStringList newP2Script)
 {
     ui->p2packetInboxListWidget->clear();
     for (int i = 0; i < newP2Script.count(); i++)
@@ -302,10 +303,8 @@ void JPTMainWindow::UpdateP2Script(QList<QByteArray> newP2Script)
     return;
 }
 
-void JPTMainWindow::UpdateP3Script(QList<QByteArray> newP3Script)
+void JPTMainWindow::UpdateP3Script(QStringList newP3Script)
 {
-    qDebug() << __FUNCTION__;
-    qDebug() << "newp3script.count(): " << newP3Script.count();
     ui->p3packetInboxListWidget->clear();
     for (int i = 0; i < newP3Script.count(); i++)
         ui->p3packetInboxListWidget->addItem(newP3Script.at(i));
@@ -377,12 +376,12 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet)
 }
 
 
-void JPTMainWindow::AppendToRawByteInbox(char newByte)
+void JPTMainWindow::AppendToStagingArea(char newByte)
 {
     int newByteASCIIValue(newByte);
     QString hexByte = QString::number(newByteASCIIValue, 16);
     if (hexByte.length() < 2) hexByte.prepend('0');
-    ui->rawByteInboxTextBrowser->insertPlainText(hexByte.toUpper() + " ");
+    ui->byteStagingLineEdit->setText(hexByte.toUpper() + " ");
     return;
 }
 

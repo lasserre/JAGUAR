@@ -34,12 +34,12 @@ public slots:
     void LoadTest();
     void RemoveNotification(int tabIndex);
     void UpdateJaguarIDS(QString JAGID);
-    void UpdateTestScript(QList<QByteArray> newScript);
-    void UpdateP2Script(QList<QByteArray> newP2Script);
-    void UpdateP3Script(QList<QByteArray> newP3Script);
+    void UpdateTestScript(QStringList newScript);
+    void UpdateP2Script(QStringList newP2Script);
+    void UpdateP3Script(QStringList newP3Script);
     void UpdatePortSelection(const QString &UnusedPortVar);
     void AppendToOutbox(QByteArray);
-    void AppendToRawByteInbox(char);
+    void AppendToStagingArea(char);
     void AppendToP2Inbox(QByteArray, QList<int> diffs);
     void AppendToP3Inbox(QByteArray packet, QList<int> diffs);
     void HandleGarbage(QByteArray garbagePacket);

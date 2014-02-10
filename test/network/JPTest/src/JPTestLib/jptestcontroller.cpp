@@ -19,16 +19,9 @@ JPTestController::JPTestController(QObject *parent) :
     connect(this->currentTest, SIGNAL(P2InboxLoaded(QStringList)), this, SLOT(NewP2InboxHandler(QStringList)));
     connect(this->currentTest, SIGNAL(P3InboxLoaded(QStringList)), this, SLOT(NewP3InboxHandler(QStringList)));
     connect(this->currentTest, SIGNAL(PacketSent(QByteArray)), this, SLOT(PacketSentHandler(QByteArray)));
-    connect(this->currentTest, SIGNAL(ByteReceived(char)), this, SLOT(ByteReceivedHandler(char)), Qt::DirectConnection);
+    //connect(this->currentTest, SIGNAL(ByteReceived(char)), this, SLOT(ByteReceivedHandler(char)), Qt::DirectConnection);
 
-    connect(this->currentTest, SIGNAL(P2PacketReceived(QByteArray,QList<int>)),
-            this, SLOT(P2PacketReceivedHandler(QByteArray,QList<int>)));
-
-    connect(this->currentTest, SIGNAL(P3PacketReceived(QByteArray,QList<int>)),
-            this, SLOT(P3PacketReceivedHandler(QByteArray,QList<int>)));
-
-    connect(this->currentTest, SIGNAL(GarbagePacketReceived(QByteArray)),
-            this, SLOT(GarbagePacketReceivedHandler(QByteArray)));
+    connect(this->currentTest, SIGNAL(SendDiffResults(JPacketDiffResults)), this, SLOT(HandleDiffResults(JPacketDiffResults)));
 
     this->testThreadController->start();   // Start thread. Don't call quit() until destructor!
 }
@@ -131,5 +124,11 @@ void JPTestController::P3PacketReceivedHandler(QByteArray packet, QList<int> dif
 void JPTestController::GarbagePacketReceivedHandler(QByteArray garbagePacket)
 {
     emit GarbagePacketReceived(garbagePacket);
+    return;
+}
+
+void JPTestController::HandleDiffResults(JPacketDiffResults results)
+{
+    //emit NewDiffResults(results);
     return;
 }

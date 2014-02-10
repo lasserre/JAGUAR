@@ -9,26 +9,37 @@ namespace JAGID
     const int QC = JAGPACKET::QC;
     const int GCS = JAGPACKET::GCS;
     const int Broadcast = JAGPACKET::BROADCAST;
-    const int Garbage = 111;        // Arbitrary values that won't interfere with real data...
-    const int Unknown = 112;
+    const int Unknown = 111;        // Arbitrary values that won't interfere with real data...
+    const int Garbage = 112;
 }
+
+struct JPTDiff
+{
+    int srcID;
+    bool pass;
+
+    JPTDiff() : srcID(JAGID::Unknown)
+      , pass(false)
+    {
+    }
+};
 
 struct JPacketDiffResults
 {
     bool packetDetected;
-    int jaguarID;                   // Need to use const variables above (in JAGID namespace)
-    QMap<char, bool> diffs;         // Map of bytes to results
+    bool garbageDetected;
+    QMap<char, JPTDiff> diffs;         // Map of bytes to results
 
     JPacketDiffResults() : packetDetected(false)
-      , jaguarID(JAGID::Unknown)
-      , diffs(QMap<char, bool>())
+      , garbageDetected(false)
+      , diffs(QMap<char, JPTDiff>())
     {
     }
 };
 
 enum JPCheckerState
 {
-    Ready,                      // Starting state - nothing in staging queue
+    EmptyQueue,                      // Starting state - nothing in staging queue
     WaitingForSrc,              // Bytes in, but not SRC byte yet
     WaitingForPacketFinish,     // Packet detected, but not fully received
     LookingForPacketStart       // Garbage packet detected! Trying to find start of next good data
@@ -38,16 +49,26 @@ class JPacketChecker
 {
 public:
     JPacketChecker();
+
+    /* ----- Run functions ----- */
     void SetNextExpectedP2Packet(const JPacket& NextP2Packet);
     void SetNextExpectedP3Packet(const JPacket& NextP3Packet);
     JPacketDiffResults CheckNewBytes(const QByteArray& Bytes);
+    void SetP2Done();
+    void SetP3Done();
+
+    // Polling
+    bool ReadyForNextP2Packet() const;
+    bool ReadyForNextP3Packet() const;
+
+    /* ----- Setup functions ----- */
     void SetMSP430Mode(const bool& MSP430ModeOn = true);
-    bool MSP430Mode() const;
+    bool MSP430Mode() const;   
     void SetP2ID(const int& P2ID);
     void SetP3ID(const int& P3ID);
 
 protected:
-    // Protected variables
+    /* ----- Protected variables ----- */
     JPacket nextP2Packet;
     JPacket nextP3Packet;
     QByteArray byteStagingQueue;
@@ -55,19 +76,39 @@ protected:
     bool msp430mode;
     int p2id;
     int p3id;
+    bool needP2Packet;
+    bool needP3Packet;
+    bool P2Finished;
+    bool P3Finished;
+    bool EntirePacketReceived;
+    int stxIndex;
+    int detectedSrcID;
 
-    // Protected methods
+    /* ----- Protected methods ----- */
     JPacketDiffResults ReevaluateState(const int &NumBytesAdded);
-    int GetSRCByteIndex() const;
-    int GetLENByteIndex() const;
+    void DiffPacketBytes(JPacketDiffResults& DiffResults, const int& NumBytesAdded);
+    void CleanupStagingQueue(const bool& GarbageJustDetected);
+    void DiffEntireQueueAgainstNextPacket(JPacketDiffResults& DiffResults, const JPacket& Packet,
+                                    const bool& Finished, const bool& NeedPacket);
+    void DiffAddedBytesAgainstNextPacket(JPacketDiffResults& DiffResults, const JPacket& Packet,
+                                    const bool& Finished, const bool& NeedPacket, const int& NumBytesAdded);
+    void HandleDiffWhenFinished(JPacketDiffResults& DiffResults, const int& srcID);
+
+    // Checks
     bool SRCByteReceived() const;
     bool LENByteReceived() const;
+    int STXByteReceived() const;
+    bool LENByteMatchesExpectedLength(const int& jagID);
+
+    // Getters
+    int GetSRCByteIndex() const;
+    int GetLENByteIndex() const;
     int GetPacketSource() const;
     int GetPacketLength() const;
     int GetP2ID() const;
     int GetP3ID() const;
-    bool IsValidSourceID(const int& JagID) const;
-    void DiffPacketBytes(JPacketDiffResults& DiffResults);
+
+    bool IsGarbageSourceID(const int& JagID) const;
 };
 
 #endif // JPACKETCHECKER_H

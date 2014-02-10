@@ -26,17 +26,15 @@ signals:
     void P2InboxLoaded(QStringList);
     void P3InboxLoaded(QStringList);
     void PacketSent(QByteArray);
-    void ByteReceived(char);
-    void P2PacketReceived(QByteArray, QList<int>);
-    void P3PacketReceived(QByteArray, QList<int>);
-    void GarbagePacketReceived(QByteArray);
+    //void ByteReceived(char);
+    void SendDiffResults(JPacketDiffResults);
 
 public slots:
     void LoadTest(JPTestOptions Options);
     void RunServer();
     void RunClient();
     void EndTestEarly();
-    void PassBytesReceived(char);
+    //void PassBytesReceived(char);
 
 protected:
     // ----- Protected members ----- //

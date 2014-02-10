@@ -3,10 +3,17 @@
 JPacketChecker::JPacketChecker() : nextP2Packet(JPacket())
   , nextP3Packet(JPacket())
   , byteStagingQueue(QByteArray())
-  , CurrentState(Ready)
+  , CurrentState(EmptyQueue)
   , msp430mode(false)
   , p2id(-1)
   , p3id(-1)
+  , needP2Packet(true)
+  , needP3Packet(true)
+  , P2Finished(false)
+  , P3Finished(false)
+  , EntirePacketReceived(false)
+  , stxIndex(0)
+  , detectedSrcID(-1)
 {
 }
 
@@ -43,12 +50,14 @@ void JPacketChecker::SetP3ID(const int &P3ID)
 void JPacketChecker::SetNextExpectedP2Packet(const JPacket &NextP2Packet)
 {
     this->nextP2Packet = NextP2Packet;
+    needP2Packet = false;
     return;
 }
 
 void JPacketChecker::SetNextExpectedP3Packet(const JPacket &NextP3Packet)
 {
     this->nextP3Packet = NextP3Packet;
+    needP3Packet = false;
     return;
 }
 
@@ -56,46 +65,93 @@ JPacketDiffResults JPacketChecker::ReevaluateState(const int& NumBytesAdded)
 {
     JPacketDiffResults diffResult;
 
+    // State machine
+
     switch(CurrentState)
     {
-    case Ready:
-        if (SRCByteReceived())
+    case EmptyQueue:
+
+        if (byteStagingQueue.isEmpty())
+            break;
+        else
         {
-            diffResult.jaguarID = GetPacketSource();
+            // Bytes in queue! Update state and fall through to WaitingForSrc
+            CurrentState = WaitingForSrc;
+        }
 
-            if (IsValidSourceID(diffResult.jaguarID))
-            {
-                if (LENByteReceived())
-                {
-                }
-            }
-            else
-            {
-                // Source is garbage! Nothing we can do until next packet
+    case WaitingForSrc:
 
-                diffResult.jaguarID = JAGID::Garbage;
-                diffResult.packetDetected = true;
-
-                CurrentState = LookingForPacketStart;
-            }
+        if (!SRCByteReceived())
+        {
+            detectedSrcID = JAGID::Unknown;       // SRC not received - still WaitingForSrc
+            break;
         }
         else
         {
-            // SRC byte not in yet
-            CurrentState = WaitingForSrc;
+            /* ------- SRC byte received! ------- */
+
+            if (IsGarbageSourceID(detectedSrcID = GetPacketSource()))
+            {
+                /* ------- SRC is garbage ------- */
+
+                diffResult.garbageDetected = true;      // Nothing we can do until next packet
+                detectedSrcID = JAGID::Garbage;
+                CurrentState = LookingForPacketStart;
+                break;
+            }
+            else
+            {
+                /* ------- SRC is valid. ------- */
+
+                diffResult.packetDetected = true;           // Update state and fall through to WaitingForPacketFinish
+                CurrentState = WaitingForPacketFinish;
+            }
         }
-        break;
-    case WaitingForSrc:
-        break;
+
     case WaitingForPacketFinish:
+
+        detectedSrcID = GetPacketSource();
+
+        if (detectedSrcID == GetP2ID() && !needP2Packet)
+        {
+            if (byteStagingQueue.length() >= nextP2Packet.GetPayload().length())
+                EntirePacketReceived = true;
+        }
+        else if (detectedSrcID == GetP3ID() && !needP3Packet)
+        {
+            if (byteStagingQueue.length() >= nextP3Packet.GetPayload().length())
+                EntirePacketReceived = true;
+        }
+
         break;
+
     case LookingForPacketStart:
+
+        stxIndex = STXByteReceived();
+
+        if (stxIndex > -1)
+        {
+            // Packet start found!
+            CurrentState = WaitingForSrc;
+            detectedSrcID = JAGID::Unknown;
+        }
+        else
+        {
+            detectedSrcID = JAGID::Garbage;
+        }
+
         break;
+
     default:
         qDebug() << "Unknown state! Check out " << __FUNCTION__ << " to debug";
     }
 
-    DiffPacketBytes(diffResult);
+    // Diff the bytes just received
+    DiffPacketBytes(diffResult, NumBytesAdded);
+
+    CleanupStagingQueue(diffResult.garbageDetected);      // Remove bytes as appropriate
+
+    stxIndex = -1;     // Reset stxIndex to -1 (not found)
 
     return diffResult;
 }
@@ -132,14 +188,25 @@ bool JPacketChecker::LENByteReceived() const
         return false;
 }
 
+int JPacketChecker::STXByteReceived() const
+{
+    for (int i = 0; i < byteStagingQueue.length(); i++)
+    {
+        if (JPacket::ByteToIntValue(byteStagingQueue.at(i)) == MAVPACKET::STXVALUE)
+            return i;
+    }
+
+    return -1;
+}
+
 int JPacketChecker::GetPacketSource() const
 {
-    return (unsigned int)byteStagingQueue.at(GetSRCByteIndex());
+    return JPacket::ByteToIntValue(byteStagingQueue.at(GetSRCByteIndex()));
 }
 
 int JPacketChecker::GetPacketLength() const
 {
-    return (unsigned int)byteStagingQueue.at(GetLENByteIndex());
+    return JPacket::ByteToIntValue(byteStagingQueue.at(GetLENByteIndex()));
 }
 
 int JPacketChecker::GetP2ID() const
@@ -152,7 +219,7 @@ int JPacketChecker::GetP3ID() const
     return p3id;
 }
 
-bool JPacketChecker::IsValidSourceID(const int &JagID) const
+bool JPacketChecker::IsGarbageSourceID(const int &JagID) const
 {
     if (JagID != JAGID::GCS)
     {
@@ -161,30 +228,78 @@ bool JPacketChecker::IsValidSourceID(const int &JagID) const
             if (JagID != JAGID::QC)
             {
                 if (JagID != JAGID::Broadcast)
-                    return false;
+                    return true;
             }
         }
     }
 
-    return true;
+    return false;
 }
 
-void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults)
+void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults, const int &NumBytesAdded)
 {
-    if (DiffResults.jaguarID == JAGID::Garbage)
-    {
-        for (int i = 0; i < byteStagingQueue.length(); i++)
+    JPTDiff jptdiff;
+
+    if (DiffResults.garbageDetected)
+    {    
+        int startIndex = byteStagingQueue.length() - NumBytesAdded;
+        for (int i = startIndex; i < byteStagingQueue.length(); i++)
         {
-            DiffResults.diffs.insert(byteStagingQueue.at(i), false);
+            if (i <= GetSRCByteIndex())
+            {
+                // On garbageDetected event, throw away everything up to (and including) SRC
+                jptdiff.srcID = JAGID::Garbage;
+            }
+            else
+            {
+                // Mark as unknown
+                jptdiff.srcID = JAGID::Unknown;
+            }
+
+            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
         }
     }
-    else if (DiffResults.jaguarID == GetP2ID())
+    else if (detectedSrcID == JAGID::Garbage)
     {
-
+        // Haven't found start of next packet yet. Throw everything away...
+        for (int i = 0; i < byteStagingQueue.length(); i++)
+        {
+            jptdiff.srcID = JAGID::Garbage;
+            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+        }
     }
-    else if (DiffResults.jaguarID == GetP3ID())
+    else if (detectedSrcID == JAGID::Unknown)
     {
-
+        int startIndex = byteStagingQueue.length() - NumBytesAdded;
+        for (int i = startIndex; i < byteStagingQueue.length(); i++)
+        {
+            jptdiff.srcID = JAGID::Unknown;
+            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+        }
+    }
+    else if (detectedSrcID == GetP2ID())
+    {
+        if (DiffResults.packetDetected)
+        {
+            // On packetDetected event we need to check all rc'vd bytes
+            DiffEntireQueueAgainstNextPacket(DiffResults, nextP2Packet, P2Finished, needP2Packet);
+        }
+        else
+        {
+            DiffAddedBytesAgainstNextPacket(DiffResults, nextP2Packet, P2Finished, needP2Packet, NumBytesAdded);
+        }
+    }
+    else if (detectedSrcID == GetP3ID())
+    {
+        if (DiffResults.packetDetected)
+        {
+            // On packetDetected event we need to check all rc'vd bytes
+            DiffEntireQueueAgainstNextPacket(DiffResults, nextP3Packet, P3Finished, needP3Packet);
+        }
+        else
+        {
+            DiffAddedBytesAgainstNextPacket(DiffResults, nextP3Packet, P3Finished, needP3Packet, NumBytesAdded);
+        }
     }
     else
     {
@@ -193,22 +308,169 @@ void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults)
     return;
 }
 
-//QList<int> JPTest::DiffByteArrays(const QByteArray &first, const QByteArray &second)
-//{
-//    QList<int> conflictIndices;
-//    int maxDiffLength = first.count();
+bool JPacketChecker::ReadyForNextP2Packet() const
+{
+    return needP2Packet;
+}
 
-//    if (second.count() != first.count())
-//    {
-//        qDebug() << "Number of bytes in packet diff do NOT match!";
-//        if (second.count() < first.count()) maxDiffLength = second.count();
-//    }
+bool JPacketChecker::ReadyForNextP3Packet() const
+{
+    return needP3Packet;
+}
 
-//    for (int i = 0; i < maxDiffLength; i++)
-//    {
-//        if (first.at(i) != second.at(i))
-//            conflictIndices.append(i);
-//    }
+void JPacketChecker::SetP2Done()
+{
+    P2Finished = true;
+    return;
+}
 
-//    return conflictIndices;
-//}
+void JPacketChecker::SetP3Done()
+{
+    P3Finished = true;
+    return;
+}
+
+void JPacketChecker::CleanupStagingQueue(const bool &GarbageJustDetected)
+{
+    int removeLen = 0;
+
+    if (EntirePacketReceived)
+    {
+        removeLen = GetPacketLength();  // Remove packet once it is fully received
+        EntirePacketReceived = false;
+    }
+    else if (CurrentState == LookingForPacketStart)
+    {
+        // Still haven't found new stx byte...remove garbage bytes from queue
+        if (GarbageJustDetected)
+        {
+            // Remove everything up to (and including) SRC byte
+            removeLen = GetSRCByteIndex() + 1;
+        }
+        else
+        {
+            // Remove all bytes
+            removeLen = byteStagingQueue.length();
+        }
+    }
+    else if (stxIndex > -1)
+    {
+        // New packet start just detected. Remove garbage bytes just before it
+        removeLen = stxIndex;
+    }
+
+    byteStagingQueue.remove(0, removeLen);
+
+    return;
+}
+
+void JPacketChecker::DiffEntireQueueAgainstNextPacket(JPacketDiffResults &DiffResults, const JPacket& Packet,
+                        const bool& Finished, const bool& NeedPacket)
+{
+    JPTDiff jptdiff;
+
+    if (Finished)
+        HandleDiffWhenFinished(DiffResults, Packet.GetSrc());
+    else if (NeedPacket)
+    {
+        qDebug() << "ERROR: " << Packet.GetSrc() << " detected but need new packet to diff with!";
+    }
+    else
+    {
+        // We have valid packet to diff with
+        int diffLength;
+
+        if (EntirePacketReceived)
+        {
+            diffLength = Packet.GetPayload().length();    // If we have the whole thing, diff up to packet length
+
+            if (Packet.GetSrc() == GetP2ID())
+                needP2Packet = true;                                // (we'll need the next packet after this diff)
+            else
+                needP3Packet = true;
+        }
+        else
+            diffLength = byteStagingQueue.length();     // ...otherwise, just diff up to what we have
+
+        for (int i = 0; i < diffLength; i++)
+        {
+            jptdiff.srcID = Packet.GetSrc();
+
+            // Do the actual diff! lol
+
+            if (byteStagingQueue.at(i) != Packet.GetPayload().at(i))
+                jptdiff.pass = false;
+            else
+                jptdiff.pass = true;
+
+            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+        }
+    }
+    return;
+}
+
+void JPacketChecker::DiffAddedBytesAgainstNextPacket(JPacketDiffResults& DiffResults, const JPacket& Packet,
+                                             const bool& Finished, const bool& NeedPacket, const int& NumBytesAdded)
+{
+    JPTDiff jptdiff;
+
+    if (Finished)
+        HandleDiffWhenFinished(DiffResults, Packet.GetSrc());
+    else if (NeedPacket)
+        qDebug() << "ERROR: " << Packet.GetSrc() << " detected but need new packet to diff with!";
+    else
+    {
+        int startIndex = byteStagingQueue.length() - NumBytesAdded;
+        for (int i = startIndex; i < byteStagingQueue.length(); i++)
+        {
+            jptdiff.srcID = Packet.GetSrc();
+
+            // Do the actual diff! lol
+
+            if (byteStagingQueue.at(i) != Packet.GetPayload().at(i))
+                jptdiff.pass = false;
+            else
+                jptdiff.pass = true;
+
+            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+        }
+    }
+
+    return;
+}
+
+bool JPacketChecker::LENByteMatchesExpectedLength(const int &jagID)
+{
+    if (jagID == GetP2ID())
+    {
+        if (GetPacketLength() == nextP2Packet.GetPayload().length())
+            return true;
+        else
+            return false;
+    }
+    else if (jagID == GetP3ID())
+    {
+        if (GetPacketLength() == nextP3Packet.GetPayload().length())
+            return true;
+        else
+            return false;
+    }
+    else
+        return false;
+}
+
+void JPacketChecker::HandleDiffWhenFinished(JPacketDiffResults &DiffResults, const int &srcID)
+{
+    JPTDiff jptdiff;
+
+    qDebug() << "Warning: " << srcID << " detected, but no more packets expected";
+
+    // We should not be getting anything from src at this point, so mark all as garbage
+    for (int i = 0; i < byteStagingQueue.length(); i++)
+    {
+        jptdiff.srcID = JAGID::Garbage;
+        DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+    }
+
+    return;
+}

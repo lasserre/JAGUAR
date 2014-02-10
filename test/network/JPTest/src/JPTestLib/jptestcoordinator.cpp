@@ -30,12 +30,11 @@ void JPTestCoordinator::SendNextPacket()
     return;
 }
 
-void JPTestCoordinator::CheckMail()
+JPacketDiffResults JPTestCoordinator::CheckMail()
 {
     UpdateInbox();      // Make sure inbox is up-to-date
-    JPacketDiffResults diffResults = inbox->CheckMail();
 
-    return;
+    return inbox->CheckMail();
 }
 
 bool JPTestCoordinator::MoreToSend()
@@ -88,14 +87,14 @@ QList<QStringList> JPTestCoordinator::LoadTest(const JPTestOptions &Options)
         *testOptions = Options;     // Save test options
 
         if (SetUpPort())
-            LoadedMailboxes = LoadTestScript(Options, jptestfile);
+            LoadedMailboxes = LoadTestScript(jptestfile);
     }
     else qDebug() << "Unable to open .jptest file " + Options.Filename;
 
     return LoadedMailboxes;
 }
 
-QList<QStringList> JPTestCoordinator::LoadTestScript(const JPTestOptions& Options, QFile &JPTestFile)
+QList<QStringList> JPTestCoordinator::LoadTestScript(QFile &JPTestFile)
 {
     // Get rid of existing items, if any
     myOutbox->clear();
@@ -183,6 +182,7 @@ void JPTestCoordinator::GetMailFromPort()
     inbox->AddToInbox(mail);
 
     for (int i = 0; i < mail.count(); i++)
+        ;
         //emit ByteReceived(mail.at(i));
         //CLS - where to put this???? Inbox needs to emit with diff per byte...
 
@@ -198,8 +198,8 @@ bool JPTestCoordinator::WaitForDataReceived(const int& msecs)
 void JPTestCoordinator::UpdateInbox()
 {
     if (!P2Inbox->empty() && !inbox->WaitingOnP2Data())
-    {
-
-    }
+        inbox->SetNextP2ExpectedPacket(GetNextP2IncomingPacket());
+    if (!P3Inbox->empty() && !inbox->WaitingOnP3Data())
+        inbox->SetNextP3ExpectedPacket(GetNextP3IncomingPacket());
     return;
 }

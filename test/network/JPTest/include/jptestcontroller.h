@@ -28,6 +28,7 @@ signals:
     void P2PacketReceived(QByteArray, QList<int>);
     void P3PacketReceived(QByteArray, QList<int>);
     void GarbagePacketReceived(QByteArray);
+    //void NewDiffResults(JPacketDiffResults);
 
 public slots:
     void TestEndedHandler();
@@ -39,6 +40,7 @@ public slots:
     void P2PacketReceivedHandler(QByteArray packet, QList<int> diffs);
     void P3PacketReceivedHandler(QByteArray, QList<int>);
     void GarbagePacketReceivedHandler(QByteArray);
+    void HandleDiffResults(JPacketDiffResults);
 
 protected:
     JPTest* currentTest;
