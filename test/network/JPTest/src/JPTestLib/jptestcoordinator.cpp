@@ -5,9 +5,9 @@ JPTestCoordinator::JPTestCoordinator(QObject *parent) : myOutbox(new QStringList
   , P3Inbox(new QStringList())
   , jpacketLib(new QMap<QString, JPacket>())
   , testOptions(new JPTestOptions())
-  , outbox(new JPOutbox())
-  , inbox(new JPInbox())
-  , port(new JPTestPort())
+  , outbox(new JPOutbox(this))
+  , inbox(new JPInbox(this))
+  , port(new JPTestPort(this))
 {
     connect(this->port, SIGNAL(youveGotMail()), this, SLOT(GetMailFromPort()));
 }
@@ -24,10 +24,12 @@ JPTestCoordinator::~JPTestCoordinator()
     delete port;
 }
 
-void JPTestCoordinator::SendNextPacket()
+QByteArray JPTestCoordinator::SendNextPacket()
 {
-    port->SendData(outbox->GetSendNextPacket());
-    return;
+    QByteArray nextPacket = outbox->GetSendNextPacket();
+    port->SendData(nextPacket);
+
+    return nextPacket;
 }
 
 JPacketDiffResults JPTestCoordinator::CheckMail()

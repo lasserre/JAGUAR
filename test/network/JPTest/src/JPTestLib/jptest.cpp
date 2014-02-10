@@ -3,19 +3,19 @@
 JPTest::JPTest(QObject *parent) :
     QObject(parent)
   , testOptions(new JPTestOptions())
-  , testCoordinator(new JPTestCoordinator())
+  , testCoordinator(NULL)
   , JaguarHeaderOffset(0)
   , delaySecs(-1)
   , testLoaded(false)
   , isRunning(false)
 {
     //connect(this->testCoordinator, SIGNAL(ByteReceived(char)), this, SLOT(PassBytesReceived(char)));
+
 }
 
 JPTest::~JPTest()
 {
     delete this->testOptions;
-    delete this->testCoordinator;
 }
 
 bool JPTest::InitNewRun()
@@ -97,7 +97,7 @@ void JPTest::StartRunLoop()
         HandleTestMode();
 
         // Send packets
-        testCoordinator->SendNextPacket();
+        emit PacketSent(testCoordinator->SendNextPacket());
 
         // Get all incoming data and send outgoing data
         QCoreApplication::processEvents();
@@ -122,6 +122,10 @@ void JPTest::StartRunLoop()
  */
 void JPTest::LoadTest(JPTestOptions Options)
 {
+    // Initialize AFTER being moved to thread to avoid QObject error
+    if (testCoordinator == NULL)
+        testCoordinator = new JPTestCoordinator(this);
+
     testLoaded = false;
 
     // Copy test options

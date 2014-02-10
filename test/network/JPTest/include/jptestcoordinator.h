@@ -22,7 +22,7 @@ public:
     ~JPTestCoordinator();
     QList<QStringList> LoadTest(const JPTestOptions& Options);
     bool WaitForDataReceived(const int &msecs);
-    void SendNextPacket();
+    QByteArray SendNextPacket();
     JPacketDiffResults CheckMail();
     bool MoreToSend();
     bool MoreToReceive() const;

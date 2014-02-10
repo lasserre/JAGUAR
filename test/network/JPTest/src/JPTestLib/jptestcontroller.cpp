@@ -13,6 +13,7 @@ JPTestController::JPTestController(QObject *parent) :
     connect(this, SIGNAL(StartClientTestSignal()), this->currentTest, SLOT(RunClient()));
     connect(this,SIGNAL(StopTestSignal()), this->currentTest, SLOT(EndTestEarly()), Qt::DirectConnection);
     connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
+
     // Connect JPTest signals to controller
     connect(this->currentTest, SIGNAL(TestEnded()), this, SLOT(TestEndedHandler()));
     connect(this->currentTest, SIGNAL(OutboxLoaded(QStringList)), this, SLOT(NewOutboxHandler(QStringList)));

@@ -12,9 +12,9 @@ bool JPOutbox::MoreToSend() const
 
 QByteArray JPOutbox::GetSendNextPacket()
 {
-    // Send entire packet
-    QByteArray outgoingBytes = currentPacketData.remove(0, currentPacketData.length());
-
+    // Send entire packet for now... (implement step mode here, later on)
+    QByteArray outgoingBytes(currentPacketData);
+    currentPacketData.remove(0, currentPacketData.length());
     return outgoingBytes;
 }
 

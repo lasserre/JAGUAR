@@ -1,7 +1,7 @@
 #include "jptestport.h"
 
 JPTestPort::JPTestPort(QObject* parent /*= 0*/) : QObject(parent)
-  , serialPort(new QSerialPort(parent))
+  , serialPort(new QSerialPort(this))
 {
     this->SetPortName("UNSET_PORT_NAME");   // Help ourselves out for debugging!
 

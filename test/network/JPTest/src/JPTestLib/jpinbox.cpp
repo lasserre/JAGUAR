@@ -12,7 +12,9 @@ JPInbox::~JPInbox()
 
 JPacketDiffResults JPInbox::CheckMail()
 {
-    return packetInspector->CheckNewBytes(byteInbox.remove(0, byteInbox.length()));
+    QByteArray contents(byteInbox);
+    byteInbox.clear();
+    return packetInspector->CheckNewBytes(contents);
 }
 
 /**
