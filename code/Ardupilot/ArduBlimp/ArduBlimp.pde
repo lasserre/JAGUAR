@@ -63,7 +63,7 @@
 #include <AP_Airspeed.h>        // needed for AHRS build
 #include <AP_InertialNav.h>     // ArduPilot Mega inertial navigation library
 #include <AC_WPNav.h>           // ArduCopter waypoint navigation library
-// #include <AP_Declination.h>     // ArduPilot Mega Declination Helper Library
+#include <AP_Declination.h>     // ArduPilot Mega Declination Helper Library
 // #include <AC_Fence.h>           // Arducopter Fence library
 #include <memcheck.h>           // memory limit checker
 // #include <SITL.h>               // software in the loop support
@@ -482,11 +482,13 @@ static float sin_pitch;
 // Used to track the orientation of the copter for Simple mode. This value is reset at each arming
 // or in SuperSimple mode when the copter leaves a 20m radius from home.
 static int32_t initial_simple_bearing;
+#endif // #if 0
 
 // Stores initial bearing when armed - initial simple bearing is modified in super simple mode so not suitable
 static int32_t initial_armed_bearing;
 
 
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // Rate contoller targets
 ////////////////////////////////////////////////////////////////////////////////
@@ -656,6 +658,7 @@ static int32_t yaw_look_at_WP_bearing;
 static int32_t yaw_look_at_heading;
 // Deg/s we should turn
 static int16_t yaw_look_at_heading_slew;
+#endif // #if 0
 
 
 
@@ -675,11 +678,13 @@ static int16_t event_value;
 // the stored value used to undo commands - such as original PWM command
 static int16_t event_undo_value;
 
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // Delay Mission Scripting Command
 ////////////////////////////////////////////////////////////////////////////////
 static int32_t condition_value;  // used in condition commands (eg delay, change alt, etc.)
 static uint32_t condition_start;
+#endif // #if 0
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -688,7 +693,6 @@ static uint32_t condition_start;
 // Integration time for the gyros (DCM algorithm)
 // Updated with the fast loop
 static float G_Dt = 0.02;
-#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // Inertial Navigation
@@ -708,6 +712,7 @@ static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon,
 // The number of GPS fixes we have had
 static uint8_t gps_fix_count;
 static int16_t pmTest1;
+#endif // #if 0
 
 // System Timers
 // --------------
@@ -732,7 +737,6 @@ static uint32_t last_heartbeat_ms;
 
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
-#endif // #if 0
 
 // Reference to the relay object (APM1 -> PORTL 2) (APM2 -> PORTB 7)
 static AP_Relay relay;
@@ -775,13 +779,13 @@ static AP_Mount camera_mount2(&current_loc, g_gps, &ahrs, 1);
 AC_Fence    fence(&inertial_nav);
 #endif
 
-#if 0 //TODO: remove
 ////////////////////////////////////////////////////////////////////////////////
 // function definitions to keep compiler from complaining about undeclared functions
 ////////////////////////////////////////////////////////////////////////////////
 void get_throttle_althold(int32_t target_alt, int16_t min_climb_rate, int16_t max_climb_rate);
 static void pre_arm_checks(bool display_failure);
 
+#if 0 //TODO: remove
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////
@@ -899,11 +903,11 @@ void loop()
         fast_loopTimer          = timer;
 
         // for mainloop failure monitoring
-//       mainLoop_count++; //TODO: enable for failsafe
+        mainLoop_count++;
 
         // Execute the fast loop
         // ---------------------
-        fast_loop();
+        // fast_loop(); TODO: enable
 
         // tell the scheduler one tick has passed
         scheduler.tick();

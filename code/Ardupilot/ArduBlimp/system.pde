@@ -139,8 +139,8 @@ static void init_ardupilot()
 
     relay.init();
 
-#if COPTER_LEDS == ENABLED
-    copter_leds_init();
+#if BLIMP_LEDS == ENABLED
+    blimp_leds_init();
 #endif
 
     // load parameters from EEPROM

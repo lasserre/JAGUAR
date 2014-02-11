@@ -14,7 +14,6 @@ static void default_dead_zones()
     g.rc_6.set_dead_zone(0);
 }
 
-#if 0 //TODO:remove
 static void init_rc_in()
 {
     // set rc channel ranges
@@ -149,7 +148,9 @@ static void read_radio()
         // turn on throttle failsafe if no update from ppm encoder for 2 seconds
         if ((elapsed >= FAILSAFE_RADIO_TIMEOUT_MS)
                 && g.failsafe_throttle && motors.armed() && !ap.failsafe_radio) {
+#if LOGGING_ENABLED == ENABLED
             Log_Write_Error(ERROR_SUBSYSTEM_RADIO, ERROR_CODE_RADIO_LATE_FRAME);
+#endif // LOGGING_ENABLED
             set_failsafe_radio(true);
         }
     }
@@ -213,5 +214,4 @@ static void trim_radio()
     g.rc_2.save_eeprom();
     g.rc_4.save_eeprom();
 }
-#endif // #if 0
 
