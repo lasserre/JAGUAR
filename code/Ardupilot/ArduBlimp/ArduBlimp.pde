@@ -46,23 +46,23 @@
 #include <AP_Baro.h>
 #include <AP_Compass.h>         // ArduPilot Mega Magnetometer Library
 #include <AP_Math.h>            // ArduPilot Mega Vector/Matrix math Library
-// #include <AP_Curve.h>           // Curve used to linearlise throttle pwm to thrust
+#include <AP_Curve.h>           // Curve used to linearlise throttle pwm to thrust
 #include <AP_InertialSensor.h>  // ArduPilot Mega Inertial Sensor (accel & gyro) Library
 #include <AP_AHRS.h>
 #include <APM_PI.h>             // PI library
 #include <AC_PID.h>             // PID library
 #include <RC_Channel.h>         // RC Channel Library
-// #include <AP_Motors.h>          // AP Motors library
+#include <AP_Motors.h>          // AP Motors library
 #include <AP_RangeFinder.h>     // Range finder library
 #include <AP_OpticalFlow.h>     // Optical Flow library
 #include <Filter.h>             // Filter library
-// #include <AP_Buffer.h>          // APM FIFO Buffer
-// #include <AP_Relay.h>           // APM relay
+#include <AP_Buffer.h>          // APM FIFO Buffer
+#include <AP_Relay.h>           // APM relay
 // #include <AP_Camera.h>          // Photo or video camera
 // #include <AP_Mount.h>           // Camera/Antenna mount
 #include <AP_Airspeed.h>        // needed for AHRS build
-// #include <AP_InertialNav.h>     // ArduPilot Mega inertial navigation library
-// #include <AC_WPNav.h>           // ArduCopter waypoint navigation library
+#include <AP_InertialNav.h>     // ArduPilot Mega inertial navigation library
+#include <AC_WPNav.h>           // ArduCopter waypoint navigation library
 // #include <AP_Declination.h>     // ArduPilot Mega Declination Helper Library
 // #include <AC_Fence.h>           // Arducopter Fence library
 #include <memcheck.h>           // memory limit checker
@@ -130,13 +130,13 @@ static DataFlash_File DataFlash("/fs/microsd/APM/logs");
 #else
 static DataFlash_Empty DataFlash;
 #endif
+#endif // #if 0
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // the rate we run the main loop at
 ////////////////////////////////////////////////////////////////////////////////
 static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_200HZ;
-#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // Sensors
@@ -290,7 +290,7 @@ static AP_OpticalFlow optflow;
 ////////////////////////////////////////////////////////////////////////////////
 static GCS_MAVLINK gcs0;
 static GCS_MAVLINK gcs3;
-#endif
+#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR selection
@@ -377,6 +377,7 @@ static int8_t control_mode = STABILIZE;
 // Used to maintain the state of the previous control switch position
 // This is set to -1 when we need to re-read the switch
 static uint8_t oldSwitchPosition;
+#endif // #if 0
 
 // receiver RSSI
 static uint8_t receiver_rssi;
@@ -385,36 +386,9 @@ static uint8_t receiver_rssi;
 ////////////////////////////////////////////////////////////////////////////////
 // Motor Output
 ////////////////////////////////////////////////////////////////////////////////
-#if FRAME_CONFIG == QUAD_FRAME
- #define MOTOR_CLASS AP_MotorsQuad
-#endif
-#if FRAME_CONFIG == TRI_FRAME
- #define MOTOR_CLASS AP_MotorsTri
-#endif
-#if FRAME_CONFIG == HEXA_FRAME
- #define MOTOR_CLASS AP_MotorsHexa
-#endif
-#if FRAME_CONFIG == Y6_FRAME
- #define MOTOR_CLASS AP_MotorsY6
-#endif
-#if FRAME_CONFIG == OCTA_FRAME
- #define MOTOR_CLASS AP_MotorsOcta
-#endif
-#if FRAME_CONFIG == OCTA_QUAD_FRAME
- #define MOTOR_CLASS AP_MotorsOctaQuad
-#endif
-#if FRAME_CONFIG == HELI_FRAME
- #define MOTOR_CLASS AP_MotorsHeli
-#endif
+static AP_MotorsBlimp motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4);
 
-#if FRAME_CONFIG == HELI_FRAME  // helicopter constructor requires more arguments
-static MOTOR_CLASS motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4, &g.rc_8, &g.heli_servo_1, &g.heli_servo_2, &g.heli_servo_3, &g.heli_servo_4);
-#elif FRAME_CONFIG == TRI_FRAME  // tri constructor requires additional rc_7 argument to allow tail servo reversing
-static MOTOR_CLASS motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4, &g.rc_7);
-#else
-static MOTOR_CLASS motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4);
-#endif
-
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // PIDs
 ////////////////////////////////////////////////////////////////////////////////
@@ -425,6 +399,7 @@ static Vector3f omega;
 float tuning_value;
 // used to limit the rate that the pid controller output is logged so that it doesn't negatively affect performance
 static uint8_t pid_log_counter;
+#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // LED output
@@ -433,12 +408,13 @@ static uint8_t pid_log_counter;
 // setting this value changes the output of the LEDs
 static uint8_t led_mode = NORMAL_LEDS;
 // Blinking indicates GPS status
-static uint8_t copter_leds_GPS_blink;
+static uint8_t blimp_leds_GPS_blink;
 // Blinking indicates battery status
-static uint8_t copter_leds_motor_blink;
+static uint8_t blimp_leds_motor_blink;
 // Navigation confirmation blinks
-static int8_t copter_leds_nav_blink;
+static int8_t blimp_leds_nav_blink;
 
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // GPS variables
 ////////////////////////////////////////////////////////////////////////////////
@@ -571,6 +547,7 @@ static uint32_t loiter_time;
 // This register tracks the current Mission Command index when writing
 // a mission using Ch7 or Ch8 aux switches in flight
 static int8_t aux_switch_wp_index;
+#endif // #if 0
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -602,6 +579,7 @@ static int32_t baro_alt;
 static int16_t saved_toy_throttle;
 
 
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // flight modes
 ////////////////////////////////////////////////////////////////////////////////
@@ -710,6 +688,7 @@ static uint32_t condition_start;
 // Integration time for the gyros (DCM algorithm)
 // Updated with the fast loop
 static float G_Dt = 0.02;
+#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // Inertial Navigation
@@ -722,6 +701,7 @@ static AP_InertialNav inertial_nav(&ahrs, &ins, &barometer, &g_gps);
 ////////////////////////////////////////////////////////////////////////////////
 static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon, &g.pid_loiter_rate_lat, &g.pid_loiter_rate_lon);
 
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
@@ -752,10 +732,10 @@ static uint32_t last_heartbeat_ms;
 
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
+#endif // #if 0
 
 // Reference to the relay object (APM1 -> PORTL 2) (APM2 -> PORTB 7)
 static AP_Relay relay;
-#endif // #if 0
 
 //Reference to the camera object (it uses the relay object inside it)
 #if CAMERA == ENABLED
@@ -808,6 +788,7 @@ static void pre_arm_checks(bool display_failure);
 
 // setup the var_info table
 AP_Param param_loader(var_info, WP_START_BYTE);
+#endif // #if 0
 
 /*
   scheduler table - all regular tasks apart from the fast_loop()
@@ -815,24 +796,23 @@ AP_Param param_loader(var_info, WP_START_BYTE);
   (in 10ms units) and the maximum time they are expected to take (in
   microseconds)
  */
-static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
-    { update_GPS,            2,     900 },
-    { update_navigation,     10,    500 },
-    { medium_loop,           2,     700 },
-    { update_altitude,      10,    1000 },
-    { fifty_hz_loop,         2,     950 },
-    { run_nav_updates,      10,     800 },
-    { slow_loop,            10,     500 },
-    { gcs_check_input,       2,     700 },
-    { gcs_send_heartbeat,  100,     700 },
-    { gcs_data_stream_send,  2,    1500 },
-    { gcs_send_deferred,     2,    1200 },
-    { compass_accumulate,    2,     700 },
-    { barometer_accumulate,  2,     900 },
-    { super_slow_loop,     100,    1100 },
-    { perf_update,        1000,     500 }
+static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = { /****** JBW - commenting out tasks until we need them ******/
+    // { update_GPS,            2,     900 },
+    // { update_navigation,     10,    500 },
+    // { medium_loop,           2,     700 },
+    { update_altitude,      10,    1000 }//,
+    // { fifty_hz_loop,         2,     950 },
+    // { run_nav_updates,      10,     800 },
+    // { slow_loop,            10,     500 },
+    // { gcs_check_input,       2,     700 },
+    // { gcs_send_heartbeat,  100,     700 },
+    // { gcs_data_stream_send,  2,    1500 },
+    // { gcs_send_deferred,     2,    1200 },
+    // { compass_accumulate,    2,     700 },
+    // { barometer_accumulate,  2,     900 },
+    // { super_slow_loop,     100,    1100 },
+    // { perf_update,        1000,     500 }
 };
-#endif // #if 0
 
 void setup() {
     // this needs to be the first call, as it fills memory with
@@ -1970,6 +1950,7 @@ static void update_trig(void){
     // 180 = cos_yaw: -1.00, sin_yaw:  0.00,
     // 270 = cos_yaw:  0.00, sin_yaw: -1.00,
 }
+#endif // #if 0
 
 // read baro and sonar altitude at 20hz
 static void update_altitude()
@@ -1991,10 +1972,13 @@ static void update_altitude()
 
     // write altitude info to dataflash logs
     if ((g.log_bitmask & MASK_LOG_CTUN) && motors.armed()) {
+#if LOGGING_ENABLED == ENABLED
         Log_Write_Control_Tuning();
+#endif // LOGGING_ENABLED
     }
 }
 
+#if 0 //TODO:remove
 static void tuning(){
     tuning_value = (float)g.rc_6.control_in / 1000.0f;
     g.rc_6.set_range(g.radio_tuning_low,g.radio_tuning_high);                   // 0 to 1

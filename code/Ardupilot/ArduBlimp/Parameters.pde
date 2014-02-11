@@ -947,6 +947,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     //@Path: ../libraries/AC_WPNav/AC_WPNav.cpp
     GOBJECT(wp_nav, "WPNAV_",       AC_WPNav),
 
+#if 0 //TODO:remove
     // @Group: SR0_
     // @Path: ./GCS_Mavlink.pde
     GOBJECT(gcs0,                   "SR0_",     GCS_MAVLINK),
@@ -954,6 +955,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Group: SR3_
     // @Path: ./GCS_Mavlink.pde
     GOBJECT(gcs3,                   "SR3_",     GCS_MAVLINK),
+#endif // #if 0
 
     // @Group: AHRS_
     // @Path: ../libraries/AP_AHRS/AP_AHRS.cpp
@@ -989,15 +991,9 @@ const AP_Param::Info var_info[] PROGMEM = {
     GOBJECT(fence,      "FENCE_",   AC_Fence),
 #endif
 
-#if FRAME_CONFIG ==     HELI_FRAME
-    // @Group: H_
-    // @Path: ../libraries/AP_Motors/AP_MotorsHeli.cpp
-    GOBJECT(motors, "H_",           AP_MotorsHeli),
-#else
     // @Group: MOT_
     // @Path: ../libraries/AP_Motors/AP_Motors_Class.cpp
     GOBJECT(motors, "MOT_",         AP_Motors),
-#endif
 
     AP_VAREND
 };
