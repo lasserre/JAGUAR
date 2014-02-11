@@ -5,7 +5,6 @@
 #define AUTO_TRIM_DELAY         100 // called at 10hz so 10 seconds
 #define AUTO_DISARMING_DELAY    25  // called at 1hz so 25 seconds
 
-#if 0 //TODO:remove
 // arm_motors_check - checks for pilot input to arm or disarm the copter
 // called at 10hz
 static void arm_motors_check()
@@ -81,9 +80,8 @@ static void arm_motors_check()
         arming_counter = 0;
     }
 }
-#endif // #if 0
 
-// auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode with throttle low for at least 25 seconds
+// auto_disarm_check - disarms the blimp if it has been sitting on the ground in manual mode with throttle low for at least 25 seconds
 // called at 1hz
 static void auto_disarm_check()
 {
@@ -103,7 +101,6 @@ static void auto_disarm_check()
     }
 }
 
-#if 0 //TODO:remove
 // init_arm_motors - performs arming process including initialisation of barometer and gyros
 static void init_arm_motors()
 {
@@ -199,7 +196,6 @@ static void init_arm_motors()
     // reenable failsafe
     failsafe_enable();
 }
-#endif // #if 0
 
 // perform pre-arm checks and set ap.pre_arm_check flag
 static void pre_arm_checks(bool display_failure)

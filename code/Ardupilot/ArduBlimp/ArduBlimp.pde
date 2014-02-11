@@ -3,7 +3,7 @@
 #define THISFIRMWARE "ArduBlimp V0.1.0"
 /*
  *  ArduBlimp Version 0.1
- *  Creator:        Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
+ *  Creators:       Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
  *  Based on code and ideas from the Arducopter team: Pat Hickey, Jose Julio, Jani Hirvinen, Andrew Tridgell, Justin Beech, Adam Rivera, Jean-Louis Naudin, Roberto Navoni
  *  Thanks to:  Chris Anderson, Mike Smith, Jordi Munoz, Doug Weibel, James Goppert, Benjamin Pelletier, Robert Lefebvre, Marco Robustini
  *
@@ -388,7 +388,6 @@ static uint8_t receiver_rssi;
 ////////////////////////////////////////////////////////////////////////////////
 static AP_MotorsBlimp motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4);
 
-#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // PIDs
 ////////////////////////////////////////////////////////////////////////////////
@@ -399,7 +398,6 @@ static Vector3f omega;
 float tuning_value;
 // used to limit the rate that the pid controller output is logged so that it doesn't negatively affect performance
 static uint8_t pid_log_counter;
-#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // LED output
@@ -414,7 +412,6 @@ static uint8_t blimp_leds_motor_blink;
 // Navigation confirmation blinks
 static int8_t blimp_leds_nav_blink;
 
-#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // GPS variables
 ////////////////////////////////////////////////////////////////////////////////
@@ -432,11 +429,11 @@ static float scaleLongDown = 1;
 ////////////////////////////////////////////////////////////////////////////////
 // Location & Navigation
 ////////////////////////////////////////////////////////////////////////////////
-// This is the angle from the copter to the next waypoint in centi-degrees
+// This is the angle from the blimp to the next waypoint in centi-degrees
 static int32_t wp_bearing;
-// The original bearing to the next waypoint.  used to point the nose of the copter at the next waypoint
+// The original bearing to the next waypoint.  used to point the nose of the blimp at the next waypoint
 static int32_t original_wp_bearing;
-// The location of home in relation to the copter in centi-degrees
+// The location of home in relation to the blimp in centi-degrees
 static int32_t home_bearing;
 // distance between plane and home in cm
 static int32_t home_distance;
@@ -476,6 +473,7 @@ static float sin_yaw;
 static float sin_roll;
 static float sin_pitch;
 
+#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // SIMPLE Mode
 ////////////////////////////////////////////////////////////////////////////////
@@ -488,7 +486,6 @@ static int32_t initial_simple_bearing;
 static int32_t initial_armed_bearing;
 
 
-#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // Rate contoller targets
 ////////////////////////////////////////////////////////////////////////////////
@@ -549,7 +546,6 @@ static uint32_t loiter_time;
 // This register tracks the current Mission Command index when writing
 // a mission using Ch7 or Ch8 aux switches in flight
 static int8_t aux_switch_wp_index;
-#endif // #if 0
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -581,7 +577,6 @@ static int32_t baro_alt;
 static int16_t saved_toy_throttle;
 
 
-#if 0 //TODO:remove
 ////////////////////////////////////////////////////////////////////////////////
 // flight modes
 ////////////////////////////////////////////////////////////////////////////////
@@ -608,10 +603,10 @@ static uint16_t land_detector;
 ////////////////////////////////////////////////////////////////////////////////
 // 3D Location vectors
 ////////////////////////////////////////////////////////////////////////////////
-// home location is stored when we have a good GPS lock and arm the copter
-// Can be reset each the copter is re-armed
+// home location is stored when we have a good GPS lock and arm the blimp
+// Can be reset each the blimp is re-armed
 static struct   Location home;
-// Current location of the copter
+// Current location of the blimp
 static struct   Location current_loc;
 // Holds the current loaded command from the EEPROM for navigation
 static struct   Location command_nav_queue;
@@ -658,7 +653,6 @@ static int32_t yaw_look_at_WP_bearing;
 static int32_t yaw_look_at_heading;
 // Deg/s we should turn
 static int16_t yaw_look_at_heading_slew;
-#endif // #if 0
 
 
 
