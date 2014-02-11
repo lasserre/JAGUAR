@@ -11,6 +11,16 @@
 #include <RC_Channel.h>     // RC Channel Library
 #include "AP_MotorsMatrix.h"    // Parent Motors Matrix library
 
+// motor definitions
+#define THRUST_MOTOR            AP_MOTORS_MOT_1  // this is actually 2 motors tied together
+#define LIFT_MOTOR              AP_MOTORS_MOT_2
+#define LEFT_ANTI_LIFT_MOTOR    AP_MOTORS_MOT_3
+#define RIGHT_ANTI_LEFT_MOTOR   AP_MOTORS_MOT_4
+#define LEFT_YAW_MOTOR	        AP_MOTORS_MOT_5
+#define RIGHT_YAW_MOTOR         AP_MOTORS_MOT_6
+#define TOP_PITCH_MOTOR         AP_MOTORS_MOT_7
+#define BOTTOM_PITCH_MOTOR      AP_MOTORS_MOT_8
+
 /// @class      AP_MotorsBlimp
 class AP_MotorsBlimp : public AP_MotorsMatrix {
 public:

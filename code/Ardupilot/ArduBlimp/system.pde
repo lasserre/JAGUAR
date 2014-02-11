@@ -191,13 +191,11 @@ static void init_ardupilot()
     init_rc_in();               // sets up rc channels from radio
     init_rc_out();              // sets up motors and output to escs
 
-#if 0 //TODO:enable
     /*
      *  setup the 'main loop is dead' check. Note that this relies on
      *  the RC library being initialised.
      */
     hal.scheduler->register_timer_failsafe(failsafe_check, 1000);
-#endif
 
 #if HIL_MODE != HIL_MODE_ATTITUDE
  #if CONFIG_ADC == ENABLED
@@ -254,11 +252,11 @@ static void init_ardupilot()
     init_sonar();
 #endif
 
-#if 0 //TODO:remove
     // initialize commands
     // -------------------
     init_commands();
 
+#if 0 //TODO:remove
     // set the correct flight mode
     // ---------------------------
     reset_control_switch();
@@ -307,17 +305,15 @@ static void startup_ground(void)
     // ---------------------------
     clear_leds();
 
-#if 0 //TODO:remove
     // when we re-calibrate the gyros,
     // all previous I values are invalid
     reset_I_all();
-#endif // #if 0
 }
 
 // returns true or false whether mode requires GPS
 static bool mode_requires_GPS(uint8_t mode) {
     switch(mode) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable RTL mode
         case AUTO:
         case GUIDED:
         case LOITER: 
@@ -340,7 +336,7 @@ static void set_mode(uint8_t mode)
     if(g_gps->status() != GPS::GPS_OK_FIX_3D && mode_requires_GPS(mode)) {
             mode = STABILIZE;
     }
-#if 0 //TODO:remove
+#if 0 //TODO: enable RTL mode
     else if(mode == RTL && !ap.home_is_set) {
             mode = STABILIZE;
     }
@@ -388,7 +384,7 @@ static void set_mode(uint8_t mode)
         // set_nav_mode(NAV_NONE); TODO:uncomment
         break;
 
-#if 0 //TODO:remove
+#if 0 //TODO: enable LAND and RTL modes
     case ALT_HOLD:
     	ap.manual_throttle = false;
     	ap.manual_attitude = true;
@@ -525,7 +521,6 @@ init_simple_bearing()
 // update_auto_armed - update status of auto_armed flag
 static void update_auto_armed()
 {
-#if 0 // TODO: enable the following code when arming is enabled
     // disarm checks
     if(ap.auto_armed){
         // if motors are disarmed, auto_armed should also be false
@@ -545,7 +540,6 @@ static void update_auto_armed()
             set_auto_armed(true);
         }
     }
-#endif // #if 0
 }
 
 /*
@@ -621,7 +615,7 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case STABILIZE:
         port->print_P(PSTR("STABILIZE"));
         break;
-#if 0 //TODO:remove
+#if 0 //TODO: enable RTL and LAND modes
     case ACRO:
         port->print_P(PSTR("ACRO"));
         break;

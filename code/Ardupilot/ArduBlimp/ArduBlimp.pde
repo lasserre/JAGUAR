@@ -7,11 +7,6 @@
  *  Based on code and ideas from the Arducopter team: Pat Hickey, Jose Julio, Jani Hirvinen, Andrew Tridgell, Justin Beech, Adam Rivera, Jean-Louis Naudin, Roberto Navoni
  *  Thanks to:  Chris Anderson, Mike Smith, Jordi Munoz, Doug Weibel, James Goppert, Benjamin Pelletier, Robert Lefebvre, Marco Robustini
  *
- *  This firmware is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
- *  version 2.1 of the License, or (at your option) any later version.
- *
  */
 
 /********************************************************************************************************
@@ -373,11 +368,9 @@ static struct AP_System{
 // This is the state of the flight control system
 // There are multiple states defined such as STABILIZE, ACRO,
 static int8_t control_mode = STABILIZE;
-#if 0 //TODO:remove
 // Used to maintain the state of the previous control switch position
 // This is set to -1 when we need to re-read the switch
 static uint8_t oldSwitchPosition;
-#endif // #if 0
 
 // receiver RSSI
 static uint8_t receiver_rssi;
@@ -845,6 +838,7 @@ void setup() {
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 }
+
 #if 0 // TODO:remove
 /*
   if the compass is enabled then try to accumulate a reading
@@ -882,6 +876,7 @@ static void perf_update(void)
     pmTest1 = 0;
 }
 #endif // #if 0
+
 void loop()
 {
     uint32_t timer = micros();
