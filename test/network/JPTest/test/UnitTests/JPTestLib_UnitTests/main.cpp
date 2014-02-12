@@ -1,6 +1,7 @@
 #include "tst_jptestfilereader_ut.h"
 #include "tst_jptestcoordinator_ut.h"
 #include "tst_jpacket_ut.h"
+#include "tst_jpacketchecker_ut.h"
 
 int main(int argc, char *argv[])
 {
@@ -14,6 +15,9 @@ int main(int argc, char *argv[])
 
     JPacket_UT jpacketUT;
     QTest::qExec(&jpacketUT, argc, argv);
+
+    JPacketChecker_UT jpacketCheckerUT;
+    QTest::qExec(&jpacketCheckerUT, argc, argv);
 
     return 0;
 }

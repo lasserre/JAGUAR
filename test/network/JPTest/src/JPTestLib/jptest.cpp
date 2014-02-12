@@ -49,7 +49,8 @@ void JPTest::RunServer()
     {
         qDebug() << "Test not loaded!";
 
-        FinishRun();
+        SetIsRunning(false);
+        emit UnableToStartTest();
         return;
     }
 
@@ -66,7 +67,8 @@ void JPTest::RunClient()
     {
         qDebug() << "Test not loaded!";
 
-        FinishRun();
+        SetIsRunning(false);
+        emit UnableToStartTest();
         return;
     }
 

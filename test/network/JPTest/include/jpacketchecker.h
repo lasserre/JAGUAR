@@ -17,9 +17,11 @@ struct JPTDiff
 {
     int srcID;
     bool pass;
+    char byte;
 
     JPTDiff() : srcID(JAGID::Unknown)
       , pass(false)
+      , byte(0x00)
     {
     }
 };
@@ -28,11 +30,11 @@ struct JPacketDiffResults
 {
     bool packetDetected;
     bool garbageDetected;
-    QMap<char, JPTDiff> diffs;         // Map of bytes to results
+    QList<JPTDiff> diffs;         // Map of bytes to results
 
     JPacketDiffResults() : packetDetected(false)
       , garbageDetected(false)
-      , diffs(QMap<char, JPTDiff>())
+      , diffs(QList<JPTDiff>())
     {
     }
 };

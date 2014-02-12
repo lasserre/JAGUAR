@@ -22,6 +22,7 @@ public:
 
 signals:
     void TestEnded();
+    void UnableToStartTest();
     void OutboxLoaded(QStringList);
     void P2InboxLoaded(QStringList);
     void P3InboxLoaded(QStringList);

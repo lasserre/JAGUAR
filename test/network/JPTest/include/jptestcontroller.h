@@ -29,10 +29,12 @@ signals:
     void PacketSent(QByteArray);
     void RawByteReceived(char);
     void NewDiffResults(JPacketDiffResults);
+    void UnableToStartTest();
     void TestEnded();
 
 public slots:
     void TestEndedHandler();
+    void UnableToStartTestHandler();
     void NewOutboxHandler(QStringList newOutbox);
     void NewP2InboxHandler(QStringList newP2Inbox);
     void NewP3InboxHandler(QStringList newP3Inbox);

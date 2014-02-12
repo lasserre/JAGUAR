@@ -39,13 +39,11 @@ public slots:
     void UpdateP3Script(QStringList newP3Script);
     void UpdatePortSelection(const QString &UnusedPortVar);
     void AppendToOutbox(QByteArray);
-    void AppendToStagingArea(char);
-    void AppendToP2Inbox(QByteArray, QList<int> diffs);
-    void AppendToP3Inbox(QByteArray packet, QList<int> diffs);
-    void HandleGarbage(QByteArray garbagePacket);
+
     void CacheTestOptions();
     void ProcessDiffResults(JPacketDiffResults);
     void HandleTestEnded();
+    void HandleUnableToStartTest();
     
 private:
     Ui::JPTMainWindow *ui;
@@ -73,12 +71,22 @@ protected:
     QString GetJptestFilename(bool IncludeWorkingDir = true);
     QString GetJPacketPath();
     QString GetPortName();
+    QString GetHtmlString(const QString& text, const QString& color);
+    QString FormatByteToHexString(const unsigned char &byte);
+
     void ShowStatusBarMessage(const QString& msg);
     void ShowMessageBoxMessage(const QString& msg);
     void LogToMessageArea(const QString& msg);
-    QString GetHtmlString(const QString& text, const QString& color);
     void UpdateJAGIDStrings(const QString& myName, const QString& p2Name, const QString& p3Name);
     void PostNotification(const int& tabIndex);
+
+    // Inboxes/outboxes
+    void AppendToStagingArea(char);
+    void AppendToP2Inbox(const char& byte, const bool& pass);
+    void AppendToP3Inbox(const char& byte, const bool& pass);
+    void AppendToGarbageArea(const char& garbageByte);
+    void StartNewP2Packet(QByteArray packetStart, QList<bool> passList);
+    void StartNewP3Packet(QByteArray packetStart, QList<bool> passList);
 };
 
 #endif // JPTMAINWINDOW_H

@@ -18,8 +18,8 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
   , stopAction(new QAction(QIcon(":/images/images/stop.png"), "Stop", this))
   , stepAction(new QAction(QIcon(":/images/images/step.png"), "Step", this))
   , loadAction(new QAction(QIcon(":/images/images/load.png"), "Load", this))
-  , p2InboxPassFailIndex(0)
-  , p3InboxPassFailIndex(0)
+  , p2InboxPassFailIndex(-1)
+  , p3InboxPassFailIndex(-1)
 {
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
@@ -99,12 +99,12 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->noMSP430checkBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
 
     // JPTest Controller
+    connect(this->jptestManager, SIGNAL(UnableToStartTest()), SLOT(HandleUnableToStartTest()));
     connect(this->jptestManager, SIGNAL(TestEnded()), this, SLOT(HandleTestEnded()));
     connect(this->jptestManager, SIGNAL(OutboxChanged(QStringList)), this, SLOT(UpdateTestScript(QStringList)));
     connect(this->jptestManager, SIGNAL(P2InboxChanged(QStringList)), this, SLOT(UpdateP2Script(QStringList)));
     connect(this->jptestManager, SIGNAL(P3InboxChanged(QStringList)), this, SLOT(UpdateP3Script(QStringList)));
     connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
-    connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToStagingArea(char)));
     connect(this->jptestManager, SIGNAL(NewDiffResults(JPacketDiffResults)),
             this, SLOT(ProcessDiffResults(JPacketDiffResults)));
     // -------------------------------------------------------------------------------------------------//
@@ -389,99 +389,105 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet)
 void JPTMainWindow::AppendToStagingArea(char newByte)
 {
     int newByteASCIIValue(newByte);
+
     QString hexByte = QString::number(newByteASCIIValue, 16);
     if (hexByte.length() < 2) hexByte.prepend('0');
-    ui->byteStagingLineEdit->setText(hexByte.toUpper() + " ");
+
+    ui->byteStagingLineEdit->setText(ui->byteStagingLineEdit->text() + hexByte.toUpper() + " ");
+
     return;
 }
 
-void JPTMainWindow::AppendToP2Inbox(QByteArray packet, QList<int> diffs)
+void JPTMainWindow::AppendToP2Inbox(const char& byte, const bool& pass)
 {
-    int asciiByte;
-    QString hexByte;
+    QString hex = FormatByteToHexString(byte);
     QString colorString;
-    QColor successColor;
 
-    qDebug() << "# diffs: " << diffs.count();
-
-    if (diffs.empty()) successColor = Qt::green;
-    else successColor = Qt::red;
-
-    ui->p2packetInboxListWidget->item(p2InboxPassFailIndex++)->setBackgroundColor(successColor);
-
-    for (int i = 0; i < packet.count(); i++)
+    if (pass)
+        colorString = "green";
+    else
     {
-        // Format into hex value string
-        asciiByte = (unsigned char) packet.at(i);
-        hexByte = QString::number(asciiByte, 16);
-        if (hexByte.length() < 2) hexByte.prepend("0");
-
-        // Check pass/fail
-        if (!diffs.empty() && diffs.first() == i)
-            colorString = "red";
-        else
-            colorString = "green";
-
-        if (!diffs.empty()) diffs.removeFirst();
-        ui->p2Inbox->insertHtml(GetHtmlString(hexByte.toUpper(), colorString));
+        colorString = "red";
+        ui->p2packetInboxListWidget->item(p2InboxPassFailIndex)->setBackgroundColor(Qt::red);
     }
 
-    ui->p2Inbox->insertPlainText("\n");
+    ui->p2Inbox->insertHtml(GetHtmlString(hex, colorString));
 
     return;
 }
 
-void JPTMainWindow::AppendToP3Inbox(QByteArray packet, QList<int> diffs)
+void JPTMainWindow::AppendToP3Inbox(const char& byte, const bool& pass)
 {
-    int asciiByte;
-    QString hexByte;
+    QString hex = FormatByteToHexString(byte);
     QString colorString;
-    QColor successColor;
 
-    qDebug() << "# diffs: " << diffs.count();
-
-    if (diffs.empty()) successColor = Qt::green;
-    else successColor = Qt::red;
-
-    ui->p3packetInboxListWidget->item(p3InboxPassFailIndex++)->setBackgroundColor(successColor);
-
-    for (int i = 0; i < packet.count(); i++)
+    if (pass)
+        colorString = "green";
+    else
     {
-        // Format into hex value string
-        asciiByte = (unsigned char) packet.at(i);
-        hexByte = QString::number(asciiByte, 16);
-        if (hexByte.length() < 2) hexByte.prepend("0");
-
-        // Check pass/fail
-        if (!diffs.empty() && diffs.first() == i)
-            colorString = "red";
-        else
-            colorString = "green";
-
-        if (!diffs.empty()) diffs.removeFirst();
-        ui->p3Inbox->insertHtml(GetHtmlString(hexByte.toUpper() + " ", colorString));
+        colorString = "red";
+        ui->p3packetInboxListWidget->item(p3InboxPassFailIndex)->setBackgroundColor(Qt::red);
     }
 
-    ui->p3Inbox->insertPlainText("\n");
-
+    ui->p3Inbox->insertHtml(GetHtmlString(hex, colorString));
 
     return;
 }
 
-void JPTMainWindow::HandleGarbage(QByteArray garbagePacket)
+void JPTMainWindow::StartNewP2Packet(QByteArray packetStart, QList<bool> passList)
 {
-    QByteArray hex = garbagePacket.toHex();
-    QString outputString;
+    // Innocent until proven guilty
+    ui->p2packetInboxListWidget->item(++p2InboxPassFailIndex)->setBackgroundColor(Qt::green);
 
-    for (int i = 0; i < hex.count(); i++)
+    if (!ui->p2Inbox->textCursor().atStart())
+        ui->p2Inbox->insertPlainText("\n");
+
+    if (packetStart.length() != passList.length())
     {
-        QString hexValue(hex.at(i));
-        hexValue.append(hex.at(i));
-        outputString.append(hexValue.toUpper() + " ");
-        i++;    // Account for second nibble
+        LogToMessageArea("ERROR in StartNewP2Packet: packet length does not match diff length!");
+        return;
     }
 
-    LogToMessageArea("Garbage packet detected: " + outputString);
+    for (int i = 0; i < packetStart.length(); i++)
+        AppendToP2Inbox(packetStart.at(i), passList.at(i));
+
+    return;
+}
+
+void JPTMainWindow::StartNewP3Packet(QByteArray packetStart, QList<bool> passList)
+{
+    // Innocent until proven guilty
+    ui->p3packetInboxListWidget->item(++p3InboxPassFailIndex)->setBackgroundColor(Qt::green);
+
+    if (!ui->p3Inbox->textCursor().atStart())
+        ui->p3Inbox->insertPlainText("\n");
+
+    if (packetStart.length() != passList.length())
+    {
+        LogToMessageArea("ERROR in StartNewP2Packet: packet length does not match diff length!");
+        return;
+    }
+
+    for (int i = 0; i < packetStart.length(); i++)
+        AppendToP3Inbox(packetStart.at(i), passList.at(i));
+
+    return;
+}
+
+QString JPTMainWindow::FormatByteToHexString(const unsigned char &byte)
+{
+    // Format into hex value string
+    QString hexByte = QString::number(byte, 16);
+    if (hexByte.length() < 2) hexByte.prepend("0");
+    return hexByte.toUpper();
+}
+
+void JPTMainWindow::AppendToGarbageArea(const char& garbageByte)
+{
+    QString hex = FormatByteToHexString(garbageByte);
+    ui->garbageInbox->insertPlainText(hex + " ");
+
+    LogToMessageArea("Garbage detected");
 
     return;
 }
@@ -561,35 +567,55 @@ void JPTMainWindow::PostNotification(const int &tabIndex)
 
 void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
 {
-    if (results.garbageDetected)
+    if (results.garbageDetected || results.packetDetected)
     {
-
+        // New packet or garbage just detected. Clear staging area
+        ui->byteStagingLineEdit->clear();
     }
-    else if (results.packetDetected)
-    {
 
-    }
-    else
-    {
-        // Append to area given by
-        QMap<char, JPTDiff>::iterator mapIter = results.diffs.begin();
+    QList<JPTDiff>::iterator listIter = results.diffs.begin();
 
-        while (mapIter != results.diffs.end())
+    while (listIter != results.diffs.end())
+    {
+        switch (listIter->srcID)
         {
-            if (mapIter->srcID == JAGID::Unknown)
-            {
-                QString lineText = ui->byteStagingLineEdit->text();
-                ui->byteStagingLineEdit->setText(lineText + QString(mapIter.key()));
-            }
-
-            mapIter++;
+        case JAGID::Unknown:
+            AppendToStagingArea(listIter->byte);
+            break;
+        case JAGID::GCS:
+        case JAGID::MS:
+        case JAGID::QC:
+            if (listIter->srcID == testOptions.P2ID)
+                AppendToP2Inbox(listIter->byte, listIter->pass);
+            else if (listIter->srcID == testOptions.P3ID)
+                AppendToP3Inbox(listIter->byte, listIter->pass);
+            else
+                LogToMessageArea("Valid SRC ID doesn't match P2 or P3 ids!");
+            break;
+        case JAGID::Garbage:
+            AppendToGarbageArea(listIter->byte);
+            break;
+        case JAGID::Broadcast:
+            break;
+        default:
+            LogToMessageArea("Unrecognized srcID in ProcessDiffResults");
+            break;
         }
+
+        listIter++;
     }
+
     return;
 }
 
 void JPTMainWindow::HandleTestEnded()
 {
     LogToMessageArea("JTest Ended.");
+    return;
+}
+
+void JPTMainWindow::HandleUnableToStartTest()
+{
+    LogToMessageArea("Unable to start test. (Did you load the test?)");
     return;
 }

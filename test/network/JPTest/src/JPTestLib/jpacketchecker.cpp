@@ -242,8 +242,7 @@ void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults, const int 
 
     if (DiffResults.garbageDetected)
     {    
-        int startIndex = byteStagingQueue.length() - NumBytesAdded;
-        for (int i = startIndex; i < byteStagingQueue.length(); i++)
+        for (int i = 0; i < byteStagingQueue.length(); i++)
         {
             if (i <= GetSRCByteIndex())
             {
@@ -256,7 +255,9 @@ void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults, const int 
                 jptdiff.srcID = JAGID::Unknown;
             }
 
-            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+            jptdiff.byte = byteStagingQueue.at(i);
+
+            DiffResults.diffs.append(jptdiff);
         }
     }
     else if (detectedSrcID == JAGID::Garbage)
@@ -265,7 +266,8 @@ void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults, const int 
         for (int i = 0; i < byteStagingQueue.length(); i++)
         {
             jptdiff.srcID = JAGID::Garbage;
-            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+            jptdiff.byte = byteStagingQueue.at(i);
+            DiffResults.diffs.append(jptdiff);
         }
     }
     else if (detectedSrcID == JAGID::Unknown)
@@ -274,7 +276,8 @@ void JPacketChecker::DiffPacketBytes(JPacketDiffResults &DiffResults, const int 
         for (int i = startIndex; i < byteStagingQueue.length(); i++)
         {
             jptdiff.srcID = JAGID::Unknown;
-            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+            jptdiff.byte = byteStagingQueue.at(i);
+            DiffResults.diffs.append(jptdiff);
         }
     }
     else if (detectedSrcID == GetP2ID())
@@ -395,15 +398,16 @@ void JPacketChecker::DiffEntireQueueAgainstNextPacket(JPacketDiffResults &DiffRe
         for (int i = 0; i < diffLength; i++)
         {
             jptdiff.srcID = Packet.GetSrc();
+            jptdiff.byte = byteStagingQueue.at(i);
 
             // Do the actual diff! lol
 
-            if (byteStagingQueue.at(i) != Packet.GetPayload().at(i))
+            if (jptdiff.byte != Packet.GetPayload().at(i))
                 jptdiff.pass = false;
             else
                 jptdiff.pass = true;
 
-            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+            DiffResults.diffs.append(jptdiff);
         }
     }
     return;
@@ -424,15 +428,16 @@ void JPacketChecker::DiffAddedBytesAgainstNextPacket(JPacketDiffResults& DiffRes
         for (int i = startIndex; i < byteStagingQueue.length(); i++)
         {
             jptdiff.srcID = Packet.GetSrc();
+            jptdiff.byte = byteStagingQueue.at(i);
 
             // Do the actual diff! lol
 
-            if (byteStagingQueue.at(i) != Packet.GetPayload().at(i))
+            if (jptdiff.byte != Packet.GetPayload().at(i))
                 jptdiff.pass = false;
             else
                 jptdiff.pass = true;
 
-            DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+            DiffResults.diffs.append(jptdiff);
         }
     }
 
@@ -469,7 +474,8 @@ void JPacketChecker::HandleDiffWhenFinished(JPacketDiffResults &DiffResults, con
     for (int i = 0; i < byteStagingQueue.length(); i++)
     {
         jptdiff.srcID = JAGID::Garbage;
-        DiffResults.diffs.insert(byteStagingQueue.at(i), jptdiff);
+        jptdiff.byte = byteStagingQueue.at(i);
+        DiffResults.diffs.append(jptdiff);
     }
 
     return;
