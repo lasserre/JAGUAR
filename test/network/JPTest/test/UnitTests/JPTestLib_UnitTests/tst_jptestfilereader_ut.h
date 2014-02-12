@@ -16,6 +16,8 @@ public:
 private Q_SLOTS:
     void GetPacketList_CorrectJptestFile_OneListPerJAGID();
     void GetPacketList_CorrectJptestFile_OneListPerJAGID_data();
+    void GetPacketList_CompactNotation();
+    void GetPacketList_CompactNotation_data();
 };
 
 #endif // TST_JPTESTFILEREADER_UT_H
