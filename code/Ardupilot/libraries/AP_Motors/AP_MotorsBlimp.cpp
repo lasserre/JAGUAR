@@ -17,11 +17,10 @@ void AP_MotorsBlimp::setup_motors()
     if( _frame_orientation == AP_MOTORS_BLIMP_FRAME ) {
     	
         //JAGUAR
-    	//The way the angle (second parameter to the add_motor function)
-        //is by the following equations:
-    	//		cosine(angle+90) = amount that the motor helps 	roll
-    	//		cosine(angle) = amount that the motor helps 	pitch
-    	//		angle = amount that the motor helps				yaw
+    	//The way the add_motor parameters affect roll pitch and yaw
+    	//		cosine(2ndparam+90) = amount that the motor helps      roll
+    	//		cosine(2ndparam) = amount that the motor helps         pitch
+    	//		3rdparam = amount that the motor helps                 yaw
 
         //Propulsion motors
         //      This is actually two motors (tied together). The 3rd parameter
@@ -31,13 +30,17 @@ void AP_MotorsBlimp::setup_motors()
         //Lift motor
         add_motor(LIFT_MOTOR, -90, 0, 2);
 
+        //Weignht compensation motors
+        add_motor(LEFT_ANTI_LIFT_MOTOR,     0, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
+        add_motor(RIGHT_ANTI_LEFT_MOTOR,    0, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
 
-        add_motor(LEFT_ANTI_LIFT_MOTOR,    0, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
-        add_motor(RIGHT_ANTI_LEFT_MOTOR, 180, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
-        add_motor(LEFT_YAW_MOTOR,        180, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  5);
-        add_motor(RIGHT_YAW_MOTOR,       180, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  6);
-        add_motor(TOP_PITCH_MOTOR,       180, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  7);
-        add_motor(BOTTOM_PITCH_MOTOR,    180, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  8);
+        //Yaw motors
+        add_motor_raw(LEFT_YAW_MOTOR,		0, 0, 1, 5);
+        add_motor_raw(RIGHT_YAW_MOTOR,		0, 0, 1, 6);
+
+        //Pitch motors
+        add_motor_raw(TOP_PITCH_MOTOR, 		0, 1, 0, 7);
+        add_motor_raw(TOP_PITCH_MOTOR, 		0, 1, 0, 8);
 
     }
 }
