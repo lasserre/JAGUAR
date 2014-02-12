@@ -117,6 +117,7 @@ void JPTestController::HandleDiffResults(JPacketDiffResults results)
 
 void JPTestController::UnableToStartTestHandler()
 {
+    testIsRunning = false;
     emit UnableToStartTest();
     return;
 }
