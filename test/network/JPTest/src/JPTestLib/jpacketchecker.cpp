@@ -111,6 +111,9 @@ JPacketDiffResults JPacketChecker::ReevaluateState(const int& NumBytesAdded)
     case WaitingForPacketFinish:
 
         detectedSrcID = GetPacketSource();
+        qDebug() << "p2ID: " << GetP2ID();
+        qDebug() << "p3ID: " << GetP3ID();
+        qDebug() << "detectedID: " << detectedSrcID;
 
         if (detectedSrcID == GetP2ID() && !needP2Packet)
         {

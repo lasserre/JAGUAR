@@ -48,3 +48,15 @@ void JPInbox::SetNextP3ExpectedPacket(const JPacket &NextP3Packet)
     packetInspector->SetNextExpectedP3Packet(NextP3Packet);
     return;
 }
+
+void JPInbox::SetP2ID(const int &ID)
+{
+    packetInspector->SetP2ID(ID);
+    return;
+}
+
+void JPInbox::SetP3ID(const int &ID)
+{
+    packetInspector->SetP3ID(ID);
+    return;
+}

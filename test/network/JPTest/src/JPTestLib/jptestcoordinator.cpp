@@ -90,6 +90,9 @@ QList<QStringList> JPTestCoordinator::LoadTest(const JPTestOptions &Options)
 
         if (SetUpPort())
             LoadedMailboxes = LoadTestScript(jptestfile);
+
+        inbox->SetP2ID(testOptions->P2ID);
+        inbox->SetP3ID(testOptions->P3ID);
     }
     else qDebug() << "Unable to open .jptest file " + Options.Filename;
 
@@ -182,11 +185,6 @@ void JPTestCoordinator::GetMailFromPort()
 {
     QByteArray mail = port->ReadData();
     inbox->AddToInbox(mail);
-
-    for (int i = 0; i < mail.count(); i++)
-        ;
-        //emit ByteReceived(mail.at(i));
-        //CLS - where to put this???? Inbox needs to emit with diff per byte...
 
     return;
 }

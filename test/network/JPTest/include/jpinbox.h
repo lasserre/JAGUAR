@@ -18,6 +18,8 @@ public:
     void AddToInbox(const QByteArray& Bytes);
     void SetNextP2ExpectedPacket(const JPacket& NextP2Packet);
     void SetNextP3ExpectedPacket(const JPacket& NextP3Packet);
+    void SetP2ID(const int& ID);
+    void SetP3ID(const int& ID);
 
 protected:
     JPacketChecker* packetInspector;

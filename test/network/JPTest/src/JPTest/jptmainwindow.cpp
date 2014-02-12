@@ -411,7 +411,7 @@ void JPTMainWindow::AppendToP2Inbox(const char& byte, const bool& pass)
         ui->p2packetInboxListWidget->item(p2InboxPassFailIndex)->setBackgroundColor(Qt::red);
     }
 
-    ui->p2Inbox->insertHtml(GetHtmlString(hex, colorString));
+    ui->p2Inbox->insertHtml(GetHtmlString(hex.append(" "), colorString));
 
     return;
 }
@@ -429,7 +429,7 @@ void JPTMainWindow::AppendToP3Inbox(const char& byte, const bool& pass)
         ui->p3packetInboxListWidget->item(p3InboxPassFailIndex)->setBackgroundColor(Qt::red);
     }
 
-    ui->p3Inbox->insertHtml(GetHtmlString(hex, colorString));
+    ui->p3Inbox->insertHtml(GetHtmlString(hex.append(" "), colorString));
 
     return;
 }
