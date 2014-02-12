@@ -5,7 +5,6 @@
  *  ArduBlimp Version 0.1
  *  Creators:       Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
  *  Based on code and ideas from the Arducopter team: Pat Hickey, Jose Julio, Jani Hirvinen, Andrew Tridgell, Justin Beech, Adam Rivera, Jean-Louis Naudin, Roberto Navoni
- *  Thanks to:  Chris Anderson, Mike Smith, Jordi Munoz, Doug Weibel, James Goppert, Benjamin Pelletier, Robert Lefebvre, Marco Robustini
  *
  */
 
@@ -103,7 +102,7 @@ static Parameters g;
 // main loop scheduler
 static AP_Scheduler scheduler;
 
-#if 0 // TODO:remove
+#if 0 // TODO: enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
 ////////////////////////////////////////////////////////////////////////////////
@@ -277,7 +276,7 @@ static AP_OpticalFlow_ADNS3080 optflow;
 static AP_OpticalFlow optflow;
  #endif
 
-#if 0 //TODO:remove
+#if 0 //TODO: Enable when we add GCS capability
 ////////////////////////////////////////////////////////////////////////////////
 // GCS selection
 ////////////////////////////////////////////////////////////////////////////////
@@ -464,7 +463,7 @@ static float sin_yaw;
 static float sin_roll;
 static float sin_pitch;
 
-#if 0 //TODO:remove
+#if 0 //TODO: This may not be needed since we probably won't use SIMPLE mode for the blimp
 ////////////////////////////////////////////////////////////////////////////////
 // SIMPLE Mode
 ////////////////////////////////////////////////////////////////////////////////
@@ -663,7 +662,7 @@ static int16_t event_value;
 // the stored value used to undo commands - such as original PWM command
 static int16_t event_undo_value;
 
-#if 0 //TODO:remove
+#if 0 //TODO: Enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Delay Mission Scripting Command
 ////////////////////////////////////////////////////////////////////////////////
@@ -690,7 +689,7 @@ static AP_InertialNav inertial_nav(&ahrs, &ins, &barometer, &g_gps);
 ////////////////////////////////////////////////////////////////////////////////
 static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon, &g.pid_loiter_rate_lat, &g.pid_loiter_rate_lon);
 
-#if 0 //TODO:remove
+#if 0 //TODO: Enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
@@ -770,7 +769,7 @@ AC_Fence    fence(&inertial_nav);
 void get_throttle_althold(int32_t target_alt, int16_t min_climb_rate, int16_t max_climb_rate);
 static void pre_arm_checks(bool display_failure);
 
-#if 0 //TODO: remove
+#if 0 //TODO: Enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////
@@ -837,7 +836,7 @@ void setup() {
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 }
 
-#if 0 // TODO:remove
+#if 0 // TODO: Enable the following code
 /*
   if the compass is enabled then try to accumulate a reading
  */
@@ -910,6 +909,7 @@ void loop()
 // Main loop - 100hz
 static void fast_loop()
 {
+#if 0 // TODO: enable when needed
     // IMU DCM Algorithm
     // --------------------
     read_AHRS();
@@ -918,27 +918,15 @@ static void fast_loop()
     // --------------------------------------------------------------------
     update_trig();
 
-#if 0 //TODO:needed?
-    // Acrobatic control
-    if (ap.do_flip) {
-        if(abs(g.rc_1.control_in) < 4000) {
-            // calling roll_flip will override the desired roll rate and throttle output
-            roll_flip();
-        }else{
-            // force an exit from the loop if we are not hands off sticks.
-            ap.do_flip = false;
-            Log_Write_Event(DATA_EXIT_FLIP);
-        }
-    }
-#endif // #if 0
-
     // run low level rate controllers that only require IMU data
     run_rate_controllers();
+#endif // #if 0
 
     // write out the servo PWM values
     // ------------------------------
-    set_servos_4();
+    motors.output();
 
+#if 0 // TODO: enable when needed
     // Inertial Nav
     // --------------------
     read_inertia();
@@ -950,11 +938,13 @@ static void fast_loop()
         update_optical_flow();
     }
 #endif  // OPTFLOW == ENABLED
+#endif // #if 0
 
     // Read radio and 3-position switch on radio
     // -----------------------------------------
     read_radio();
-    // read_control_switch(); TODO: enable when control_modes.pde is included
+#if 0 //TODO: enable when needed
+    read_control_switch();
 
     // custom code/exceptions for flight modes
     // ---------------------------------------
@@ -968,9 +958,10 @@ static void fast_loop()
 #ifdef USERHOOK_FASTLOOP
     USERHOOK_FASTLOOP
 #endif
+#endif // #if 0
 }
 
-#if 0 // TODO:remove
+#if 0 // TODO: Enable the following code
 // stuff that happens at 50 hz
 // ---------------------------
 static void fifty_hz_loop()
@@ -981,10 +972,6 @@ static void fifty_hz_loop()
     // Update the throttle ouput
     // -------------------------
     update_throttle_mode();
-
-#if TOY_EDF == ENABLED
-    edf_toy();
-#endif
 
     // check auto_armed status
     update_auto_armed();
@@ -1268,7 +1255,7 @@ static void update_optical_flow(void)
 }
 #endif  // OPTFLOW == ENABLED
 
-#if 0 //TODO:remove
+#if 0 //TODO: Enable to update the GPS
 // called at 50hz
 static void update_GPS(void)
 {
@@ -1373,9 +1360,6 @@ bool set_yaw_mode(uint8_t new_yaw_mode)
                 yaw_initialised = true;
             }
             break;
-        case YAW_TOY:
-            yaw_initialised = true;
-            break;
         case YAW_RESETTOARMEDYAW:
             nav_yaw = ahrs.yaw_sensor; // store current yaw so we can start rotating back to correct one
             yaw_initialised = true;
@@ -1464,15 +1448,6 @@ void update_yaw_mode(void)
         // Commanded Yaw to automatically look ahead.
         get_look_ahead_yaw(g.rc_4.control_in);
         break;
-
-#if TOY_LOOKUP == TOY_EXTERNAL_MIXER
-    case YAW_TOY:
-        // update to allow external roll/yaw mixing
-        // keep heading always pointing at home with no pilot input allowed
-        nav_yaw = get_yaw_slew(nav_yaw, home_bearing, AUTO_YAW_SLEW_RATE);
-        get_stabilize_yaw(nav_yaw);
-        break;
-#endif
 
     case YAW_RESETTOARMEDYAW:
         // changes yaw to be same as when quad was armed
@@ -1568,21 +1543,6 @@ void update_roll_pitch_mode(void)
         control_roll            = g.rc_1.control_in;
         control_pitch           = g.rc_2.control_in;
 
-#if FRAME_CONFIG == HELI_FRAME
-        if(g.axis_enabled) {
-            get_roll_rate_stabilized_ef(g.rc_1.control_in);
-            get_pitch_rate_stabilized_ef(g.rc_2.control_in);
-        }else{
-            // ACRO does not get SIMPLE mode ability
-            if (motors.flybar_mode == 1) {
-                g.rc_1.servo_out = g.rc_1.control_in;
-                g.rc_2.servo_out = g.rc_2.control_in;
-            } else {
-                get_acro_roll(g.rc_1.control_in);
-                get_acro_pitch(g.rc_2.control_in);
-            }
-        }
-#else  // !HELI_FRAME
         if(g.axis_enabled) {
             get_roll_rate_stabilized_ef(g.rc_1.control_in);
             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
@@ -1591,7 +1551,6 @@ void update_roll_pitch_mode(void)
             get_acro_roll(g.rc_1.control_in);
             get_acro_pitch(g.rc_2.control_in);
         }
-#endif  // HELI_FRAME
         break;
 
     case ROLL_PITCH_STABLE:
@@ -1668,12 +1627,10 @@ void update_roll_pitch_mode(void)
         break;
     }
 
-    #if FRAME_CONFIG != HELI_FRAME
     if(g.rc_3.control_in == 0 && control_mode == STABILIZE /*control_mode <= ACRO*/) {
         reset_rate_I();
         reset_stability_I();
     }
-    #endif //HELI_FRAME
 
     if(ap_system.new_radio_frame) {
         // clear new radio frame info
@@ -1681,7 +1638,7 @@ void update_roll_pitch_mode(void)
     }
 }
 
-#if 0 //TODO:remove
+#if 0 //TODO: Is this needed? It's for SIMPLE mode
 // new radio frame is used to make sure we only call this at 50hz
 void update_simple_mode(void)
 {
@@ -1803,14 +1760,6 @@ void update_throttle_mode(void)
         return;
     }
 
-#if FRAME_CONFIG == HELI_FRAME
-    if (control_mode == STABILIZE){
-        motors.stab_throttle = true;
-    } else {
-        motors.stab_throttle = false;
-    }
-#endif // HELI_FRAME
-
     switch(throttle_mode) {
 
     case THROTTLE_MANUAL:
@@ -1915,7 +1864,6 @@ static float get_target_alt_for_reporting()
 {
     return target_alt_for_reporting;
 }
-#endif // #if 0
 
 static void read_AHRS(void)
 {
@@ -1966,6 +1914,7 @@ static void update_trig(void){
     // 180 = cos_yaw: -1.00, sin_yaw:  0.00,
     // 270 = cos_yaw:  0.00, sin_yaw: -1.00,
 }
+#endif // #if 0
 
 // read baro and sonar altitude at 20hz
 static void update_altitude()
@@ -1993,7 +1942,7 @@ static void update_altitude()
     }
 }
 
-#if 0 //TODO:remove
+#if 0 //TODO: Enable this. It's for tuning PIDs with Channel 6
 static void tuning(){
     tuning_value = (float)g.rc_6.control_in / 1000.0f;
     g.rc_6.set_range(g.radio_tuning_low,g.radio_tuning_high);                   // 0 to 1
@@ -2158,5 +2107,6 @@ static void tuning(){
     }
 }
 #endif // #if 0
+
 AP_HAL_MAIN();
 

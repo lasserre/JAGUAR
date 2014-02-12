@@ -215,7 +215,7 @@ static void pre_arm_checks(bool display_failure)
     pre_arm_rc_checks();
     if(!ap.pre_arm_rc_check) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: RC not calibrated"));
 #endif // #if 0
         }
@@ -225,7 +225,7 @@ static void pre_arm_checks(bool display_failure)
     // check accelerometers have been calibrated
     if(!ins.calibrated()) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: INS not calibrated"));
 #endif // #if 0
         }
@@ -235,7 +235,7 @@ static void pre_arm_checks(bool display_failure)
     // check the compass is healthy
     if(!compass.healthy) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not healthy"));
 #endif // #if 0
         }
@@ -246,7 +246,7 @@ static void pre_arm_checks(bool display_failure)
     Vector3f offsets = compass.get_offsets();
     if(!compass._learn && offsets.length() == 0) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not calibrated"));
 #endif // #if 0
         }
@@ -256,7 +256,7 @@ static void pre_arm_checks(bool display_failure)
     // check for unreasonable compass offsets
     if(offsets.length() > 500) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass offsets too high"));
 #endif // #if 0
         }
@@ -267,7 +267,7 @@ static void pre_arm_checks(bool display_failure)
     float mag_field = pythagorous3(compass.mag_x, compass.mag_y, compass.mag_z);
     if (mag_field > COMPASS_MAGFIELD_EXPECTED*1.65 || mag_field < COMPASS_MAGFIELD_EXPECTED*0.35) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
 #endif // #if 0
         }
@@ -277,7 +277,7 @@ static void pre_arm_checks(bool display_failure)
     // barometer health check
     if(!barometer.healthy) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Baro not healthy"));
 #endif // #if 0
         }
@@ -288,7 +288,7 @@ static void pre_arm_checks(bool display_failure)
     // check fence is initialised
     if(!fence.pre_arm_check()) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: No GPS Lock"));
 #endif // #if 0
         }
@@ -300,7 +300,7 @@ static void pre_arm_checks(bool display_failure)
     // check board voltage
     if(board_voltage() < BOARD_VOLTAGE_MIN || board_voltage() > BOARD_VOLTAGE_MAX) {
         if (display_failure) {
-#if 0 //TODO:remove
+#if 0 //TODO: enable when enabling GCS code
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Board Voltage"));
 #endif // #if 0
         }
@@ -367,17 +367,3 @@ static void init_disarm_motors()
     // disable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(false);
 }
-
-/*****************************************
-* Set the flight control servos based on the current calculated values
-*****************************************/
-static void
-set_servos_4()
-{
-#if FRAME_CONFIG == TRI_FRAME
-    // To-Do: implement improved stability patch for tri so that we do not need to limit throttle input to motors
-    g.rc_3.servo_out = min(g.rc_3.servo_out, 800);
-#endif
-    motors.output();
-}
-

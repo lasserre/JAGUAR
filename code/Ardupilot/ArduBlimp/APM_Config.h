@@ -10,18 +10,6 @@
 //#define DMP_ENABLED           ENABLED             // use MPU6000's DMP instead of DCM for attitude estimation
 //#define SECONDARY_DMP_ENABLED ENABLED             // allows running DMP in parallel with DCM for testing purposes
 
-//#define FRAME_CONFIG QUAD_FRAME
-/*
- *  options:
- *  QUAD_FRAME
- *  TRI_FRAME
- *  HEXA_FRAME
- *  Y6_FRAME
- *  OCTA_FRAME
- *  OCTA_QUAD_FRAME
- *  HELI_FRAME
- */
-
 #define AC_FENCE         DISABLED
 #define CAMERA           DISABLED
 #define CONFIG_SONAR     DISABLED

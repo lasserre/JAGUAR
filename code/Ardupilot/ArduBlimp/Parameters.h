@@ -343,14 +343,6 @@ public:
     AP_Int8         ch8_option;
     AP_Int8         arming_check_enabled;
 
-#if FRAME_CONFIG ==     HELI_FRAME
-    // Heli
-    RC_Channel      heli_servo_1, heli_servo_2, heli_servo_3, heli_servo_4;     // servos for swash plate and tail
-    AP_Float        heli_pitch_ff;												// pitch rate feed-forward
-    AP_Float        heli_roll_ff;												// roll rate feed-forward
-    AP_Float        heli_yaw_ff;												// yaw rate feed-forward																			
-#endif
-
     // RC channels
     RC_Channel              rc_1;
     RC_Channel              rc_2;
@@ -401,13 +393,6 @@ public:
     // Note: keep initializers here in the same order as they are declared
     // above.
     Parameters() :
-
-#if FRAME_CONFIG ==     HELI_FRAME
-        heli_servo_1        (CH_1),
-        heli_servo_2        (CH_2),
-        heli_servo_3        (CH_3),
-        heli_servo_4        (CH_4),
-#endif
 
         rc_1                (CH_1),
         rc_2                (CH_2),

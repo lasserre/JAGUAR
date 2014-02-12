@@ -19,12 +19,7 @@ static void init_rc_in()
     // set rc channel ranges
     g.rc_1.set_angle(MAX_INPUT_ROLL_ANGLE);
     g.rc_2.set_angle(MAX_INPUT_PITCH_ANGLE);
-#if FRAME_CONFIG == HELI_FRAME
-    // we do not want to limit the movment of the heli's swash plate
-    g.rc_3.set_range(0, 1000);
-#else
     g.rc_3.set_range(g.throttle_min, g.throttle_max);
-#endif
     g.rc_4.set_angle(4500);
 
     // reverse: CW = left
@@ -103,12 +98,6 @@ static void init_rc_out()
     if (ap.pre_arm_rc_check) {
         output_min();
     }
-
-#if TOY_EDF == ENABLED
-    // add access to CH8 and CH6
-    APM_RC.enable_out(CH_8);
-    APM_RC.enable_out(CH_6);
-#endif
 }
 
 // output_min - enable and output lowest possible value to motors
@@ -139,18 +128,15 @@ static void read_radio()
         g.rc_7.set_pwm(periods[6]);
         g.rc_8.set_pwm(periods[7]);
 
-#if FRAME_CONFIG != HELI_FRAME
         // limit our input to 800 so we can still pitch and roll
         g.rc_3.control_in = min(g.rc_3.control_in, MAXIMUM_THROTTLE);
-#endif
     }else{
         uint32_t elapsed = millis() - last_update;
         // turn on throttle failsafe if no update from ppm encoder for 2 seconds
-        if ((elapsed >= FAILSAFE_RADIO_TIMEOUT_MS)
-                && g.failsafe_throttle && motors.armed() && !ap.failsafe_radio) {
+        if ((elapsed >= FAILSAFE_RADIO_TIMEOUT_MS) && g.failsafe_throttle && motors.armed() && !ap.failsafe_radio) {
 #if LOGGING_ENABLED == ENABLED
             Log_Write_Error(ERROR_SUBSYSTEM_RADIO, ERROR_CODE_RADIO_LATE_FRAME);
-#endif // LOGGING_ENABLED
+#endif // LOGGING_ENABLED == ENABLED
             set_failsafe_radio(true);
         }
     }

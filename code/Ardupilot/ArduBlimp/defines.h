@@ -23,15 +23,13 @@
 #define YAW_LOOK_AT_HOME    		    5       // point towards home (no pilot input accepted)
 #define YAW_LOOK_AT_HEADING    		    6       // point towards a particular angle (not pilot input accepted)
 #define YAW_LOOK_AHEAD					7		// WARNING!  CODE IN DEVELOPMENT NOT PROVEN
-#define YAW_TOY                         8       // THOR This is the Yaw mode
-#define YAW_RESETTOARMEDYAW				9       // point towards heading at time motors were armed
+#define YAW_RESETTOARMEDYAW				8       // point towards heading at time motors were armed
 
 #define ROLL_PITCH_STABLE           0       // pilot input roll, pitch angles
 #define ROLL_PITCH_ACRO             1       // pilot inputs roll, pitch rotation rates
 #define ROLL_PITCH_AUTO             2       // no pilot input.  autopilot roll, pitch is sent to stabilize controller inputs
 #define ROLL_PITCH_STABLE_OF        3       // pilot inputs roll, pitch angles which are mixed with optical flow based position controller lean anbles
-#define ROLL_PITCH_TOY              4       // THOR This is the Roll and Pitch mode
-#define ROLL_PITCH_LOITER           5       // pilot inputs the desired horizontal velocities
+#define ROLL_PITCH_LOITER           4       // pilot inputs the desired horizontal velocities
 
 #define THROTTLE_MANUAL                     0   // manual throttle mode - pilot input goes directly to motors
 #define THROTTLE_MANUAL_TILT_COMPENSATED    1   // mostly manual throttle but with some tilt compensation
@@ -65,6 +63,7 @@
 
 
 // Frame types
+// JBW - TODO: are these needed?
 #define QUAD_FRAME 0
 #define TRI_FRAME 1
 #define HEXA_FRAME 2
@@ -133,8 +132,6 @@
 // #define LAND 9                          // AUTO control
 // #define OF_LOITER 10                    // Hold a single location using optical flow
 //                                         // sensor
-// #define TOY_A 11                        // THOR Enum for Toy mode
-// #define TOY_M 12                        // THOR Enum for Toy mode
 #define NUM_MODES 1
 
 // CH_6 Tuning
@@ -194,11 +191,6 @@
 #define WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP               1   // auto pilot will face next waypoint or home during rtl
 #define WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL    2   // auto pilot will face next waypoint except when doing RTL at which time it will stay in it's last 
 #define WP_YAW_BEHAVIOR_LOOK_AHEAD                    3   // auto pilot will look ahead during missions and rtl (primarily meant for traditional helicotpers)
-
-// TOY mixing options
-#define TOY_LOOKUP_TABLE 0
-#define TOY_LINEAR_MIXER 1
-#define TOY_EXTERNAL_MIXER 2
 
 
 // Waypoint options

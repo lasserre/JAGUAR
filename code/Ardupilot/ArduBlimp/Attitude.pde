@@ -50,13 +50,6 @@ get_stabilize_yaw(int32_t target_angle)
     target_rate = g.pi_stabilize_yaw.get_p(angle_error);
     i_term = g.pi_stabilize_yaw.get_i(angle_error, G_Dt);
 
-    // do not use rate controllers for helicotpers with external gyros
-#if FRAME_CONFIG == HELI_FRAME
-    if(motors.ext_gyro_enabled) {
-        g.rc_4.servo_out = constrain_int32((target_rate + i_term), -4500, 4500);
-    }
-#endif
-
 #if LOGGING_ENABLED == ENABLED
     // log output if PID logging is on and we are tuning the yaw
     if( g.log_bitmask & MASK_LOG_PID && g.radio_tuning == CH6_YAW_KP ) {
@@ -248,18 +241,10 @@ update_rate_contoller_targets()
 void
 run_rate_controllers()
 {
-#if FRAME_CONFIG == HELI_FRAME          // helicopters only use rate controllers for yaw and only when not using an external gyro
-    if(!motors.ext_gyro_enabled) {
-		g.rc_1.servo_out = get_heli_rate_roll(roll_rate_target_bf);
-		g.rc_2.servo_out = get_heli_rate_pitch(pitch_rate_target_bf);
-        g.rc_4.servo_out = get_heli_rate_yaw(yaw_rate_target_bf);
-    }
-#else
     // call rate controllers
     g.rc_1.servo_out = get_rate_roll(roll_rate_target_bf);
     g.rc_2.servo_out = get_rate_pitch(pitch_rate_target_bf);
     g.rc_4.servo_out = get_rate_yaw(yaw_rate_target_bf);
-#endif
 
     // run throttle controller if accel based throttle controller is enabled and active (active means it has been given a target)
     if( g.throttle_accel_enabled && throttle_accel_controller_active ) {
@@ -267,167 +252,6 @@ run_rate_controllers()
     }
 }
 
-#if FRAME_CONFIG == HELI_FRAME
-// init_rate_controllers - set-up filters for rate controller inputs
-void init_rate_controllers()
-{
-   // initalise low pass filters on rate controller inputs
-   // 1st parameter is time_step, 2nd parameter is time_constant
-   rate_roll_filter.set_cutoff_frequency(0.01f, 2.0f);
-   rate_pitch_filter.set_cutoff_frequency(0.01f, 2.0f);
-   // rate_yaw_filter.set_cutoff_frequency(0.01f, 2.0f);
-   // other option for initialisation is rate_roll_filter.set_cutoff_frequency(<time_step>,<cutoff_freq>);
-}
-
-static int16_t
-get_heli_rate_roll(int32_t target_rate)
-{
-    int32_t p,i,d,ff;                // used to capture pid values for logging
-	int32_t current_rate;			// this iteration's rate
-    int32_t rate_error;             // simply target_rate - current_rate
-    int32_t output;                 // output from pid controller
-
-	// get current rate
-	current_rate    = (omega.x * DEGX100);
-
-    // filter input
-    current_rate = rate_roll_filter.apply(current_rate);
-	
-    // call pid controller
-    rate_error  = target_rate - current_rate;
-    p   = g.pid_rate_roll.get_p(rate_error);
-
-    if (motors.flybar_mode == 1) {												// Mechanical Flybars get regular integral for rate auto trim
-		if (target_rate > -50 && target_rate < 50){								// Frozen at high rates
-			i		= g.pid_rate_roll.get_i(rate_error, G_Dt);
-		} else {
-			i		= g.pid_rate_roll.get_integrator();
-		}
-	} else {
-		i			= g.pid_rate_roll.get_leaky_i(rate_error, G_Dt, RATE_INTEGRATOR_LEAK_RATE);		// Flybarless Helis get huge I-terms. I-term controls much of the rate
-	}
-	
-	d = g.pid_rate_roll.get_d(rate_error, G_Dt);
-	
-	ff = g.heli_roll_ff * target_rate;
-
-    output = p + i + d + ff;
-
-    // constrain output
-    output = constrain_int32(output, -4500, 4500);
-
-#if LOGGING_ENABLED == ENABLED
-    // log output if PID logging is on and we are tuning the rate P, I or D gains
-    if( g.log_bitmask & MASK_LOG_PID && (g.radio_tuning == CH6_RATE_KP || g.radio_tuning == CH6_RATE_KI || g.radio_tuning == CH6_RATE_KD) ) {
-        pid_log_counter++;
-        if( pid_log_counter >= 10 ) {               // (update rate / desired output rate) = (100hz / 10hz) = 10
-            pid_log_counter = 0;
-            Log_Write_PID(CH6_RATE_KP, rate_error, p, i, d, output, tuning_value);
-        }
-    }
-#endif
-
-    // output control
-    return output;
-}
-
-static int16_t
-get_heli_rate_pitch(int32_t target_rate)
-{
-    int32_t p,i,d,ff;                                                                   // used to capture pid values for logging
-	int32_t current_rate;                                                     			// this iteration's rate
-    int32_t rate_error;                                                                 // simply target_rate - current_rate
-    int32_t output;                                                                     // output from pid controller
-
-	// get current rate
-	current_rate    = (omega.y * DEGX100);
-	
-	// filter input
-	current_rate = rate_pitch_filter.apply(current_rate);
-	
-	// call pid controller
-    rate_error      = target_rate - current_rate;
-    p               = g.pid_rate_pitch.get_p(rate_error);						// Helicopters get huge feed-forward
-	
-	if (motors.flybar_mode == 1) {												// Mechanical Flybars get regular integral for rate auto trim
-		if (target_rate > -50 && target_rate < 50){								// Frozen at high rates
-			i		= g.pid_rate_pitch.get_i(rate_error, G_Dt);
-		} else {
-			i		= g.pid_rate_pitch.get_integrator();
-		}
-	} else {
-		i			= g.pid_rate_pitch.get_leaky_i(rate_error, G_Dt, RATE_INTEGRATOR_LEAK_RATE);	// Flybarless Helis get huge I-terms. I-term controls much of the rate
-	}
-	
-	d = g.pid_rate_pitch.get_d(rate_error, G_Dt);
-	
-	ff = g.heli_pitch_ff*target_rate;
-    
-    output = p + i + d + ff;
-
-    // constrain output
-    output = constrain_int32(output, -4500, 4500);
-
-#if LOGGING_ENABLED == ENABLED
-    // log output if PID logging is on and we are tuning the rate P, I or D gains
-    if( g.log_bitmask & MASK_LOG_PID && (g.radio_tuning == CH6_RATE_KP || g.radio_tuning == CH6_RATE_KI || g.radio_tuning == CH6_RATE_KD) ) {
-        if( pid_log_counter == 0 ) {               // relies on get_heli_rate_roll to update pid_log_counter
-            Log_Write_PID(CH6_RATE_KP+100, rate_error, p, i, 0, output, tuning_value);
-        }
-    }
-#endif
-
-    // output control
-    return output;
-}
-
-static int16_t
-get_heli_rate_yaw(int32_t target_rate)
-{
-    int32_t p,i,d,ff;                                                                   // used to capture pid values for logging
-	int32_t current_rate;                                                               // this iteration's rate
-    int32_t rate_error;
-    int32_t output;
-
-	// get current rate
-    current_rate    = (omega.z * DEGX100);
-	
-	// filter input
-	// current_rate = rate_yaw_filter.apply(current_rate);
-	
-    // rate control
-    rate_error              = target_rate - current_rate;
-
-    // separately calculate p, i, d values for logging
-    p = g.pid_rate_yaw.get_p(rate_error);
-    
-    i = g.pid_rate_yaw.get_i(rate_error, G_Dt);
-
-    d = g.pid_rate_yaw.get_d(rate_error, G_Dt);
-	
-	ff = g.heli_yaw_ff*target_rate;
-
-    output  = p + i + d + ff;
-    output = constrain_float(output, -4500, 4500);
-
-#if LOGGING_ENABLED == ENABLED
-    // log output if PID loggins is on and we are tuning the yaw
-    if( g.log_bitmask & MASK_LOG_PID && (g.radio_tuning == CH6_YAW_RATE_KP || g.radio_tuning == CH6_YAW_RATE_KD) ) {
-        pid_log_counter++;
-        if( pid_log_counter >= 10 ) {               // (update rate / desired output rate) = (100hz / 10hz) = 10
-            pid_log_counter = 0;
-            Log_Write_PID(CH6_YAW_RATE_KP, rate_error, p, i, d, output, tuning_value);
-        }
-    }
-	
-#endif
-
-	// output control
-	return output;
-}
-#endif // HELI_FRAME
-
-#if FRAME_CONFIG != HELI_FRAME
 static int16_t
 get_rate_roll(int32_t target_rate)
 {
@@ -563,7 +387,6 @@ get_rate_yaw(int32_t target_rate)
     return constrain_int32(output, -yaw_limit, yaw_limit);
 #endif // TRI_FRAME
 }
-#endif // !HELI_FRAME
 
 // calculate modified roll/pitch depending upon optical flow calculated position
 static int32_t
@@ -614,7 +437,7 @@ get_of_roll(int32_t input_roll)
     of_roll = constrain_int32(of_roll, -1000, 1000);
 
     return input_roll+of_roll;
-#else
+#else // if OPTFLOW == DISABLED
     return input_roll;
 #endif
 }
@@ -666,7 +489,7 @@ get_of_pitch(int32_t input_pitch)
     of_pitch = constrain_int32(of_pitch, -1000, 1000);
 
     return input_pitch+of_pitch;
-#else
+#else // if OPTFLOW == DISABLED
     return input_pitch;
 #endif
 }
@@ -747,22 +570,6 @@ static void update_throttle_cruise(int16_t throttle)
     }
 }
 
-#if FRAME_CONFIG == HELI_FRAME
-// get_angle_boost - returns a throttle including compensation for roll/pitch angle
-// throttle value should be 0 ~ 1000
-// for traditional helicopters
-static int16_t get_angle_boost(int16_t throttle)
-{
-    float angle_boost_factor = cos_pitch_x * cos_roll_x;
-    angle_boost_factor = 1.0f - constrain_float(angle_boost_factor, .5f, 1.0f);
-    int16_t throttle_above_mid = max(throttle - motors.throttle_mid,0);
-
-    // to allow logging of angle boost
-    angle_boost = throttle_above_mid*angle_boost_factor;
-
-    return throttle + angle_boost;
-}
-#else   // all multicopters
 // get_angle_boost - returns a throttle including compensation for roll/pitch angle
 // throttle value should be 0 ~ 1000
 static int16_t get_angle_boost(int16_t throttle)
@@ -783,7 +590,6 @@ static int16_t get_angle_boost(int16_t throttle)
 
     return throttle_out;
 }
-#endif // FRAME_CONFIG == HELI_FRAME
 
  // set_throttle_out - to be called by upper throttle controllers when they wish to provide throttle output directly to motors
  // provide 0 to cut motors

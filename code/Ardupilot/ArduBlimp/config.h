@@ -94,32 +94,12 @@
 //////////////////////////////////////////////////////////////////////////////
 // FRAME_CONFIG
 //
+// JBW - TODO: Is this needed for the blimp?
 #ifndef FRAME_CONFIG
  # define FRAME_CONFIG   BLIMP_FRAME
 #endif
 #ifndef FRAME_ORIENTATION
  # define FRAME_ORIENTATION      X_FRAME
-#endif
-#ifndef TOY_EDF
- # define TOY_EDF        DISABLED
-#endif
-#ifndef TOY_MIXER
- # define TOY_MIXER      TOY_LINEAR_MIXER
-#endif
-
-/////////////////////////////////////////////////////////////////////////////////
-// Bulk defines for TradHeli
-#if FRAME_CONFIG == HELI_FRAME
-  # define RC_FAST_SPEED 				125
-  # define WP_YAW_BEHAVIOR_DEFAULT      YAW_LOOK_AT_HOME
-  # define RATE_INTEGRATOR_LEAK_RATE 	0.02f
-  # define RATE_ROLL_D    				0
-  # define RATE_PITCH_D       			0
-  # define HELI_PITCH_FF				0
-  # define HELI_ROLL_FF					0
-  # define HELI_YAW_FF					0  
-  # define STABILIZE_THROTTLE			THROTTLE_MANUAL
-  # define MPU6K_FILTER                 10
 #endif
 
 
@@ -577,6 +557,7 @@
 
 
 // Flight mode roll, pitch, yaw, throttle and navigation definitions
+// JBW - TODO: I don't think all these are needed
 
 // Acro Mode
 #ifndef ACRO_YAW
