@@ -896,7 +896,7 @@ void loop()
 
         // Execute the fast loop
         // ---------------------
-        // fast_loop(); TODO: enable
+        fast_loop();
 
         // tell the scheduler one tick has passed
         scheduler.tick();
@@ -909,7 +909,6 @@ void loop()
     }
 }
 
-#if 0 // TODO:remove
 // Main loop - 100hz
 static void fast_loop()
 {
@@ -921,6 +920,7 @@ static void fast_loop()
     // --------------------------------------------------------------------
     update_trig();
 
+#if 0 //TODO:needed?
     // Acrobatic control
     if (ap.do_flip) {
         if(abs(g.rc_1.control_in) < 4000) {
@@ -932,6 +932,7 @@ static void fast_loop()
             Log_Write_Event(DATA_EXIT_FLIP);
         }
     }
+#endif // #if 0
 
     // run low level rate controllers that only require IMU data
     run_rate_controllers();
@@ -955,7 +956,7 @@ static void fast_loop()
     // Read radio and 3-position switch on radio
     // -----------------------------------------
     read_radio();
-    read_control_switch();
+    // read_control_switch(); TODO: enable when control_modes.pde is included
 
     // custom code/exceptions for flight modes
     // ---------------------------------------
@@ -971,6 +972,7 @@ static void fast_loop()
 #endif
 }
 
+#if 0 // TODO:remove
 // stuff that happens at 50 hz
 // ---------------------------
 static void fifty_hz_loop()
@@ -1240,6 +1242,7 @@ static void super_slow_loop()
     USERHOOK_SUPERSLOWLOOP
 #endif
 }
+#endif // #if 0
 
 // called at 100hz but data from sensor only arrives at 20 Hz
 #if OPTFLOW == ENABLED
@@ -1257,14 +1260,17 @@ static void update_optical_flow(void)
         of_log_counter++;
         if( of_log_counter >= 4 ) {
             of_log_counter = 0;
+#if LOGGING_ENABLED == ENABLED
             if (g.log_bitmask & MASK_LOG_OPTFLOW) {
                 Log_Write_Optflow();
             }
+#endif // LOGGING_ENABLED == ENABLED
         }
     }
 }
 #endif  // OPTFLOW == ENABLED
 
+#if 0 //TODO:remove
 // called at 50hz
 static void update_GPS(void)
 {
@@ -1317,6 +1323,7 @@ static void update_GPS(void)
     // check for loss of gps
     failsafe_gps_check();
 }
+#endif // #if 0
 
 // set_yaw_mode - update yaw mode and initialise any variables required
 bool set_yaw_mode(uint8_t new_yaw_mode)
@@ -1483,6 +1490,7 @@ void update_yaw_mode(void)
     }
 }
 
+#if 0 // TODO:remove
 // get yaw mode based on WP_YAW_BEHAVIOR parameter
 // set rtl parameter to true if this is during an RTL
 uint8_t get_wp_yaw_mode(bool rtl)
@@ -1546,6 +1554,7 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
     // return success or failure
     return roll_pitch_initialised;
 }
+#endif // #if 0
 
 // update_roll_pitch_mode - run high level roll and pitch controllers
 // 100hz update rate
@@ -1584,10 +1593,12 @@ void update_roll_pitch_mode(void)
         break;
 
     case ROLL_PITCH_STABLE:
+#if 0 //TODO:Do we need SIMPLE mode?
         // apply SIMPLE mode transform
         if(ap.simple_mode && ap_system.new_radio_frame) {
             update_simple_mode();
         }
+#endif // #if 0
 
         control_roll            = g.rc_1.control_in;
         control_pitch           = g.rc_2.control_in;
@@ -1610,10 +1621,12 @@ void update_roll_pitch_mode(void)
         break;
 
     case ROLL_PITCH_STABLE_OF:
+#if 0 //TODO:Do we need SIMPLE mode?
         // apply SIMPLE mode transform
         if(ap.simple_mode && ap_system.new_radio_frame) {
             update_simple_mode();
         }
+#endif // #if 0
 
         control_roll            = g.rc_1.control_in;
         control_pitch           = g.rc_2.control_in;
@@ -1623,17 +1636,21 @@ void update_roll_pitch_mode(void)
         get_stabilize_pitch(get_of_pitch(control_pitch));
         break;
 
+#if 0 //TODO:needed?
     // THOR
     // a call out to the main toy logic
     case ROLL_PITCH_TOY:
         roll_pitch_toy();
         break;
+#endif // #if 0
 
     case ROLL_PITCH_LOITER:
+#if 0 //TODO:Do we need SIMPLE mode?
         // apply SIMPLE mode transform
         if(ap.simple_mode && ap_system.new_radio_frame) {
             update_simple_mode();
         }
+#endif // #if 0
         // copy user input for logging purposes
         control_roll            = g.rc_1.control_in;
         control_pitch           = g.rc_2.control_in;
@@ -1650,7 +1667,7 @@ void update_roll_pitch_mode(void)
     }
 
     #if FRAME_CONFIG != HELI_FRAME
-    if(g.rc_3.control_in == 0 && control_mode <= ACRO) {
+    if(g.rc_3.control_in == 0 && control_mode == STABILIZE /*control_mode <= ACRO*/) {
         reset_rate_I();
         reset_stability_I();
     }
@@ -1662,6 +1679,7 @@ void update_roll_pitch_mode(void)
     }
 }
 
+#if 0 //TODO:remove
 // new radio frame is used to make sure we only call this at 50hz
 void update_simple_mode(void)
 {
@@ -1893,6 +1911,7 @@ static float get_target_alt_for_reporting()
 {
     return target_alt_for_reporting;
 }
+#endif // #if 0
 
 static void read_AHRS(void)
 {
@@ -1943,7 +1962,6 @@ static void update_trig(void){
     // 180 = cos_yaw: -1.00, sin_yaw:  0.00,
     // 270 = cos_yaw:  0.00, sin_yaw: -1.00,
 }
-#endif // #if 0
 
 // read baro and sonar altitude at 20hz
 static void update_altitude()
