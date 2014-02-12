@@ -67,6 +67,7 @@ void JPTestController::StopTest()
 void JPTestController::TestEndedHandler()
 {
     testIsRunning = false;
+    emit TestEnded();
     return;
 }
 
@@ -107,29 +108,8 @@ void JPTestController::ByteReceivedHandler(char byte)
     return;
 }
 
-void JPTestController::P2PacketReceivedHandler(QByteArray packet, QList<int> diffs)
-{
-    qDebug() << __FUNCTION__;
-    emit P2PacketReceived(packet, diffs);
-    return;
-}
-
-void JPTestController::P3PacketReceivedHandler(QByteArray packet, QList<int> diffs)
-{
-    qDebug() << __FUNCTION__;
-
-    emit P3PacketReceived(packet, diffs);
-    return;
-}
-
-void JPTestController::GarbagePacketReceivedHandler(QByteArray garbagePacket)
-{
-    emit GarbagePacketReceived(garbagePacket);
-    return;
-}
-
 void JPTestController::HandleDiffResults(JPacketDiffResults results)
 {
-    //emit NewDiffResults(results);
+    emit NewDiffResults(results);
     return;
 }

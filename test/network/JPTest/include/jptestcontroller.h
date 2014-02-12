@@ -16,19 +16,20 @@ public:
     void LoadTest(const JPTestOptions &Options);
 
 signals:
+    // Signals to JPTest on worker thread
     void StartServerTestSignal();
     void StartClientTestSignal();
     void StopTestSignal();
     void LoadTestSignal(const JPTestOptions& TestOptions);
+
+    // Signals to parent...
     void OutboxChanged(QStringList);
     void P2InboxChanged(QStringList);
     void P3InboxChanged(QStringList);
     void PacketSent(QByteArray);
     void RawByteReceived(char);
-    void P2PacketReceived(QByteArray, QList<int>);
-    void P3PacketReceived(QByteArray, QList<int>);
-    void GarbagePacketReceived(QByteArray);
-    //void NewDiffResults(JPacketDiffResults);
+    void NewDiffResults(JPacketDiffResults);
+    void TestEnded();
 
 public slots:
     void TestEndedHandler();
@@ -37,9 +38,6 @@ public slots:
     void NewP3InboxHandler(QStringList newP3Inbox);
     void PacketSentHandler(QByteArray);
     void ByteReceivedHandler(char);
-    void P2PacketReceivedHandler(QByteArray packet, QList<int> diffs);
-    void P3PacketReceivedHandler(QByteArray, QList<int>);
-    void GarbagePacketReceivedHandler(QByteArray);
     void HandleDiffResults(JPacketDiffResults);
 
 protected:

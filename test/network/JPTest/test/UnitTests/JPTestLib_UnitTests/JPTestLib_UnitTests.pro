@@ -15,7 +15,8 @@ TEMPLATE = app
 
 SOURCES += tst_jptestfilereader_ut.cpp \
     main.cpp \
-    tst_jptestcoordinator_ut.cpp
+    tst_jptestcoordinator_ut.cpp \
+    tst_jpacket_ut.cpp
 DEFINES += SRCDIR=\\\"$$PWD/\\\"
 
 # -----------------------------------------------------------------------
@@ -29,7 +30,8 @@ UI_DIR = build
 
 HEADERS += \
     tst_jptestfilereader_ut.h \
-    tst_jptestcoordinator_ut.h
+    tst_jptestcoordinator_ut.h \
+    tst_jpacket_ut.h
 
 unix|win32: LIBS += -L$$PWD/../../../lib/ -lJPTestLib
 

@@ -5,7 +5,6 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     QMainWindow(parent)
   , ui(new Ui::JPTMainWindow)
   , mainLayout(new QHBoxLayout())
-  , commandButtonLayout(new QHBoxLayout())
   , outboxTabPacketListLayout(new QVBoxLayout())
   , outboxTabOutboxLayout(new QVBoxLayout())
   , outboxTabLayout(new QHBoxLayout())
@@ -15,6 +14,10 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
   , workingDirectory(new QDir(GetInitialWorkingDir()))
   , notificationColor(QColor(Qt::blue))
   , testOptions(JPTestOptions())
+  , startAction(new QAction(QIcon(":/images/images/play.png"), "Start", this))
+  , stopAction(new QAction(QIcon(":/images/images/stop.png"), "Stop", this))
+  , stepAction(new QAction(QIcon(":/images/images/step.png"), "Step", this))
+  , loadAction(new QAction(QIcon(":/images/images/load.png"), "Load", this))
   , p2InboxPassFailIndex(0)
   , p3InboxPassFailIndex(0)
 {
@@ -25,19 +28,25 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
     ui->setupUi(this);
 
+    // Icons
+    const int iconWidth = 80;
+    const int iconHeight = 30;
+
+    ui->mainToolBar->setIconSize(QSize(iconWidth, iconHeight));
+    ui->mainToolBar->addAction(startAction);
+    ui->mainToolBar->addAction(stopAction);
+    ui->mainToolBar->addAction(stepAction);
+    ui->mainToolBar->addSeparator();
+    ui->mainToolBar->addAction(loadAction);
+    addToolBar(Qt::LeftToolBarArea, ui->mainToolBar);
+
     // Set up layouts...(have to hack bc designer being ANNOYING)
     leftLayout->addWidget(ui->leftTitleLabel);
     leftLayout->addWidget(ui->toolBox);
 
-    // commandButtonLayout
-    commandButtonLayout->addWidget(ui->startTestButton);
-    commandButtonLayout->addWidget(ui->stopTestButton);
-    commandButtonLayout->addWidget(ui->stepTestButton);
-
     // outboxTabPacketListLayout
     outboxTabPacketListLayout->addWidget(ui->packetOutboxLabel);
     outboxTabPacketListLayout->addWidget(ui->packetOutboxListWidget);
-    outboxTabPacketListLayout->addLayout(commandButtonLayout);
 
     // outboxTabOutboxLayout
     outboxTabOutboxLayout->addWidget(ui->outboxLabel);
@@ -61,8 +70,8 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     ui->centralWidget->setLayout(mainLayout);
 
     // Set up port settings page
-    ui->portListWidget->setAutoScroll(true);    // ATTN John: this is an exception to the magic # rule...(see fct. name) ;)
-
+    ui->portListWidget->setAutoScroll(true);    // ATTN John: this is an exception to the magic # rule...
+                                                // (see fct. name) ;)
     // Set up test settings page
     ui->workingDirLineEdit->setText(workingDirectory->path());
     ui->jptestServerRButton->setChecked(true);
@@ -77,11 +86,11 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     // Buttons
     connect(this->ui->refreshPortsButton, SIGNAL(clicked()), this, SLOT(RefreshPortList()));
     connect(this->ui->browseWkDirButton, SIGNAL(clicked()), this, SLOT(BrowseWkDirSlot()));
-    connect(this->ui->startTestButton, SIGNAL(clicked()), this, SLOT(StartTest()));
-    connect(this->ui->stopTestButton, SIGNAL(clicked()), this, SLOT(StopTest()));
+    connect(this->startAction, SIGNAL(triggered()), this, SLOT(StartTest()));
+    connect(this->stopAction, SIGNAL(triggered()), this, SLOT(StopTest()));
     connect(this->ui->clearOutboxButton, SIGNAL(clicked()), ui->outboxTextBrowser, SLOT(clear()));
     connect(this->ui->clearMessagesButton, SIGNAL(clicked()), ui->messagesTextBrowser, SLOT(clear()));
-    connect(this->ui->loadTestButton, SIGNAL(clicked()), this, SLOT(LoadTest()));
+    connect(this->loadAction, SIGNAL(triggered()), this, SLOT(LoadTest()));
 
     // Misc
     connect(this->ui->tabWidget, SIGNAL(currentChanged(int)), this, SLOT(RemoveNotification(int)));
@@ -90,23 +99,18 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->noMSP430checkBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
 
     // JPTest Controller
+    connect(this->jptestManager, SIGNAL(TestEnded()), this, SLOT(HandleTestEnded()));
     connect(this->jptestManager, SIGNAL(OutboxChanged(QStringList)), this, SLOT(UpdateTestScript(QStringList)));
     connect(this->jptestManager, SIGNAL(P2InboxChanged(QStringList)), this, SLOT(UpdateP2Script(QStringList)));
     connect(this->jptestManager, SIGNAL(P3InboxChanged(QStringList)), this, SLOT(UpdateP3Script(QStringList)));
     connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
     connect(this->jptestManager, SIGNAL(RawByteReceived(char)), this, SLOT(AppendToStagingArea(char)));
-
-    connect(this->jptestManager, SIGNAL(P2PacketReceived(QByteArray,QList<int>)),
-            this, SLOT(AppendToP2Inbox(QByteArray,QList<int>)));
-
-    connect(this->jptestManager, SIGNAL(P3PacketReceived(QByteArray,QList<int>)),
-            this, SLOT(AppendToP3Inbox(QByteArray,QList<int>)));
-
-    connect(this->jptestManager, SIGNAL(GarbagePacketReceived(QByteArray)), this, SLOT(HandleGarbage(QByteArray)));
+    connect(this->jptestManager, SIGNAL(NewDiffResults(JPacketDiffResults)),
+            this, SLOT(ProcessDiffResults(JPacketDiffResults)));
     // -------------------------------------------------------------------------------------------------//
 
     // Set initial states
-    ui->startTestButton->setEnabled(false);     // Disabled until test is loaded
+    startAction->setEnabled(false);     // Disabled until test is loaded
     ui->toolBox->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
 
@@ -121,7 +125,6 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
 JPTMainWindow::~JPTMainWindow()
 {
-    delete commandButtonLayout;
     delete outboxTabPacketListLayout;
     delete outboxTabOutboxLayout;
     delete outboxTabLayout;
@@ -209,7 +212,14 @@ void JPTMainWindow::StartTest()
 
 void JPTMainWindow::StopTest()
 {
+    QString role = "server";
+
     this->jptestManager->StopTest();
+
+    if (ui->jptestClientRButton->isChecked())
+        role = "client";
+
+    LogToMessageArea("Stopping " + role + " test");
     return;
 }
 
@@ -220,7 +230,7 @@ void JPTMainWindow::LoadTest()
     jptestManager->LoadTest(this->testOptions);
 
     ShowStatusBarMessage(GetJptestFilename(false) + " test loaded");
-    ui->startTestButton->setEnabled(true);
+    startAction->setEnabled(true);
     return;
 }
 
@@ -280,7 +290,7 @@ void JPTMainWindow::UpdateJaguarIDS(QString JAGID)
     UpdateJAGIDStrings(JAGID, P2, P3);
 
     // Reload test for new JAGUAR ID if already loaded from a selected file
-    if (ui->startTestButton->isEnabled()) LoadTest();
+    if (startAction->isEnabled()) LoadTest();
 
     LogToMessageArea("Configured as " + testOptions.GetJagIDString() + " (" + testOptions.JaguarID + ")");
 
@@ -317,7 +327,7 @@ void JPTMainWindow::UpdateP3Script(QStringList newP3Script)
  */
 void JPTMainWindow::UpdatePortSelection(const QString& UnusedPortVar)
 {
-    if (ui->startTestButton->isEnabled())
+    if (startAction->isEnabled())
     {
         qDebug() << "Reloading test bc of port change...";
         LoadTest();
@@ -369,8 +379,8 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet)
     }
     ui->outboxTextBrowser->insertPlainText("\n");
 
-    if (ui->tabWidget->currentIndex() != 1)
-        PostNotification(1);  //Notify
+    if (ui->tabWidget->currentIndex() != 0)
+        PostNotification(0);  //Notify
 
     return;
 }
@@ -546,5 +556,40 @@ void JPTMainWindow::UpdateJAGIDStrings(const QString& myName, const QString &p2N
 void JPTMainWindow::PostNotification(const int &tabIndex)
 {
     ui->tabWidget->tabBar()->setTabTextColor(tabIndex, notificationColor);
+    return;
+}
+
+void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
+{
+    if (results.garbageDetected)
+    {
+
+    }
+    else if (results.packetDetected)
+    {
+
+    }
+    else
+    {
+        // Append to area given by
+        QMap<char, JPTDiff>::iterator mapIter = results.diffs.begin();
+
+        while (mapIter != results.diffs.end())
+        {
+            if (mapIter->srcID == JAGID::Unknown)
+            {
+                QString lineText = ui->byteStagingLineEdit->text();
+                ui->byteStagingLineEdit->setText(lineText + QString(mapIter.key()));
+            }
+
+            mapIter++;
+        }
+    }
+    return;
+}
+
+void JPTMainWindow::HandleTestEnded()
+{
+    LogToMessageArea("JTest Ended.");
     return;
 }

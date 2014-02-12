@@ -115,8 +115,7 @@ int JPacket::GetSrc() const
 
 int JPacket::ByteToIntValue(const char &byte)
 {
-    uchar unsignedByte = byte;      // cast to unsigned char
-    return (int) unsignedByte;      // return int value of unsigned char cast
+    return (int) (uchar) byte;      // return int value of unsigned char cast
 }
 
 char JPacket::IntValueToChar(const short &intValue)

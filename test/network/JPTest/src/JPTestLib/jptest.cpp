@@ -10,7 +10,6 @@ JPTest::JPTest(QObject *parent) :
   , isRunning(false)
 {
     //connect(this->testCoordinator, SIGNAL(ByteReceived(char)), this, SLOT(PassBytesReceived(char)));
-
 }
 
 JPTest::~JPTest()
@@ -103,14 +102,19 @@ void JPTest::StartRunLoop()
         QCoreApplication::processEvents();
 
         // Check the mail
-        emit SendDiffResults(testCoordinator->CheckMail());
+        JPacketDiffResults results = testCoordinator->CheckMail();
+        if (!results.diffs.isEmpty())
+            emit SendDiffResults(results);
     }
 
     // Finish receiving
     while (Running() && testCoordinator->MoreToReceive())
     {
         QCoreApplication::processEvents();
-        emit SendDiffResults(testCoordinator->CheckMail());
+
+        JPacketDiffResults results = testCoordinator->CheckMail();
+        if (!results.diffs.isEmpty())
+            emit SendDiffResults(results);
     }
 
     return;
@@ -152,7 +156,8 @@ void JPTest::LoadTest(JPTestOptions Options)
 void JPTest::EndTestEarly()
 {
     qDebug() << "In " << __FUNCTION__;
-    FinishRun();
+
+    SetIsRunning(false);
     return;
 }
 

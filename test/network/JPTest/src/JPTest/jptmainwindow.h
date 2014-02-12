@@ -44,11 +44,12 @@ public slots:
     void AppendToP3Inbox(QByteArray packet, QList<int> diffs);
     void HandleGarbage(QByteArray garbagePacket);
     void CacheTestOptions();
+    void ProcessDiffResults(JPacketDiffResults);
+    void HandleTestEnded();
     
 private:
     Ui::JPTMainWindow *ui;
     QHBoxLayout* mainLayout;
-    QHBoxLayout* commandButtonLayout;
     QVBoxLayout* outboxTabPacketListLayout;
     QVBoxLayout* outboxTabOutboxLayout;
     QHBoxLayout* outboxTabLayout;
@@ -60,6 +61,10 @@ protected:
     QDir* workingDirectory;
     QColor notificationColor;
     JPTestOptions testOptions;
+    QAction* startAction;
+    QAction* stopAction;
+    QAction* stepAction;
+    QAction* loadAction;
     int p2InboxPassFailIndex;
     int p3InboxPassFailIndex;
 

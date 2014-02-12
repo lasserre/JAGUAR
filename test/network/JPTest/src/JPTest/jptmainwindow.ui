@@ -46,7 +46,7 @@
      <enum>QTabWidget::Rounded</enum>
     </property>
     <property name="currentIndex">
-     <number>1</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="sendTab">
      <attribute name="title">
@@ -110,25 +110,6 @@
        </size>
       </property>
      </widget>
-     <widget class="QPushButton" name="stepTestButton">
-      <property name="geometry">
-       <rect>
-        <x>170</x>
-        <y>240</y>
-        <width>71</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>75</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Step</string>
-      </property>
-     </widget>
      <widget class="QPushButton" name="clearOutboxButton">
       <property name="geometry">
        <rect>
@@ -146,44 +127,6 @@
       </property>
       <property name="text">
        <string>Clear</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="startTestButton">
-      <property name="geometry">
-       <rect>
-        <x>21</x>
-        <y>239</y>
-        <width>72</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>75</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Start</string>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="stopTestButton">
-      <property name="geometry">
-       <rect>
-        <x>95</x>
-        <y>239</y>
-        <width>71</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>75</width>
-        <height>16777215</height>
-       </size>
-      </property>
-      <property name="text">
-       <string>Stop</string>
       </property>
      </widget>
     </widget>
@@ -354,19 +297,19 @@
      <rect>
       <x>13</x>
       <y>45</y>
-      <width>250</width>
+      <width>200</width>
       <height>452</height>
      </rect>
     </property>
     <property name="minimumSize">
      <size>
-      <width>250</width>
+      <width>200</width>
       <height>0</height>
      </size>
     </property>
     <property name="maximumSize">
      <size>
-      <width>250</width>
+      <width>200</width>
       <height>16777215</height>
      </size>
     </property>
@@ -377,14 +320,14 @@
      <enum>QFrame::Plain</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <widget class="QWidget" name="portSettingsPage">
      <property name="geometry">
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>250</width>
+       <width>200</width>
        <height>350</height>
       </rect>
      </property>
@@ -514,30 +457,6 @@
          </size>
         </property>
        </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
-        <item>
-         <widget class="QPushButton" name="loadTestButton">
-          <property name="text">
-           <string>Load</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-       </layout>
       </item>
      </layout>
     </widget>
