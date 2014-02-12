@@ -256,11 +256,9 @@ static void init_ardupilot()
     // -------------------
     init_commands();
 
-#if 0 //TODO:remove
     // set the correct flight mode
     // ---------------------------
     reset_control_switch();
-#endif // #if 0
 
 
     startup_ground();
@@ -351,7 +349,7 @@ static void set_mode(uint8_t mode)
     control_mode    = constrain_int16(control_mode, 0, NUM_MODES - 1);
 
     // if we change modes, we must clear landed flag
-    // set_land_complete(false); TODO:uncomment
+    set_land_complete(false);
 
     // report the GPS and Motor arming status
     led_mode = NORMAL_LEDS;

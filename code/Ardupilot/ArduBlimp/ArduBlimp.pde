@@ -149,10 +149,8 @@ static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor:
 // All GPS access should be through this pointer.
 static GPS         *g_gps;
 
-#if 0 //TODO:remove
 // flight modes convenience array
 static AP_Int8 *flight_modes = &g.flight_mode1;
-#endif // #if 0
 
 #if HIL_MODE == HIL_MODE_DISABLED
 
@@ -1517,6 +1515,7 @@ uint8_t get_wp_yaw_mode(bool rtl)
             break;
     }
 }
+#endif // #if 0
 
 // set_roll_pitch_mode - update roll/pitch mode and initialise any variables as required
 bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
@@ -1531,19 +1530,23 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
 
     switch( new_roll_pitch_mode ) {
         case ROLL_PITCH_STABLE:
+#if 0 //TODO:enable necessary modes
         case ROLL_PITCH_ACRO:
         case ROLL_PITCH_AUTO:
         case ROLL_PITCH_STABLE_OF:
         case ROLL_PITCH_TOY:
+#endif // #if 0
             roll_pitch_initialised = true;
             break;
 
+#if 0 //TODO:enable necessary modes
         case ROLL_PITCH_LOITER:
             // require gps lock
             if( ap.home_is_set ) {
                 roll_pitch_initialised = true;
             }
             break;
+#endif // #if 0
     }
 
     // if initialisation has been successful update the yaw mode
@@ -1554,7 +1557,6 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
     // return success or failure
     return roll_pitch_initialised;
 }
-#endif // #if 0
 
 // update_roll_pitch_mode - run high level roll and pitch controllers
 // 100hz update rate
@@ -1723,6 +1725,7 @@ void update_super_simple_bearing()
         }
     }
 }
+#endif // #if 0
 
 // set_throttle_mode - sets the throttle mode and initialises any variables as required
 bool set_throttle_mode( uint8_t new_throttle_mode )
@@ -1781,6 +1784,7 @@ bool set_throttle_mode( uint8_t new_throttle_mode )
     return throttle_initialised;
 }
 
+#if 0 //TODO:enable following code
 // update_throttle_mode - run high level throttle controllers
 // 50 hz update rate
 void update_throttle_mode(void)
