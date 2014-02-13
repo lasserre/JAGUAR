@@ -491,8 +491,23 @@ void JPacketChecker::DiffAddedBytesAgainstNextPacket(JPacketDiffResults& DiffRes
         qDebug() << "ERROR: " << Packet.GetSrc() << " detected but need new packet to diff with!";
     else
     {
+        // We have valid packet to diff with
         int startIndex = byteStagingQueue.length() - NumBytesAdded;
-        for (int i = startIndex; i < byteStagingQueue.length(); i++)
+        int diffLength;
+
+        if (EntirePacketReceived)
+        {
+            diffLength = Packet.GetPayload().length();    // If we have the whole thing, diff up to packet length
+
+            if (Packet.GetSrc() == GetP2ID())
+                needP2Packet = true;                                // (we'll need the next packet after this diff)
+            else
+                needP3Packet = true;
+        }
+        else
+            diffLength = byteStagingQueue.length();     // ...otherwise, just diff up to what we have
+
+        for (int i = startIndex; i < diffLength; i++)
         {
             jptdiff.srcID = Packet.GetSrc();
             jptdiff.byte = byteStagingQueue.at(i);

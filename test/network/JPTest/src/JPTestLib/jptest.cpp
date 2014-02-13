@@ -55,6 +55,8 @@ void JPTest::RunServer()
         return;
     }
 
+    emit TestStarted();
+
     StartRunLoop();
 
     // Cleanup/reset
@@ -73,6 +75,8 @@ void JPTest::RunClient()
         return;
     }
 
+    emit TestStarted();
+
     // Listen for server...
     if (!WaitForServerStart())
     {
@@ -90,8 +94,6 @@ void JPTest::RunClient()
 
 void JPTest::StartRunLoop()
 {
-    emit TestStarted();
-
     //bool IsLoopingRun = (testOptions->NumLoops > -1);
     bool newPacketStart = false;
     int packetLength = 0;
