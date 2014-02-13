@@ -53,6 +53,7 @@ public:
     JPacketChecker();
 
     /* ----- Run functions ----- */
+    void Reset();
     void SetNextExpectedP2Packet(const JPacket& NextP2Packet);
     void SetNextExpectedP3Packet(const JPacket& NextP3Packet);
     JPacketDiffResults CheckNewBytes(const QByteArray& Bytes);

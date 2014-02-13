@@ -31,18 +31,22 @@ public slots:
     void StartTest();
     void StopTest();
     void StepTest();
-    //void EnableDisableStartButton();
     void LoadTest();
+
     void RemoveNotification(int tabIndex);
     void UpdateJaguarIDS(QString JAGID);
     void UpdateTestScript(QStringList newScript);
     void UpdateP2Script(QStringList newP2Script);
     void UpdateP3Script(QStringList newP3Script);
     void UpdatePortSelection(const QString &UnusedPortVar);
-    void AppendToOutbox(QByteArray, bool newPacketStart, int packetLength);
+    void HandleTestListSelectionChanged();
+
+    void AppendToOutbox(QByteArray data, bool newPacketStart, int packetLength);
 
     void CacheTestOptions();
     void ProcessDiffResults(JPacketDiffResults);
+    void HandleFinishedSending();
+    void HandleTestStarted();
     void HandleTestEnded();
     void HandleUnableToStartTest();
     
@@ -69,22 +73,32 @@ protected:
     int p2InboxPassFailIndex;
     int p3InboxPassFailIndex;
     bool running;
+    bool doneSending;
 
-    // Methods
+    // Setup Methods
+    void RegisterMetaTypes();
+    void SetupLayouts();
+    void SetInitialStates();
+    void ConnectSignalsAndSlots();
+
+    // Utility Methods
     QDir GetInitialWorkingDir();    // CLS - needed to account for OS X .app files
     QString GetJptestFilename(bool IncludeWorkingDir = true);
     QString GetJPacketPath();
     QString GetPortName();
     QString GetHtmlString(const QString& text, const QString& color);
     QString FormatByteToHexString(const unsigned char &byte);
+    void SetRunning(const bool& SetRunning = true);
 
+    // UI Methods
     void ShowStatusBarMessage(const QString& msg);
     void ShowMessageBoxMessage(const QString& msg);
     void LogToMessageArea(const QString& msg);
     void UpdateJAGIDStrings(const QString& myName, const QString& p2Name, const QString& p3Name);
     void PostNotification(const int& tabIndex);
+    void ClearMailboxes();
 
-    // Inboxes/outboxes
+    // Inboxes/outboxes methods
     void AppendToStagingArea(char);
     void AppendToP2Inbox(const char& byte, const bool& pass);
     void AppendToP3Inbox(const char& byte, const bool& pass);

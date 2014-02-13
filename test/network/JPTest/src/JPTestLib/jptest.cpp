@@ -90,6 +90,8 @@ void JPTest::RunClient()
 
 void JPTest::StartRunLoop()
 {
+    emit TestStarted();
+
     //bool IsLoopingRun = (testOptions->NumLoops > -1);
     bool newPacketStart = false;
     int packetLength = 0;
@@ -112,6 +114,10 @@ void JPTest::StartRunLoop()
         if (!results.diffs.isEmpty())
             emit SendDiffResults(results);
     }
+
+    // Let main window know we're done sending (for step mode)
+    if (Running())
+        emit FinishedSending();
 
     // Finish receiving
     while (Running() && testCoordinator->MoreToReceive())

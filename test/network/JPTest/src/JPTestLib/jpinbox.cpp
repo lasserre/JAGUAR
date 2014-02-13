@@ -66,3 +66,10 @@ void JPInbox::SetMSP430Mode(const bool &Enabled)
     packetInspector->SetMSP430Mode(Enabled);
     return;
 }
+
+void JPInbox::Clear()
+{
+    byteInbox.clear();
+    packetInspector->Reset();
+    return;
+}

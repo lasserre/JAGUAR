@@ -17,6 +17,23 @@ JPacketChecker::JPacketChecker() : nextP2Packet(JPacket())
 {
 }
 
+void JPacketChecker::Reset()
+{
+    this->byteStagingQueue.clear();
+    this->CurrentState = EmptyQueue;
+    this->detectedSrcID = -1;
+    this->EntirePacketReceived = false;
+    this->needP2Packet = true;
+    this->needP3Packet = true;
+    this->nextP2Packet.SetPayload(QByteArray());
+    this->nextP3Packet.SetPayload(QByteArray());
+    this->P2Finished = false;
+    this->P3Finished = false;
+    this->stxIndex = 0;
+
+    return;
+}
+
 JPacketDiffResults JPacketChecker::CheckNewBytes(const QByteArray &Bytes)
 {
     byteStagingQueue.append(Bytes);

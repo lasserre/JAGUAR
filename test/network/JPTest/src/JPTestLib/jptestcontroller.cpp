@@ -16,7 +16,9 @@ JPTestController::JPTestController(QObject *parent) :
     connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
 
     // Connect JPTest signals to controller
-    connect(this->currentTest, SIGNAL(UnableToStartTest()), SLOT(UnableToStartTestHandler()));
+    connect(this->currentTest, SIGNAL(TestStarted()), this, SLOT(TestStartedHandler()));
+    connect(this->currentTest, SIGNAL(UnableToStartTest()), this, SLOT(UnableToStartTestHandler()));
+    connect(this->currentTest, SIGNAL(FinishedSending()), this, SLOT(FinishedSendingHandler()));
     connect(this->currentTest, SIGNAL(TestEnded()), this, SLOT(TestEndedHandler()));
     connect(this->currentTest, SIGNAL(OutboxLoaded(QStringList)), this, SLOT(NewOutboxHandler(QStringList)));
     connect(this->currentTest, SIGNAL(P2InboxLoaded(QStringList)), this, SLOT(NewP2InboxHandler(QStringList)));
@@ -74,6 +76,12 @@ void JPTestController::StepTest()
     return;
 }
 
+void JPTestController::TestStartedHandler()
+{
+    emit TestStarted();
+    return;
+}
+
 void JPTestController::TestEndedHandler()
 {
     testIsRunning = false;
@@ -128,5 +136,11 @@ void JPTestController::UnableToStartTestHandler()
 {
     testIsRunning = false;
     emit UnableToStartTest();
+    return;
+}
+
+void JPTestController::FinishedSendingHandler()
+{
+    emit FinishedSending();
     return;
 }

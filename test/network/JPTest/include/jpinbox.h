@@ -21,6 +21,7 @@ public:
     void SetP2ID(const int& ID);
     void SetP3ID(const int& ID);
     void SetMSP430Mode(const bool& Enabled = true);
+    void Clear();
 
 protected:
     JPacketChecker* packetInspector;

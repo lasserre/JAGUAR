@@ -23,14 +23,45 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
   , p2InboxPassFailIndex(-1)
   , p3InboxPassFailIndex(-1)
   , running(false)
+  , doneSending(true)
+{
+    RegisterMetaTypes();
+
+    ui->setupUi(this);
+
+    SetupLayouts();
+    SetInitialStates();
+    ConnectSignalsAndSlots();
+}
+
+JPTMainWindow::~JPTMainWindow()
+{
+    delete outboxTabPacketListLayout;
+    delete outboxTabOutboxLayout;
+    delete outboxTabLayout;
+    delete leftLayout;
+    delete rightLayout;
+    delete mainLayout;
+    delete ui;
+    delete jptestManager;
+}
+
+/**
+ * @brief JPTMainWindow::RegisterMetaTypes calls qRegisterMetaType for each type we want to pass across
+ * a signal/slot pair
+ */
+void JPTMainWindow::RegisterMetaTypes()
 {
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
     qRegisterMetaType<QList<int> >("QList<int>");
     qRegisterMetaType<JPacketDiffResults>("JPacketDiffResults");
 
-    ui->setupUi(this);
+    return;
+}
 
+void JPTMainWindow::SetupLayouts()
+{
     // Icons
     const int iconWidth = 80;
     const int iconHeight = 30;
@@ -41,7 +72,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     ui->mainToolBar->addAction(stepAction);
     ui->mainToolBar->addSeparator();
     ui->mainToolBar->addAction(loadAction);
-    addToolBar(Qt::LeftToolBarArea, ui->mainToolBar);
+    //addToolBar(Qt::LeftToolBarArea, ui->mainToolBar);
 
     // Set up layouts...(have to hack bc designer being ANNOYING)
     leftLayout->addWidget(ui->leftTitleLabel);
@@ -72,6 +103,11 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
 
     ui->centralWidget->setLayout(mainLayout);
 
+    return;
+}
+
+void JPTMainWindow::SetInitialStates()
+{
     // Set up port settings page
     ui->portListWidget->setAutoScroll(true);    // ATTN John: this is an exception to the magic # rule...
                                                 // (see fct. name) ;)
@@ -79,11 +115,33 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     ui->workingDirLineEdit->setText(workingDirectory->path());
     ui->jptestServerRButton->setChecked(true);
 
+    // Fill JAGIDcomboBox
     ui->JAGIDcomboBox->addItem("GCS");
     ui->JAGIDcomboBox->addItem("MS");
     ui->JAGIDcomboBox->addItem("QC");
     ui->JAGIDcomboBox->addItem("Broadcast");
 
+    // Specify initial conditions
+    startAction->setEnabled(false);     // Disabled until test is loaded
+    stepAction->setEnabled(false);      // Disabled until test is started (and in step mode)
+    stopAction->setEnabled(false);      // Disabled until test is started
+    loadAction->setEnabled(false);      // Disabled until jptest file is selected (to be loaded)
+    ui->toolBox->setCurrentIndex(0);
+    ui->tabWidget->setCurrentIndex(0);
+
+    RefreshPortList();
+    RefreshTestList();
+
+    UpdateJaguarIDS(ui->JAGIDcomboBox->currentText());
+    ShowStatusBarMessage("Ready");
+
+    qDebug() << workingDirectory->path();
+
+    return;
+}
+
+void JPTMainWindow::ConnectSignalsAndSlots()
+{
     // ---------------------------- Connect signals/slots -------------------------------------------- //
 
     // Buttons
@@ -102,9 +160,12 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->portListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(UpdatePortSelection(QString)));
     connect(this->ui->noMSP430checkBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
     connect(this->ui->stepModeCheckBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
+    connect(this->ui->jptestListWidget, SIGNAL(itemSelectionChanged()), this, SLOT(HandleTestListSelectionChanged()));
 
     // JPTest Controller
     connect(this->jptestManager, SIGNAL(UnableToStartTest()), SLOT(HandleUnableToStartTest()));
+    connect(this->jptestManager, SIGNAL(FinishedSending()), this, SLOT(HandleFinishedSending()));
+    connect(this->jptestManager, SIGNAL(TestStarted()), this, SLOT(HandleTestStarted()));
     connect(this->jptestManager, SIGNAL(TestEnded()), this, SLOT(HandleTestEnded()));
     connect(this->jptestManager, SIGNAL(OutboxChanged(QStringList)), this, SLOT(UpdateTestScript(QStringList)));
     connect(this->jptestManager, SIGNAL(P2InboxChanged(QStringList)), this, SLOT(UpdateP2Script(QStringList)));
@@ -114,31 +175,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
             this, SLOT(ProcessDiffResults(JPacketDiffResults)));
     // -------------------------------------------------------------------------------------------------//
 
-    // Set initial states
-    startAction->setEnabled(false);     // Disabled until test is loaded
-    stepAction->setEnabled(false);      // Disabled until test is started (and in step mode)
-    ui->toolBox->setCurrentIndex(0);
-    ui->tabWidget->setCurrentIndex(0);
-
-    RefreshPortList();
-    RefreshTestList();
-
-    UpdateJaguarIDS(ui->JAGIDcomboBox->currentText());
-    ShowStatusBarMessage("Ready");
-
-    qDebug() << workingDirectory->path();
-}
-
-JPTMainWindow::~JPTMainWindow()
-{
-    delete outboxTabPacketListLayout;
-    delete outboxTabOutboxLayout;
-    delete outboxTabLayout;
-    delete leftLayout;
-    delete rightLayout;
-    delete mainLayout;
-    delete ui;
-    delete jptestManager;
+    return;
 }
 
 void JPTMainWindow::RefreshPortList()
@@ -191,8 +228,8 @@ void JPTMainWindow::RefreshTestList()
 
 void JPTMainWindow::StartTest()
 {   
-    ui->outboxTextBrowser->clear();
-    ui->garbageInbox->clear();
+    ClearMailboxes();
+
     outgoingPacketIndex = 0;
     packetBytesSent = 0;
     p2InboxPassFailIndex = 0;
@@ -206,9 +243,8 @@ void JPTMainWindow::StartTest()
         {
             this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
 
-            LogToMessageArea("Running " + testOptions.Filename + " in " + testOptions.GetRunModeString());
-            running = true;
-            stepAction->setEnabled(true);
+            LogToMessageArea("Attempt to run " + testOptions.Filename + " in "
+                             + testOptions.GetRunModeString() + " mode");
         }
         // CLS - server needs to send at least 1 msg since that signals the clients to start!
         else ShowMessageBoxMessage(GetJptestFilename(false) + " has no outgoing packets for " + testOptions.GetJagIDString());
@@ -218,8 +254,7 @@ void JPTMainWindow::StartTest()
         /* ----- Start Client ----- */
 
         this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
-        LogToMessageArea("Client is listening for JPackets...");
-        running = true;
+        LogToMessageArea("Client is listening for JPackets...");        
     }
 
     return;
@@ -254,7 +289,10 @@ void JPTMainWindow::LoadTest()
 
     jptestManager->LoadTest(this->testOptions);
 
+    ClearMailboxes();
     ShowStatusBarMessage(GetJptestFilename(false) + " test loaded");
+
+    // Enable start button since test is loaded
     startAction->setEnabled(true);
     return;
 }
@@ -317,7 +355,8 @@ void JPTMainWindow::UpdateJaguarIDS(QString JAGID)
     // Reload test for new JAGUAR ID if already loaded from a selected file
     if (startAction->isEnabled()) LoadTest();
 
-    LogToMessageArea("Configured as " + testOptions.GetJagIDString() + " (" + testOptions.JaguarID + ")");
+    LogToMessageArea("Configured as " + testOptions.GetJagIDString() +
+                     " (JAGID: " + QString::number(testOptions.JaguarID) + ")");
 
     return;
 }
@@ -360,6 +399,15 @@ void JPTMainWindow::UpdatePortSelection(const QString& UnusedPortVar)
     return;
 }
 
+void JPTMainWindow::HandleTestListSelectionChanged()
+{
+    if (ui->jptestListWidget->selectedItems().isEmpty())
+        loadAction->setEnabled(false);
+    else
+        loadAction->setEnabled(true);
+    return;
+}
+
 QString JPTMainWindow::GetJptestFilename(bool IncludeWorkingDir /* = true*/)
 {
     if (ui->jptestListWidget->selectedItems().empty()) return "JPTMainWindow_NOFILESELECTED";
@@ -370,7 +418,13 @@ QString JPTMainWindow::GetJptestFilename(bool IncludeWorkingDir /* = true*/)
         return ui->jptestListWidget->selectedItems().at(0)->text();
 }
 
-void JPTMainWindow::AppendToOutbox(QByteArray packet, bool newPacketStart, int packetLength)
+/**
+ * @brief JPTMainWindow::AppendToOutbox
+ * @param data is the actual bytes that have been sent
+ * @param newPacketStart is set to true when we begin sending the next packet (enabling us to implement step mode)
+ * @param packetLength is the length of the current packet
+ */
+void JPTMainWindow::AppendToOutbox(QByteArray data, bool newPacketStart, int packetLength)
 {
     QString htmlString;
 
@@ -387,13 +441,13 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet, bool newPacketStart, int p
         packetBytesSent = 0;
     }
 
-    QByteArray hexPacket = packet.toHex();     // hexPacket.count() == # nibbles (bc of encoding hex to ascii chars)
+    QByteArray hexData = data.toHex();     // hexPacket.count() == # nibbles (bc of encoding hex to ascii chars)
     int byteCount = 0;
 
-    for (int i = 0; i < hexPacket.count(); i++)
+    for (int i = 0; i < hexData.count(); i++)
     {
-        QString hexValue(hexPacket.at(i));      // Get first nibble
-        hexValue.append(hexPacket.at(i+1));     // Get second nibble
+        QString hexValue(hexData.at(i));      // Get first nibble
+        hexValue.append(hexData.at(i+1));     // Get second nibble
 
         // Format output to highlight protocols
         if ((byteCount + packetBytesSent) < MAVPACKET::JHDR_OFFSET)
@@ -529,6 +583,33 @@ QString JPTMainWindow::FormatByteToHexString(const unsigned char &byte)
     return hexByte.toUpper();
 }
 
+void JPTMainWindow::SetRunning(const bool &SetRunning)
+{
+    if (SetRunning)
+    {
+        running = true;
+        doneSending = false;
+
+        // Enable/Disable actions
+        startAction->setEnabled(false);
+        stopAction->setEnabled(true);
+        if (testOptions.RunMode == STEP)
+            stepAction->setEnabled(true);
+        loadAction->setEnabled(false);
+    }
+    else
+    {
+        running = false;
+        doneSending = true;
+
+        // Enable/Disable actions
+        stepAction->setEnabled(false);
+        stopAction->setEnabled(false);
+        loadAction->setEnabled(true);
+    }
+    return;
+}
+
 void JPTMainWindow::AppendToGarbageArea(const char& garbageByte)
 {
     QString hex = FormatByteToHexString(garbageByte);
@@ -615,6 +696,17 @@ void JPTMainWindow::PostNotification(const int &tabIndex)
     return;
 }
 
+void JPTMainWindow::ClearMailboxes()
+{
+    ui->outboxTextBrowser->clear();
+    ui->byteStagingLineEdit->clear();
+    ui->p2Inbox->clear();
+    ui->p3Inbox->clear();
+    ui->garbageInbox->clear();
+
+    return;
+}
+
 void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
 {
     if (results.garbageDetected || results.packetDetected)  // New packet or garbage just detected. Clear staging area
@@ -676,18 +768,30 @@ void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
     return;
 }
 
+void JPTMainWindow::HandleFinishedSending()
+{
+    doneSending = false;
+    stepAction->setEnabled(false);
+    return;
+}
+
+void JPTMainWindow::HandleTestStarted()
+{
+    LogToMessageArea("JPTest Started!");
+    SetRunning(true);
+    return;
+}
+
 void JPTMainWindow::HandleTestEnded()
 {
-    LogToMessageArea("JTest Ended.");
-    running = false;
-    stepAction->setEnabled(false);
+    LogToMessageArea("JPTest Ended.");
+    SetRunning(false);
     return;
 }
 
 void JPTMainWindow::HandleUnableToStartTest()
 {
     LogToMessageArea("Unable to start test. (Did you load the test?)");
-    running = false;
-    stepAction->setEnabled(false);
+    SetRunning(false);
     return;
 }

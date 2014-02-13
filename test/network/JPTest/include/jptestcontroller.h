@@ -32,10 +32,14 @@ signals:
     void RawByteReceived(char);
     void NewDiffResults(JPacketDiffResults);
     void UnableToStartTest();
+    void FinishedSending();
+    void TestStarted();
     void TestEnded();
 
 public slots:
+    void TestStartedHandler();
     void TestEndedHandler();
+    void FinishedSendingHandler();
     void UnableToStartTestHandler();
     void NewOutboxHandler(QStringList newOutbox);
     void NewP2InboxHandler(QStringList newP2Inbox);

@@ -33,3 +33,9 @@ bool JPOutbox::SetNextPacket(const QByteArray &NextPacket)
 
     return true;            // Return true if we do set the next packet
 }
+
+void JPOutbox::Clear()
+{
+    this->currentPacketData.clear();
+    return;
+}

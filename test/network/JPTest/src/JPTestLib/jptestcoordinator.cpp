@@ -109,12 +109,16 @@ QList<QStringList> JPTestCoordinator::LoadTest(const JPTestOptions &Options)
 
 QList<QStringList> JPTestCoordinator::LoadTestScript(QFile &JPTestFile)
 {
-    // Get rid of existing items, if any
+    // Get rid of existing items in inbox/outbox lists, if any
     myOutbox->clear();
     P2Inbox->clear();
     P3Inbox->clear();
 
-    // Load inboxes and outbox
+    // Clear actual inbox/outbox
+    outbox->Clear();
+    inbox->Clear();
+
+    // Load inbox/outbox lists
     *myOutbox = JPTestFileReader::GetPacketList(testOptions->GetJagIDString(), JPTestFile);
     *P2Inbox = JPTestFileReader::GetPacketList(testOptions->GetP2IDString(), JPTestFile);
     *P3Inbox = JPTestFileReader::GetPacketList(testOptions->GetP3IDString(), JPTestFile);

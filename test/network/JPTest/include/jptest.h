@@ -21,7 +21,9 @@ public:
     ~JPTest();
 
 signals:
+    void TestStarted();
     void TestEnded();
+    void FinishedSending();
     void UnableToStartTest();
     void OutboxLoaded(QStringList);
     void P2InboxLoaded(QStringList);

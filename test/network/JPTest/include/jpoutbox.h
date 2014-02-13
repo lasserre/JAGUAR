@@ -13,6 +13,7 @@ public:
     bool MoreToSend() const;
     QByteArray SendNextPacket(const bool &NextByte = false);
     bool SetNextPacket(const QByteArray& NextPacket);
+    void Clear();
 
 protected:
     QByteArray currentPacketData;
