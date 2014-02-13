@@ -61,6 +61,7 @@ protected:
     // Running...
     void StartRunLoop();
     void HandleTestMode();
+    void CheckForMail();
 
     void SetIsRunning(const bool& IsRunning = true);
     bool Running();

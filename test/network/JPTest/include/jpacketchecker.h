@@ -107,7 +107,7 @@ protected:
     int GetSRCByteIndex() const;
     int GetLENByteIndex() const;
     int GetPacketSource() const;
-    int GetPacketLength() const;
+    int GetPacketLength(const bool &includeMAVHeader = false, const bool &includeJAGHeader = false) const;
     int GetP2ID() const;
     int GetP3ID() const;
 

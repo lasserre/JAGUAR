@@ -161,12 +161,18 @@ JPacketDiffResults JPacketChecker::ReevaluateState(const int& NumBytesAdded)
         if (detectedSrcID == GetP2ID() && !needP2Packet)
         {
             if (byteStagingQueue.length() >= nextP2Packet.GetPayload().length())
+            {
                 EntirePacketReceived = true;
+                CurrentState = WaitingForSrc;
+            }
         }
         else if (detectedSrcID == GetP3ID() && !needP3Packet)
         {
             if (byteStagingQueue.length() >= nextP3Packet.GetPayload().length())
+            {
                 EntirePacketReceived = true;
+                CurrentState = WaitingForSrc;
+            }
         }
 
         break;
@@ -247,12 +253,27 @@ int JPacketChecker::STXByteReceived() const
 
 int JPacketChecker::GetPacketSource() const
 {
+    qDebug() << "msp430 mode: " << MSP430Mode();
+    qDebug() << "src index: " << GetSRCByteIndex();
+    qDebug() << "byteStagingQueue len: " << byteStagingQueue.length();
+    qDebug() << "byteStagingQueue: ";
+    for (int i = 0; i < byteStagingQueue.length(); i++)
+        qDebug() << JPacket::ByteToIntValue(byteStagingQueue[i]);
+    qDebug() << "src byte: " << JPacket::ByteToIntValue(byteStagingQueue.at(GetSRCByteIndex()));
     return JPacket::ByteToIntValue(byteStagingQueue.at(GetSRCByteIndex()));
 }
 
-int JPacketChecker::GetPacketLength() const
+int JPacketChecker::GetPacketLength(const bool& includeMAVHeader /* = false */,
+                                    const bool& includeJAGHeader /* = false */) const
 {
-    return JPacket::ByteToIntValue(byteStagingQueue.at(GetLENByteIndex()));
+    int headerLen = 0;
+
+    if (includeMAVHeader)
+        headerLen = 8;
+    if (includeJAGHeader)
+        headerLen = 10;
+
+    return (headerLen + JPacket::ByteToIntValue(byteStagingQueue.at(GetLENByteIndex())));
 }
 
 int JPacketChecker::GetP2ID() const
@@ -385,7 +406,7 @@ void JPacketChecker::CleanupStagingQueue(const bool &GarbageJustDetected)
 
     if (EntirePacketReceived)
     {
-        removeLen = GetPacketLength();  // Remove packet once it is fully received
+        removeLen = GetPacketLength(true, !MSP430Mode());  // Remove packet once it is fully received
         EntirePacketReceived = false;
     }
     else if (CurrentState == LookingForPacketStart)
@@ -494,14 +515,14 @@ bool JPacketChecker::LENByteMatchesExpectedLength(const int &jagID)
 {
     if (jagID == GetP2ID())
     {
-        if (GetPacketLength() == nextP2Packet.GetPayload().length())
+        if (GetPacketLength(true, true) == nextP2Packet.GetPayload().length())
             return true;
         else
             return false;
     }
     else if (jagID == GetP3ID())
     {
-        if (GetPacketLength() == nextP3Packet.GetPayload().length())
+        if (GetPacketLength(true, true) == nextP3Packet.GetPayload().length())
             return true;
         else
             return false;

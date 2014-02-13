@@ -101,18 +101,13 @@ void JPTest::StartRunLoop()
     {
         // Do delays/step/etc...
         HandleTestMode();
+
         if (!Running()) break;  // We might have killed the test while waiting for step signal
 
         // Send packets
         emit DataSent(testCoordinator->SendNextPacket(), newPacketStart, packetLength);
 
-        // Get all incoming data and send outgoing data
-        QCoreApplication::processEvents();
-
-        // Check the mail
-        JPacketDiffResults results = testCoordinator->CheckMail();
-        if (!results.diffs.isEmpty())
-            emit SendDiffResults(results);
+        CheckForMail();
     }
 
     // Let main window know we're done sending (for step mode)
@@ -122,11 +117,7 @@ void JPTest::StartRunLoop()
     // Finish receiving
     while (Running() && testCoordinator->MoreToReceive())
     {
-        QCoreApplication::processEvents();
-
-        JPacketDiffResults results = testCoordinator->CheckMail();
-        if (!results.diffs.isEmpty())
-            emit SendDiffResults(results);
+        CheckForMail();
     }
 
     return;
@@ -231,6 +222,19 @@ void JPTest::HandleTestMode()
     return;
 }
 
+void JPTest::CheckForMail()
+{
+    // Get all incoming data and send outgoing data
+    QCoreApplication::processEvents();
+
+    // Check the mail
+    JPacketDiffResults results = testCoordinator->CheckMail();
+    if (!results.diffs.isEmpty())
+        emit SendDiffResults(results);
+
+    return;
+}
+
 /**
  * @brief JPTest::WaitForServerStart waits for data to come in from the server.
  * @return true if data received, false if run stopped by user
@@ -248,11 +252,14 @@ void JPTest::WaitForStep()
     while (this->Running())
     {
         QThread::msleep(100);
+
         if (StepReceived())
         {
             ClearStepReceived();
             break;
         }
+
+        CheckForMail();
     }
     return;
 }

@@ -542,11 +542,10 @@ void JPTMainWindow::AppendToP3Inbox(const char& byte, const bool& pass)
 void JPTMainWindow::StartNewP2Packet(QByteArray packetStart, QList<bool> passList)
 {
     // Innocent until proven guilty
-    ui->p2packetInboxListWidget->item(++p2InboxPassFailIndex)->setBackgroundColor(Qt::green);
+    ui->p2packetInboxListWidget->item(p2InboxPassFailIndex++)->setBackgroundColor(Qt::green);
 
-    //if (!ui->p2Inbox->textCursor().atStart())
-      //  ui->p2Inbox->insertPlainText("\n");
-    ui->p2Inbox->append("");
+    if (p2InboxPassFailIndex > 1)   // Don't put a newline on the first line
+        ui->p2Inbox->insertPlainText("\n");
 
     if (packetStart.length() != passList.length())
     {
@@ -563,9 +562,9 @@ void JPTMainWindow::StartNewP2Packet(QByteArray packetStart, QList<bool> passLis
 void JPTMainWindow::StartNewP3Packet(QByteArray packetStart, QList<bool> passList)
 {
     // Innocent until proven guilty
-    ui->p3packetInboxListWidget->item(++p3InboxPassFailIndex)->setBackgroundColor(Qt::green);
+    ui->p3packetInboxListWidget->item(p3InboxPassFailIndex++)->setBackgroundColor(Qt::green);
 
-    //if (!ui->p3Inbox->textCursor().atStart())
+    if (p3InboxPassFailIndex > 1)   // Don't put a newline on the first line
         ui->p3Inbox->insertPlainText("\n");
 
     if (packetStart.length() != passList.length())
