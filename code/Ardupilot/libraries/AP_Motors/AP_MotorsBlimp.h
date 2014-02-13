@@ -40,6 +40,11 @@ public:
     AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT);
 
     /**
+     * @brief set update rate to motors - a value in hertz
+     */
+    virtual void set_update_rate(uint16_t speed_hz);
+
+    /**
  	 * @brief starts allowing signals to be sent to motors
  	 */
     virtual void enable();

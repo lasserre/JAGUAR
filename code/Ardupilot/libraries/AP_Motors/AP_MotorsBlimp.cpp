@@ -14,6 +14,23 @@ AP_MotorsBlimp::AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Cha
 {
 }
 
+void AP_MotorsBlimp::set_update_rate(uint16_t speed_hz)
+{
+    // record requested speed
+    AP_Motors::set_update_rate(speed_hz);
+
+    uint32_t mask = 
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_1] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_2] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_3] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_4] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_5] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_6] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_7] |
+        1U << _motor_to_channel_map[AP_MOTORS_MOT_8];
+    hal.rcout->set_freq(mask, _speed_hz);
+}
+
 void AP_MotorsBlimp::enable()
 {
     // enable output channels
@@ -62,5 +79,6 @@ void AP_MotorsBlimp::output_armed()
 
 void AP_MotorsBlimp::output_disarmed()
 {
-    //TODO: add code for motor output when disarmed
+    // send minimum values to all motors
+    output_min();
 }
