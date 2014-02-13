@@ -5,42 +5,62 @@
  */
 
 #include "AP_MotorsBlimp.h"
+#include <AP_HAL.h>
 
-// setup_motors - configures the motors for a blimp
-void AP_MotorsBlimp::setup_motors()
+extern const AP_HAL::HAL& hal;
+
+AP_MotorsBlimp::AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, uint16_t speed_hz) :
+  AP_Motors(rc_roll, rc_pitch, rc_throttle, rc_yaw, speed_hz)
 {
-    // call parent
-    AP_MotorsMatrix::setup_motors();
+}
 
-    // hard coded config for supported frames
-    // When initializing motors, use AP_MOTORS_BLIMP_FRAME
-    if( _frame_orientation == AP_MOTORS_BLIMP_FRAME ) {
-    	
-        //JAGUAR
-    	//The way the add_motor parameters affect roll pitch and yaw
-    	//		cosine(2ndparam+90) = amount that the motor helps      roll
-    	//		cosine(2ndparam) = amount that the motor helps         pitch
-    	//		3rdparam = amount that the motor helps                 yaw
-
-        //Propulsion motors
-        //      This is actually two motors (tied together). The 3rd parameter
-        //      is 0 because these motors do not affect yaw.
-        add_motor(THRUST_MOTOR,  0, 0, 1);
-
-        //Lift motor
-        add_motor(LIFT_MOTOR, -90, 0, 2);
-
-        //Weignht compensation motors
-        add_motor(LEFT_ANTI_LIFT_MOTOR,     0, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  3);
-        add_motor(RIGHT_ANTI_LEFT_MOTOR,    0, AP_MOTORS_MATRIX_YAW_FACTOR_CW,  4);
-
-        //Yaw motors
-        add_motor_raw(LEFT_YAW_MOTOR,		0, 0, 1, 5);
-        add_motor_raw(RIGHT_YAW_MOTOR,		0, 0, 1, 6);
-
-        //Pitch motors
-        add_motor_raw(TOP_PITCH_MOTOR, 		0, 1, 0, 7);
-        add_motor_raw(TOP_PITCH_MOTOR, 		0, 1, 0, 8);
-
+void AP_MotorsBlimp::enable()
+{
+    // enable output channels
+    for (uint8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    {
+        hal.rcout->enable_ch(_motor_to_channel_map[i]);
     }
+}
+
+void AP_MotorsBlimp::output_min()
+{
+    // fill the motor_out[] array for HIL use and send minimum value to each motor
+    for (int8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    {
+        motor_out[i] = _rc_throttle->radio_min;
+        hal.rcout->write(_motor_to_channel_map[i], motor_out[i]);
+    }
+}
+
+void AP_MotorsBlimp::output_test()
+{
+    // shut down all motors
+    output_min();
+
+    // first delay is longer
+    hal.scheduler->delay(3000);
+
+    // loop through all the possible orders spinning any motors that match that description
+    for (uint8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    {
+        // turn on this motor and wait 1/3rd of a second
+        hal.rcout->write(_motor_to_channel_map[i], _rc_throttle->radio_min + _min_throttle);
+        hal.scheduler->delay(333);
+        hal.rcout->write(_motor_to_channel_map[i], _rc_throttle->radio_min);
+        hal.scheduler->delay(2000);
+    }
+
+    // shut down all motors
+    output_min();
+}
+
+void AP_MotorsBlimp::output_armed()
+{
+    //TODO: add code for motor output when armed
+}
+
+void AP_MotorsBlimp::output_disarmed()
+{
+    //TODO: add code for motor output when disarmed
 }

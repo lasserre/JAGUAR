@@ -9,7 +9,7 @@
 #include <AP_Common.h>
 #include <AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
 #include <RC_Channel.h>     // RC Channel Library
-#include "AP_MotorsMatrix.h"    // Parent Motors Matrix library
+#include "AP_Motors.h"    // Parent Motors Matrix library
 
 // motor definitions
 #define THRUST_MOTOR            AP_MOTORS_MOT_1  // this is actually 2 motors tied together
@@ -21,19 +21,49 @@
 #define TOP_PITCH_MOTOR         AP_MOTORS_MOT_7
 #define BOTTOM_PITCH_MOTOR      AP_MOTORS_MOT_8
 
-/// @class      AP_MotorsBlimp
-class AP_MotorsBlimp : public AP_MotorsMatrix {
+#define NUM_BLIMP_MOTORS    8
+
+/**
+ * @class AP_MotorsBlimp
+ */
+class AP_MotorsBlimp : public AP_Motors
+{
 public:
+    /**
+     * @brief Constructor
+     * @param rc_roll     RC Channel for roll
+     * @param rc_pitch    RC Channel for pitch
+     * @param rc_throttle RC Channel for throttle
+     * @param rc_yaw      RC Channel for yaw
+     * @param speed_hz    motors speed in Hz
+     */
+    AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT);
 
-    /// Constructor
-    AP_MotorsBlimp( RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT) : AP_MotorsMatrix(rc_roll, rc_pitch, rc_throttle, rc_yaw, speed_hz) {
-    };
+    /**
+ 	 * @brief starts allowing signals to be sent to motors
+ 	 */
+    virtual void enable();
 
-    // setup_motors - configures the motors for a blimp
-    virtual void        setup_motors();
+    /**
+     * @brief test all motors
+     */
+    virtual void output_test();
+
+    /**
+     * @brief sends minimum values out to the motors
+     */
+    virtual void output_min();
 
 protected:
+    /**
+     * @brief output to motors while armed
+     */
+    virtual void output_armed();
 
+    /**
+     * @brief output to motors while disarmed
+     */
+    virtual void output_disarmed();
 };
 
 #endif  // __AP_MOTORS_BLIMP_H__
