@@ -44,6 +44,7 @@ protected:
     JPTestPort* port;
 
     // Protected methods
+    void FilterInboxList(QStringList& inbox);
     QList<QStringList> LoadTestScript(QFile& JPTestFile);
     bool SetUpPort();
     JPacket GetJPkt(const QString &PacketFilename);

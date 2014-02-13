@@ -10,7 +10,7 @@ class JPTestFileReader
 {
 public:
     JPTestFileReader();
-    static QStringList GetPacketList(const QString& JAGID, QFile& JPTestFile);
+    static QStringList GetPacketList(const QString& senderJAGID, QFile& JPTestFile);
 
 protected:
     static QList<QByteArray> GetFileLinesForJAGID(const QString& JAGID, QFile& JPTestFile);

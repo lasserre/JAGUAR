@@ -107,6 +107,29 @@ QList<QStringList> JPTestCoordinator::LoadTest(const JPTestOptions &Options)
     return LoadedMailboxes;
 }
 
+void JPTestCoordinator::FilterInboxList(QStringList &inbox)
+{
+    JPacket packet;
+    QList<QString> packetsToRemove;
+
+    for (int i = 0; i < inbox.length(); i++)
+    {
+        packet = GetJPkt(inbox[i]);
+
+        if (packet.GetDst() != testOptions->JaguarID)
+        {
+            // If the packet isn't being sent to us, remove it from inbox!
+            if (!packetsToRemove.contains(inbox[i]))
+                packetsToRemove.append(inbox[i]);
+        }
+    }
+
+    for (int i = 0; i < packetsToRemove.length(); i++)
+        inbox.removeAll(packetsToRemove[i]);
+
+    return;
+}
+
 QList<QStringList> JPTestCoordinator::LoadTestScript(QFile &JPTestFile)
 {
     // Get rid of existing items in inbox/outbox lists, if any
@@ -122,6 +145,10 @@ QList<QStringList> JPTestCoordinator::LoadTestScript(QFile &JPTestFile)
     *myOutbox = JPTestFileReader::GetPacketList(testOptions->GetJagIDString(), JPTestFile);
     *P2Inbox = JPTestFileReader::GetPacketList(testOptions->GetP2IDString(), JPTestFile);
     *P3Inbox = JPTestFileReader::GetPacketList(testOptions->GetP3IDString(), JPTestFile);
+
+    // Remove packets from inbox lists that aren't destined for us
+    FilterInboxList(*P2Inbox);
+    FilterInboxList(*P3Inbox);
 
     QList<QStringList> mailboxes;
     mailboxes << *myOutbox << *P2Inbox << *P3Inbox;

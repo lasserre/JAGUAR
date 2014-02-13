@@ -291,6 +291,7 @@ void JPTMainWindow::LoadTest()
 
     ClearMailboxes();
     ShowStatusBarMessage(GetJptestFilename(false) + " test loaded");
+    LogToMessageArea(GetJptestFilename(false) + " test loaded.");
 
     // Enable start button since test is loaded
     startAction->setEnabled(true);
@@ -353,7 +354,11 @@ void JPTMainWindow::UpdateJaguarIDS(QString JAGID)
     UpdateJAGIDStrings(JAGID, P2, P3);
 
     // Reload test for new JAGUAR ID if already loaded from a selected file
-    if (startAction->isEnabled()) LoadTest();
+    if (startAction->isEnabled())
+    {
+        LogToMessageArea("Reloading test bc of JAGID change...");
+        LoadTest();
+    }
 
     LogToMessageArea("Configured as " + testOptions.GetJagIDString() +
                      " (JAGID: " + QString::number(testOptions.JaguarID) + ")");
@@ -393,7 +398,7 @@ void JPTMainWindow::UpdatePortSelection(const QString& UnusedPortVar)
 {
     if (startAction->isEnabled())
     {
-        qDebug() << "Reloading test bc of port change...";
+        LogToMessageArea("Reloading test bc of port change...");
         LoadTest();
     }
     return;

@@ -12,9 +12,9 @@ JPTestFileReader::JPTestFileReader()
  * @param JPTestFile
  * @return QStringList of packets
  */
-QStringList JPTestFileReader::GetPacketList(const QString &JAGID, QFile &JPTestFile)
+QStringList JPTestFileReader::GetPacketList(const QString &senderJAGID, QFile &JPTestFile)
 {
-    QList<QByteArray> linesToParse = GetFileLinesForJAGID(JAGID, JPTestFile);
+    QList<QByteArray> linesToParse = GetFileLinesForJAGID(senderJAGID, JPTestFile);
     QStringList packetList = ConvertFileLinesToPacketList(linesToParse);
 
     JPTestFile.seek(0);     // Reset to beginning of file for future function calls.
