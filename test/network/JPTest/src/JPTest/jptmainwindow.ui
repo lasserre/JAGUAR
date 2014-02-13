@@ -320,7 +320,7 @@
      <enum>QFrame::Plain</enum>
     </property>
     <property name="currentIndex">
-     <number>0</number>
+     <number>2</number>
     </property>
     <widget class="QWidget" name="portSettingsPage">
      <property name="geometry">
@@ -408,8 +408,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>250</width>
-       <height>350</height>
+       <width>184</width>
+       <height>217</height>
       </rect>
      </property>
      <attribute name="label">
@@ -465,7 +465,7 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>250</width>
+       <width>200</width>
        <height>350</height>
       </rect>
      </property>
@@ -541,6 +541,13 @@
        <widget class="QCheckBox" name="noMSP430checkBox">
         <property name="text">
          <string>&quot;No MSP430&quot; mode</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="stepModeCheckBox">
+        <property name="text">
+         <string>Step mode</string>
         </property>
        </widget>
       </item>

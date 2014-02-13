@@ -8,6 +8,7 @@ JPTest::JPTest(QObject *parent) :
   , delaySecs(-1)
   , testLoaded(false)
   , isRunning(false)
+  , stepReceived(false)
 {
     //connect(this->testCoordinator, SIGNAL(ByteReceived(char)), this, SLOT(PassBytesReceived(char)));
 }
@@ -90,15 +91,18 @@ void JPTest::RunClient()
 void JPTest::StartRunLoop()
 {
     //bool IsLoopingRun = (testOptions->NumLoops > -1);
+    bool newPacketStart = false;
+    int packetLength = 0;
 
     // Send/receive
-    while(Running() && testCoordinator->MoreToSend())
+    while(Running() && testCoordinator->MoreToSend(newPacketStart, packetLength))
     {
         // Do delays/step/etc...
         HandleTestMode();
+        if (!Running()) break;  // We might have killed the test while waiting for step signal
 
         // Send packets
-        emit PacketSent(testCoordinator->SendNextPacket());
+        emit DataSent(testCoordinator->SendNextPacket(), newPacketStart, packetLength);
 
         // Get all incoming data and send outgoing data
         QCoreApplication::processEvents();
@@ -176,6 +180,26 @@ bool JPTest::Running()
     return this->isRunning;
 }
 
+void JPTest::SetStepReceived()
+{
+    QMutexLocker(&this->stepReceivedMutex);
+    this->stepReceived = true;
+    return;
+}
+
+void JPTest::ClearStepReceived()
+{
+    QMutexLocker(&this->stepReceivedMutex);
+    this->stepReceived = false;
+    return;
+}
+
+bool JPTest::StepReceived()
+{
+    QMutexLocker(&this->stepReceivedMutex);
+    return this->stepReceived;
+}
+
 void JPTest::HandleTestMode()
 {
     switch(testOptions->RunMode)
@@ -183,6 +207,7 @@ void JPTest::HandleTestMode()
     case RUN:
         break;
     case STEP:
+        WaitForStep();
         break;
     case DELAY:
         if (-1 != testOptions->DelaySecs)
@@ -200,28 +225,6 @@ void JPTest::HandleTestMode()
     return;
 }
 
-//QString JPTest::ReportErrorCode(const JPTESTERROR &error)
-//{
-//    QString errMsg = "JPTest error: ";
-
-//    switch(error)
-//    {
-//    case NO_ERROR:
-//        errMsg.append("NO_ERROR");
-//        break;
-//    case PORT_ERROR:
-//        errMsg.append("PORT_ERROR");
-//        break;
-//    case JPTESTFILE_ERROR:
-//        errMsg.append("JPTESTFILE_ERROR");
-//        break;
-//    default:
-//        errMsg.append("UNKNOWN_ERROR_TYPE");
-//    }
-
-//    return errMsg;
-//}
-
 /**
  * @brief JPTest::WaitForServerStart waits for data to come in from the server.
  * @return true if data received, false if run stopped by user
@@ -234,8 +237,22 @@ bool JPTest::WaitForServerStart()
     return false;
 }
 
-//void JPTest::PassBytesReceived(char byte)
-//{
-//    emit ByteReceived(byte);
-//    return;
-//}
+void JPTest::WaitForStep()
+{
+    while (this->Running())
+    {
+        QThread::msleep(100);
+        if (StepReceived())
+        {
+            ClearStepReceived();
+            break;
+        }
+    }
+    return;
+}
+
+void JPTest::HandleStepSignal()
+{
+    SetStepReceived();
+    return;
+}

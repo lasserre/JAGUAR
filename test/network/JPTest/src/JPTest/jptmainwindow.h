@@ -30,6 +30,7 @@ public slots:
     void RefreshTestList();
     void StartTest();
     void StopTest();
+    void StepTest();
     //void EnableDisableStartButton();
     void LoadTest();
     void RemoveNotification(int tabIndex);
@@ -38,7 +39,7 @@ public slots:
     void UpdateP2Script(QStringList newP2Script);
     void UpdateP3Script(QStringList newP3Script);
     void UpdatePortSelection(const QString &UnusedPortVar);
-    void AppendToOutbox(QByteArray);
+    void AppendToOutbox(QByteArray, bool newPacketStart, int packetLength);
 
     void CacheTestOptions();
     void ProcessDiffResults(JPacketDiffResults);
@@ -63,8 +64,11 @@ protected:
     QAction* stopAction;
     QAction* stepAction;
     QAction* loadAction;
+    int outgoingPacketIndex;
+    int packetBytesSent;
     int p2InboxPassFailIndex;
     int p3InboxPassFailIndex;
+    bool running;
 
     // Methods
     QDir GetInitialWorkingDir();    // CLS - needed to account for OS X .app files

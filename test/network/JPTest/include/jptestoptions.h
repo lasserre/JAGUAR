@@ -33,6 +33,7 @@ struct JPTestOptions
     QString GetJagIDString() const;
     QString GetP2IDString() const;
     QString GetP3IDString() const;
+    QString GetRunModeString() const;
 
     JPTESTMODE RunMode;
     QString Filename;

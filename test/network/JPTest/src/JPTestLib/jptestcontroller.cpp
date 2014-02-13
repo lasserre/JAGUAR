@@ -12,6 +12,7 @@ JPTestController::JPTestController(QObject *parent) :
     connect(this, SIGNAL(StartServerTestSignal()), this->currentTest, SLOT(RunServer()));
     connect(this, SIGNAL(StartClientTestSignal()), this->currentTest, SLOT(RunClient()));
     connect(this,SIGNAL(StopTestSignal()), this->currentTest, SLOT(EndTestEarly()), Qt::DirectConnection);
+    connect(this, SIGNAL(StepTestSignal()), this->currentTest, SLOT(HandleStepSignal()), Qt::DirectConnection);
     connect(this, SIGNAL(LoadTestSignal(JPTestOptions)), this->currentTest, SLOT(LoadTest(JPTestOptions)));
 
     // Connect JPTest signals to controller
@@ -20,10 +21,9 @@ JPTestController::JPTestController(QObject *parent) :
     connect(this->currentTest, SIGNAL(OutboxLoaded(QStringList)), this, SLOT(NewOutboxHandler(QStringList)));
     connect(this->currentTest, SIGNAL(P2InboxLoaded(QStringList)), this, SLOT(NewP2InboxHandler(QStringList)));
     connect(this->currentTest, SIGNAL(P3InboxLoaded(QStringList)), this, SLOT(NewP3InboxHandler(QStringList)));
-    connect(this->currentTest, SIGNAL(PacketSent(QByteArray)), this, SLOT(PacketSentHandler(QByteArray)));
-    //connect(this->currentTest, SIGNAL(ByteReceived(char)), this, SLOT(ByteReceivedHandler(char)), Qt::DirectConnection);
-
-    connect(this->currentTest, SIGNAL(SendDiffResults(JPacketDiffResults)), this, SLOT(HandleDiffResults(JPacketDiffResults)));
+    connect(this->currentTest, SIGNAL(DataSent(QByteArray,bool,int)), this, SLOT(DataSentHandler(QByteArray,bool,int)));
+    connect(this->currentTest, SIGNAL(SendDiffResults(JPacketDiffResults)),
+            this, SLOT(HandleDiffResults(JPacketDiffResults)));
 
     this->testThreadController->start();   // Start thread. Don't call quit() until destructor!
 }
@@ -65,6 +65,15 @@ void JPTestController::StopTest()
     return;
 }
 
+void JPTestController::StepTest()
+{
+    if (testIsRunning)
+        emit StepTestSignal();
+    else
+        qDebug() << "Can't step because test is not running!";
+    return;
+}
+
 void JPTestController::TestEndedHandler()
 {
     testIsRunning = false;
@@ -96,10 +105,10 @@ void JPTestController::LoadTest(const JPTestOptions& Options)
     return;
 }
 
-void JPTestController::PacketSentHandler(QByteArray packet)
+void JPTestController::DataSentHandler(QByteArray packet, bool newPacketStart, int packetLength)
 {
     // qDebug() << "In " << __FUNCTION__;
-    emit PacketSent(packet);
+    emit DataSent(packet, newPacketStart, packetLength);
     return;
 }
 

@@ -10,16 +10,26 @@ bool JPOutbox::MoreToSend() const
     return (!currentPacketData.isEmpty());
 }
 
-QByteArray JPOutbox::GetSendNextPacket()
+QByteArray JPOutbox::SendNextPacket(const bool& NextByte /* = false */)
 {
-    // Send entire packet for now... (implement step mode here, later on)
-    QByteArray outgoingBytes(currentPacketData);
-    currentPacketData.remove(0, currentPacketData.length());
+    QByteArray outgoingBytes;
+    int numBytes = currentPacketData.count();
+
+    if (NextByte)
+        numBytes = 1;
+
+    outgoingBytes.append(currentPacketData.left(numBytes));
+    currentPacketData.remove(0, numBytes);
+
     return outgoingBytes;
 }
 
-void JPOutbox::SetNextPacket(const QByteArray &NextPacket)
+bool JPOutbox::SetNextPacket(const QByteArray &NextPacket)
 {
-    currentPacketData = NextPacket;
-    return;
+    if (MoreToSend())
+        return false;       // Return false if we don't set the next packet (still have some bytes left to send)
+    else
+        currentPacketData = NextPacket;
+
+    return true;            // Return true if we do set the next packet
 }

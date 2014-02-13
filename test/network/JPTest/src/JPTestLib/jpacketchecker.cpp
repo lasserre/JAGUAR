@@ -49,15 +49,41 @@ void JPacketChecker::SetP3ID(const int &P3ID)
 
 void JPacketChecker::SetNextExpectedP2Packet(const JPacket &NextP2Packet)
 {
-    this->nextP2Packet = NextP2Packet;
+    if (!MSP430Mode())
+    {
+        this->nextP2Packet = NextP2Packet;
+    }
+    else
+    {
+        JPacket packet;
+        QByteArray fullPayload = NextP2Packet.GetPayload();
+        QByteArray expectedPayload = fullPayload.right(fullPayload.length() - MAVPACKET::JHDR_OFFSET);
+        packet.SetPayload(expectedPayload);
+        this->nextP2Packet = packet;
+    }
+
     needP2Packet = false;
+
     return;
 }
 
 void JPacketChecker::SetNextExpectedP3Packet(const JPacket &NextP3Packet)
 {
-    this->nextP3Packet = NextP3Packet;
+    if (!MSP430Mode())
+    {
+        this->nextP3Packet = NextP3Packet;
+    }
+    else
+    {
+        JPacket packet;
+        QByteArray fullPayload = NextP3Packet.GetPayload();
+        QByteArray expectedPayload = fullPayload.right(fullPayload.length() - MAVPACKET::JHDR_OFFSET);
+        packet.SetPayload(expectedPayload);
+        this->nextP3Packet = packet;
+    }
+
     needP3Packet = false;
+
     return;
 }
 

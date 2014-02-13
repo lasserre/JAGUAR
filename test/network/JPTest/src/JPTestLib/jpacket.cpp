@@ -60,6 +60,7 @@ JPacket& JPacket::operator=(const JPacket& other)
 void JPacket::SetPayload(const QByteArray &Payload)
 {
     *(this->payload) = Payload;
+    SetFieldsFromPayload();
     return;
 }
 

@@ -24,7 +24,7 @@ public:
     bool WaitForDataReceived(const int &msecs);
     QByteArray SendNextPacket();
     JPacketDiffResults CheckMail();
-    bool MoreToSend();
+    bool MoreToSend(bool &newPacketStart, int &packetLength);
     bool MoreToReceive() const;
 
 public slots:

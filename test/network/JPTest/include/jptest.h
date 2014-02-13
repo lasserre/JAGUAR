@@ -26,7 +26,7 @@ signals:
     void OutboxLoaded(QStringList);
     void P2InboxLoaded(QStringList);
     void P3InboxLoaded(QStringList);
-    void PacketSent(QByteArray);
+    void DataSent(QByteArray, bool newPacketStart, int packetLength);
     //void ByteReceived(char);
     void SendDiffResults(JPacketDiffResults);
 
@@ -35,7 +35,7 @@ public slots:
     void RunServer();
     void RunClient();
     void EndTestEarly();
-    //void PassBytesReceived(char);
+    void HandleStepSignal();
 
 protected:
     // ----- Protected members ----- //
@@ -46,12 +46,15 @@ protected:
     int delaySecs;
     bool testLoaded;
     bool isRunning;
+    bool stepReceived;
     mutable QMutex isRunningMutex;   // Used to protect acces
+    mutable QMutex stepReceivedMutex;
 
     // ----- Protected methods ----- //
     bool InitNewRun();
     void FinishRun();
     bool WaitForServerStart();
+    void WaitForStep();
 
     // Running...
     void StartRunLoop();
@@ -59,6 +62,9 @@ protected:
 
     void SetIsRunning(const bool& IsRunning = true);
     bool Running();
+    void SetStepReceived();
+    void ClearStepReceived();
+    bool StepReceived();
 
     //QString ReportErrorCode(const JPTESTERROR& error);
 };

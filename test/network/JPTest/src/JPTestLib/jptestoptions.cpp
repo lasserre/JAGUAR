@@ -67,3 +67,21 @@ QString JPTestOptions::GetIDString(const int& ID) const
         return "JPTestOptions: unrecognized JAGUAR ID!";
     }
 }
+
+QString JPTestOptions::GetRunModeString() const
+{
+    switch(RunMode)
+    {
+    case RUN:
+        return "RUN";
+        break;
+    case STEP:
+        return "STEP";
+        break;
+    case DELAY:
+        return "DELAY";
+        break;
+    default:
+        return "Error: Unknown Run Mode";
+    }
+}

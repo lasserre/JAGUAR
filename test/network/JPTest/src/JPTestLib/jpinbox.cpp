@@ -60,3 +60,9 @@ void JPInbox::SetP3ID(const int &ID)
     packetInspector->SetP3ID(ID);
     return;
 }
+
+void JPInbox::SetMSP430Mode(const bool &Enabled)
+{
+    packetInspector->SetMSP430Mode(Enabled);
+    return;
+}

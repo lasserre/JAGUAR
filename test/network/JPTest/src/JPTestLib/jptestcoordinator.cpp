@@ -26,7 +26,12 @@ JPTestCoordinator::~JPTestCoordinator()
 
 QByteArray JPTestCoordinator::SendNextPacket()
 {
-    QByteArray nextPacket = outbox->GetSendNextPacket();
+    bool OnlySendOneByte = false;
+
+    if (testOptions->RunMode == STEP)
+        OnlySendOneByte = true;
+
+    QByteArray nextPacket = outbox->SendNextPacket(OnlySendOneByte);
     port->SendData(nextPacket);
 
     return nextPacket;
@@ -39,9 +44,10 @@ JPacketDiffResults JPTestCoordinator::CheckMail()
     return inbox->CheckMail();
 }
 
-bool JPTestCoordinator::MoreToSend()
+bool JPTestCoordinator::MoreToSend(bool& newPacketStart, int& packetLength)
 {
     bool MoreDataToSend = false;
+    newPacketStart = false;
 
     if (outbox->MoreToSend())   // Data still ready to be sent from outbox
         MoreDataToSend =  true;
@@ -51,7 +57,8 @@ bool JPTestCoordinator::MoreToSend()
         if (!nextPacket.GetPayload().isEmpty())
         {
             MoreDataToSend = true;
-            outbox->SetNextPacket(nextPacket.GetPayload());
+            newPacketStart = outbox->SetNextPacket(nextPacket.GetPayload());
+            packetLength = nextPacket.GetPayload().count();
         }
     }
 
@@ -93,6 +100,7 @@ QList<QStringList> JPTestCoordinator::LoadTest(const JPTestOptions &Options)
 
         inbox->SetP2ID(testOptions->P2ID);
         inbox->SetP3ID(testOptions->P3ID);
+        inbox->SetMSP430Mode(testOptions->MSP430ModeOn);
     }
     else qDebug() << "Unable to open .jptest file " + Options.Filename;
 

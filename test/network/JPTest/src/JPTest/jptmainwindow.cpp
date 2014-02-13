@@ -18,8 +18,11 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
   , stopAction(new QAction(QIcon(":/images/images/stop.png"), "Stop", this))
   , stepAction(new QAction(QIcon(":/images/images/step.png"), "Step", this))
   , loadAction(new QAction(QIcon(":/images/images/load.png"), "Load", this))
+  , outgoingPacketIndex(-1)
+  , packetBytesSent(0)
   , p2InboxPassFailIndex(-1)
   , p3InboxPassFailIndex(-1)
+  , running(false)
 {
     qRegisterMetaType<JPTestOptions>("JPTestOptions");
     qRegisterMetaType<QList<QByteArray> >("QList<QByteArray>");
@@ -88,6 +91,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->browseWkDirButton, SIGNAL(clicked()), this, SLOT(BrowseWkDirSlot()));
     connect(this->startAction, SIGNAL(triggered()), this, SLOT(StartTest()));
     connect(this->stopAction, SIGNAL(triggered()), this, SLOT(StopTest()));
+    connect(this->stepAction, SIGNAL(triggered()), this, SLOT(StepTest()));
     connect(this->ui->clearOutboxButton, SIGNAL(clicked()), ui->outboxTextBrowser, SLOT(clear()));
     connect(this->ui->clearMessagesButton, SIGNAL(clicked()), ui->messagesTextBrowser, SLOT(clear()));
     connect(this->loadAction, SIGNAL(triggered()), this, SLOT(LoadTest()));
@@ -97,6 +101,7 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->ui->JAGIDcomboBox, SIGNAL(currentIndexChanged(QString)), this, SLOT(UpdateJaguarIDS(QString)));
     connect(this->ui->portListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(UpdatePortSelection(QString)));
     connect(this->ui->noMSP430checkBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
+    connect(this->ui->stepModeCheckBox, SIGNAL(released()), this, SLOT(CacheTestOptions()));
 
     // JPTest Controller
     connect(this->jptestManager, SIGNAL(UnableToStartTest()), SLOT(HandleUnableToStartTest()));
@@ -104,13 +109,14 @@ JPTMainWindow::JPTMainWindow(QWidget *parent) :
     connect(this->jptestManager, SIGNAL(OutboxChanged(QStringList)), this, SLOT(UpdateTestScript(QStringList)));
     connect(this->jptestManager, SIGNAL(P2InboxChanged(QStringList)), this, SLOT(UpdateP2Script(QStringList)));
     connect(this->jptestManager, SIGNAL(P3InboxChanged(QStringList)), this, SLOT(UpdateP3Script(QStringList)));
-    connect(this->jptestManager, SIGNAL(PacketSent(QByteArray)), this, SLOT(AppendToOutbox(QByteArray)));
+    connect(this->jptestManager, SIGNAL(DataSent(QByteArray,bool,int)), this, SLOT(AppendToOutbox(QByteArray, bool,int)));
     connect(this->jptestManager, SIGNAL(NewDiffResults(JPacketDiffResults)),
             this, SLOT(ProcessDiffResults(JPacketDiffResults)));
     // -------------------------------------------------------------------------------------------------//
 
     // Set initial states
     startAction->setEnabled(false);     // Disabled until test is loaded
+    stepAction->setEnabled(false);      // Disabled until test is started (and in step mode)
     ui->toolBox->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
 
@@ -187,24 +193,33 @@ void JPTMainWindow::StartTest()
 {   
     ui->outboxTextBrowser->clear();
     ui->garbageInbox->clear();
+    outgoingPacketIndex = 0;
+    packetBytesSent = 0;
     p2InboxPassFailIndex = 0;
     p3InboxPassFailIndex = 0;
 
     if (ui->jptestServerRButton->isChecked())
     {
+        /* ----- Start Server ----- */
+
         if (ui->packetOutboxListWidget->count() > 0)
         {
             this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
-            LogToMessageArea("Running " + testOptions.Filename + "...");
+
+            LogToMessageArea("Running " + testOptions.Filename + " in " + testOptions.GetRunModeString());
+            running = true;
+            stepAction->setEnabled(true);
         }
         // CLS - server needs to send at least 1 msg since that signals the clients to start!
         else ShowMessageBoxMessage(GetJptestFilename(false) + " has no outgoing packets for " + testOptions.GetJagIDString());
     }
     else
     {
-        // Start test as client (begin listening)
+        /* ----- Start Client ----- */
+
         this->jptestManager->StartTest(ui->jptestServerRButton->isChecked());
         LogToMessageArea("Client is listening for JPackets...");
+        running = true;
     }
 
     return;
@@ -220,6 +235,16 @@ void JPTMainWindow::StopTest()
         role = "client";
 
     LogToMessageArea("Stopping " + role + " test");
+    return;
+}
+
+void JPTMainWindow::StepTest()
+{
+    if (!running)
+        LogToMessageArea("Click the start test button before you can step.");
+    else
+        jptestManager->StepTest();
+
     return;
 }
 
@@ -345,28 +370,42 @@ QString JPTMainWindow::GetJptestFilename(bool IncludeWorkingDir /* = true*/)
         return ui->jptestListWidget->selectedItems().at(0)->text();
 }
 
-void JPTMainWindow::AppendToOutbox(QByteArray packet)
+void JPTMainWindow::AppendToOutbox(QByteArray packet, bool newPacketStart, int packetLength)
 {
-    QByteArray hexPacket = packet.toHex();
-    int totalBytes = hexPacket.count() / 2;     // hexPacket.count() == # nibbles (bc of encoding hex to ascii chars)
-    int byteCount = 0;
     QString htmlString;
+
+    if (newPacketStart && packetBytesSent != 0)
+    {
+        // Start handling next packet (after first has been sent)
+        ui->outboxTextBrowser->insertPlainText("\n");
+
+        // If last packet wasn't fully sent, indicate with yellow highlight
+        if (ui->packetOutboxListWidget->item(outgoingPacketIndex)->backgroundColor() != Qt::green)
+            ui->packetOutboxListWidget->item(outgoingPacketIndex)->setBackgroundColor(Qt::darkYellow);
+        outgoingPacketIndex++;
+
+        packetBytesSent = 0;
+    }
+
+    QByteArray hexPacket = packet.toHex();     // hexPacket.count() == # nibbles (bc of encoding hex to ascii chars)
+    int byteCount = 0;
+
     for (int i = 0; i < hexPacket.count(); i++)
     {
         QString hexValue(hexPacket.at(i));      // Get first nibble
         hexValue.append(hexPacket.at(i+1));     // Get second nibble
 
         // Format output to highlight protocols
-        if (byteCount < MAVPACKET::JHDR_OFFSET)
+        if ((byteCount + packetBytesSent) < MAVPACKET::JHDR_OFFSET)
             // Format JAGUAR header
             htmlString = GetHtmlString(hexValue.toUpper(), JAG_COLOR);
-        else if (byteCount < (MAVPACKET::JHDR_OFFSET + MAVPACKET::MVHDR_OFFSET))
-            // Forma Mavelink header
+        else if ((byteCount + packetBytesSent) < (MAVPACKET::JHDR_OFFSET + MAVPACKET::MVHDR_OFFSET))
+            // Forma MAVELINK header
             htmlString = GetHtmlString(hexValue.toUpper(), MAV_COLOR);
         else
         {
             // Format payload and checksum
-            if (byteCount < (totalBytes - MAVPACKET::tail_CS_OFFSET))
+            if ((byteCount + packetBytesSent) < (packetLength - MAVPACKET::tail_CS_OFFSET))
                 htmlString = GetHtmlString(hexValue.toUpper(), PAYLOAD_COLOR);
             else
                 htmlString = GetHtmlString(hexValue.toUpper(), MAV_COLOR);
@@ -377,10 +416,17 @@ void JPTMainWindow::AppendToOutbox(QByteArray packet)
         i++;        // Account for grabbing first and second nibble...
         byteCount++;
     }
-    ui->outboxTextBrowser->insertPlainText("\n");
 
+    // Increment # packet bytes sent by the number of bytes we just now sent out
+    packetBytesSent += byteCount;
+
+    // Set success color if we have sent out all the bytes
+    if (packetBytesSent == packetLength)
+        ui->packetOutboxListWidget->item(outgoingPacketIndex)->setBackgroundColor(Qt::green);
+
+    // Notify if not on outbox tab
     if (ui->tabWidget->currentIndex() != 0)
-        PostNotification(0);  //Notify
+        PostNotification(0);
 
     return;
 }
@@ -439,8 +485,9 @@ void JPTMainWindow::StartNewP2Packet(QByteArray packetStart, QList<bool> passLis
     // Innocent until proven guilty
     ui->p2packetInboxListWidget->item(++p2InboxPassFailIndex)->setBackgroundColor(Qt::green);
 
-    if (!ui->p2Inbox->textCursor().atStart())
-        ui->p2Inbox->insertPlainText("\n");
+    //if (!ui->p2Inbox->textCursor().atStart())
+      //  ui->p2Inbox->insertPlainText("\n");
+    ui->p2Inbox->append("");
 
     if (packetStart.length() != passList.length())
     {
@@ -459,7 +506,7 @@ void JPTMainWindow::StartNewP3Packet(QByteArray packetStart, QList<bool> passLis
     // Innocent until proven guilty
     ui->p3packetInboxListWidget->item(++p3InboxPassFailIndex)->setBackgroundColor(Qt::green);
 
-    if (!ui->p3Inbox->textCursor().atStart())
+    //if (!ui->p3Inbox->textCursor().atStart())
         ui->p3Inbox->insertPlainText("\n");
 
     if (packetStart.length() != passList.length())
@@ -504,7 +551,10 @@ QString JPTMainWindow::GetPortName()
 
 void JPTMainWindow::CacheTestOptions()
 {
-    testOptions.RunMode = RUN;
+    if (ui->stepModeCheckBox->isChecked())
+        testOptions.RunMode = STEP;
+    else
+        testOptions.RunMode = RUN;
     testOptions.Filename = GetJptestFilename();
     testOptions.JPacketPath = GetJPacketPath();
     testOptions.PortName = GetPortName();
@@ -567,10 +617,28 @@ void JPTMainWindow::PostNotification(const int &tabIndex)
 
 void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
 {
-    if (results.garbageDetected || results.packetDetected)
-    {
-        // New packet or garbage just detected. Clear staging area
+    if (results.garbageDetected || results.packetDetected)  // New packet or garbage just detected. Clear staging area
         ui->byteStagingLineEdit->clear();
+
+    if (results.packetDetected)
+    {
+        QByteArray startOfNewPacket;
+        QList<bool> passList;
+
+        for (int i = 0; i < results.diffs.count(); i++)
+        {
+            startOfNewPacket.append(results.diffs[i].byte);
+            passList << results.diffs[i].pass;
+        }
+
+        if (results.diffs[0].srcID == testOptions.P2ID)
+            StartNewP2Packet(startOfNewPacket, passList);
+        else if (results.diffs[0].srcID == testOptions.P3ID)
+            StartNewP3Packet(startOfNewPacket, passList);
+        else
+            LogToMessageArea("ERROR: New packet detected, but src doesn't match P2 or P3!");
+
+        return;
     }
 
     QList<JPTDiff>::iterator listIter = results.diffs.begin();
@@ -611,11 +679,15 @@ void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
 void JPTMainWindow::HandleTestEnded()
 {
     LogToMessageArea("JTest Ended.");
+    running = false;
+    stepAction->setEnabled(false);
     return;
 }
 
 void JPTMainWindow::HandleUnableToStartTest()
 {
     LogToMessageArea("Unable to start test. (Did you load the test?)");
+    running = false;
+    stepAction->setEnabled(false);
     return;
 }

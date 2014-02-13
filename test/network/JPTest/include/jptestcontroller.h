@@ -13,6 +13,7 @@ public:
     ~JPTestController();
     void StartTest(const bool &RunServer);
     void StopTest();
+    void StepTest();
     void LoadTest(const JPTestOptions &Options);
 
 signals:
@@ -20,13 +21,14 @@ signals:
     void StartServerTestSignal();
     void StartClientTestSignal();
     void StopTestSignal();
+    void StepTestSignal();
     void LoadTestSignal(const JPTestOptions& TestOptions);
 
     // Signals to parent...
     void OutboxChanged(QStringList);
     void P2InboxChanged(QStringList);
     void P3InboxChanged(QStringList);
-    void PacketSent(QByteArray);
+    void DataSent(QByteArray, bool, int);
     void RawByteReceived(char);
     void NewDiffResults(JPacketDiffResults);
     void UnableToStartTest();
@@ -38,7 +40,7 @@ public slots:
     void NewOutboxHandler(QStringList newOutbox);
     void NewP2InboxHandler(QStringList newP2Inbox);
     void NewP3InboxHandler(QStringList newP3Inbox);
-    void PacketSentHandler(QByteArray);
+    void DataSentHandler(QByteArray, bool newPacketStart, int packetLength);
     void ByteReceivedHandler(char);
     void HandleDiffResults(JPacketDiffResults);
 

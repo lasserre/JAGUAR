@@ -20,6 +20,7 @@ public:
     void SetNextP3ExpectedPacket(const JPacket& NextP3Packet);
     void SetP2ID(const int& ID);
     void SetP3ID(const int& ID);
+    void SetMSP430Mode(const bool& Enabled = true);
 
 protected:
     JPacketChecker* packetInspector;

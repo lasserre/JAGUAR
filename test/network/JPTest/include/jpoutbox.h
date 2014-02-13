@@ -11,8 +11,8 @@ class JPOutbox : public QObject
 public:
     explicit JPOutbox(QObject* parent = 0);
     bool MoreToSend() const;
-    QByteArray GetSendNextPacket();
-    void SetNextPacket(const QByteArray& NextPacket);
+    QByteArray SendNextPacket(const bool &NextByte = false);
+    bool SetNextPacket(const QByteArray& NextPacket);
 
 protected:
     QByteArray currentPacketData;
