@@ -154,9 +154,6 @@ JPacketDiffResults JPacketChecker::ReevaluateState(const int& NumBytesAdded)
     case WaitingForPacketFinish:
 
         detectedSrcID = GetPacketSource();
-        qDebug() << "p2ID: " << GetP2ID();
-        qDebug() << "p3ID: " << GetP3ID();
-        qDebug() << "detectedID: " << detectedSrcID;
 
         if (detectedSrcID == GetP2ID() && !needP2Packet)
         {
@@ -253,13 +250,6 @@ int JPacketChecker::STXByteReceived() const
 
 int JPacketChecker::GetPacketSource() const
 {
-    qDebug() << "msp430 mode: " << MSP430Mode();
-    qDebug() << "src index: " << GetSRCByteIndex();
-    qDebug() << "byteStagingQueue len: " << byteStagingQueue.length();
-    qDebug() << "byteStagingQueue: ";
-    for (int i = 0; i < byteStagingQueue.length(); i++)
-        qDebug() << JPacket::ByteToIntValue(byteStagingQueue[i]);
-    qDebug() << "src byte: " << JPacket::ByteToIntValue(byteStagingQueue.at(GetSRCByteIndex()));
     return JPacket::ByteToIntValue(byteStagingQueue.at(GetSRCByteIndex()));
 }
 

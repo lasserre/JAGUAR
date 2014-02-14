@@ -619,8 +619,6 @@ void JPTMainWindow::AppendToGarbageArea(const char& garbageByte)
     QString hex = FormatByteToHexString(garbageByte);
     ui->garbageInbox->insertPlainText(hex + " ");
 
-    LogToMessageArea("Garbage detected");
-
     return;
 }
 
@@ -768,6 +766,10 @@ void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
 
         listIter++;
     }
+
+    // Notify if not on inbox tab
+    if (ui->tabWidget->currentIndex() != 1)
+        PostNotification(1);
 
     return;
 }
