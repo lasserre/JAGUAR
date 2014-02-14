@@ -3,6 +3,6 @@ GCSoutPacket:2
 <MS>
 MSoutPacket
 <QC>
-QCoutPacket:5
+QCoutPacket:50
 <Broadcast>
 BroadcastoutPacket
