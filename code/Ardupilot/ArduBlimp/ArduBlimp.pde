@@ -769,14 +769,12 @@ AC_Fence    fence(&inertial_nav);
 void get_throttle_althold(int32_t target_alt, int16_t min_climb_rate, int16_t max_climb_rate);
 static void pre_arm_checks(bool display_failure);
 
-#if 0 //TODO: Enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////
 
 // setup the var_info table
 AP_Param param_loader(var_info, WP_START_BYTE);
-#endif // #if 0
 
 /*
   scheduler table - all regular tasks apart from the fast_loop()
@@ -811,6 +809,11 @@ void setup() {
     // Load the default values of variables listed in var_info[]s
     AP_Param::setup_sketch_defaults();
 
+    //******************* ADDED 02/15/14 *********************
+    //Temporary function to calibrate controller. This functionality will eventually be in mission planner
+    setup_radio();
+    //*********************************************************
+
 #if CONFIG_SONAR == ENABLED
  #if CONFIG_SONAR_SOURCE == SONAR_SOURCE_ADC
     sonar_analog_source = new AP_ADC_AnalogSource(
@@ -831,6 +834,8 @@ void setup() {
     board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 
     init_ardupilot();
+    motors.armed(true);
+
 
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
@@ -2107,6 +2112,77 @@ static void tuning(){
     }
 }
 #endif // #if 0
+
+void setup_radio(void)
+{
+  hal.console->println("\n\nRadio Setup:");
+  uint8_t i;
+  
+  for(i = 0; i < 100;i++){
+    hal.scheduler->delay(20);
+    read_radio();
+  }
+    
+  g.rc_1.radio_min = g.rc_1.radio_in;
+  g.rc_2.radio_min = g.rc_2.radio_in;
+  g.rc_3.radio_min = g.rc_3.radio_in;
+  g.rc_4.radio_min = g.rc_4.radio_in;
+  g.rc_5.radio_min = g.rc_5.radio_in;
+  g.rc_6.radio_min = g.rc_6.radio_in;
+  g.rc_7.radio_min = g.rc_7.radio_in;
+  g.rc_8.radio_min = g.rc_8.radio_in;
+
+  g.rc_1.radio_max = g.rc_1.radio_in;
+  g.rc_2.radio_max = g.rc_2.radio_in;
+  g.rc_3.radio_max = g.rc_3.radio_in;
+  g.rc_4.radio_max = g.rc_4.radio_in;
+  g.rc_5.radio_max = g.rc_5.radio_in;
+  g.rc_6.radio_max = g.rc_6.radio_in;
+  g.rc_7.radio_max = g.rc_7.radio_in;
+  g.rc_8.radio_max = g.rc_8.radio_in;
+
+  g.rc_1.radio_trim = g.rc_1.radio_in;
+  g.rc_2.radio_trim = g.rc_2.radio_in;
+  g.rc_4.radio_trim = g.rc_4.radio_in;
+  // 3 is not trimed
+  g.rc_5.radio_trim = 1500;
+  g.rc_6.radio_trim = 1500;
+  g.rc_7.radio_trim = 1500;
+  g.rc_8.radio_trim = 1500;
+      
+  hal.console->println("\nMove all controls to each extreme. Hit Enter to save:");
+  while(1){
+    
+    hal.scheduler->delay(20);
+    // Filters radio input - adjust filters in the radio.pde file
+    // ----------------------------------------------------------
+    read_radio();
+
+    g.rc_1.update_min_max();
+    g.rc_2.update_min_max();
+    g.rc_3.update_min_max();
+    g.rc_4.update_min_max();
+    g.rc_5.update_min_max();
+    g.rc_6.update_min_max();
+    g.rc_7.update_min_max();
+    g.rc_8.update_min_max();
+    
+        if(hal.console->available() > 0) {
+            hal.console->println("Radio calibrated, Showing control values:");
+            break;
+        }
+    }
+    g.rc_1.radio_min.save();
+    g.rc_2.radio_min.save();
+    g.rc_3.radio_min.save();
+    g.rc_4.radio_min.save();
+    g.rc_5.radio_min.save();
+    g.rc_6.radio_min.save();
+    g.rc_7.radio_min.save();
+    g.rc_8.radio_min.save();
+    return;
+}
+
 
 AP_HAL_MAIN();
 
