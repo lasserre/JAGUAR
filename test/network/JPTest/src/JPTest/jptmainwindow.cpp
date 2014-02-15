@@ -731,7 +731,11 @@ void JPTMainWindow::ProcessDiffResults(JPacketDiffResults results)
         else if (results.diffs[0].srcID == testOptions.P3ID)
             StartNewP3Packet(startOfNewPacket, passList);
         else
-            LogToMessageArea("ERROR: New packet detected, but src doesn't match P2 or P3!");
+        {
+            LogToMessageArea("ERROR: New packet detected, but src of " + QString::number(results.diffs[0].srcID) +
+                    "doesn't match P2 or P3!");
+            LogToMessageArea("# packet bytes received: " + results.diffs.count());
+        }
 
         return;
     }
