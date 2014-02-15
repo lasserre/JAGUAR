@@ -497,6 +497,7 @@ void JPTMainWindow::AppendToStagingArea(char newByte)
 
     QString hexByte = QString::number(newByteASCIIValue, 16);
     if (hexByte.length() < 2) hexByte.prepend('0');
+    if (hexByte.length() > 2) hexByte.remove(0, hexByte.length() - 2);
 
     ui->byteStagingLineEdit->setText(ui->byteStagingLineEdit->text() + hexByte.toUpper() + " ");
 
@@ -582,7 +583,7 @@ void JPTMainWindow::StartNewP3Packet(QByteArray packetStart, QList<bool> passLis
 QString JPTMainWindow::FormatByteToHexString(const unsigned char &byte)
 {
     // Format into hex value string
-    QString hexByte = QString::number(byte, 16);
+    QString hexByte = QString::number((uint)byte, 16);
     if (hexByte.length() < 2) hexByte.prepend("0");
     return hexByte.toUpper();
 }
@@ -617,7 +618,7 @@ void JPTMainWindow::SetRunning(const bool &SetRunning)
 void JPTMainWindow::AppendToGarbageArea(const char& garbageByte)
 {
     QString hex = FormatByteToHexString(garbageByte);
-    ui->garbageInbox->insertPlainText(hex + " ");
+    ui->garbageInbox->insertHtml(GetHtmlString(hex + " ", "black"));
 
     return;
 }
