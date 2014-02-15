@@ -74,6 +74,21 @@ void AP_MotorsBlimp::output_test()
 
 void AP_MotorsBlimp::output_armed()
 {
+    _rc_throttle->calc_pwm();
+    hal.console->println(_rc_throttle->radio_in);
+
+
+    if (_rc_throttle->radio_in > 1500) {
+        hal.rcout->write(_motor_to_channel_map[3], _rc_throttle->radio_min + _min_throttle);
+        if(_rc_throttle->radio_in > 1700)
+            hal.rcout->write(_motor_to_channel_map[2], _rc_throttle->radio_min + _min_throttle);
+    }
+    else
+    {
+        hal.rcout->write(_motor_to_channel_map[3], _rc_throttle->radio_min);
+        hal.rcout->write(_motor_to_channel_map[2], _rc_throttle->radio_min);
+    }
+
     //TODO: add code for motor output when armed
 }
 
