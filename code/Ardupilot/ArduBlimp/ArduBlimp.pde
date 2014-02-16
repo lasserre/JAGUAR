@@ -1548,14 +1548,30 @@ void update_roll_pitch_mode(void)
         control_roll            = g.rc_1.control_in;
         control_pitch           = g.rc_2.control_in;
 
-        if(g.axis_enabled) {
+#if FRAME_CONFIG == HELI_FRAME
+		if(g.axis_enabled) {
+            get_roll_rate_stabilized_ef(g.rc_1.control_in);
+            get_pitch_rate_stabilized_ef(g.rc_2.control_in);
+        }else{
+            // ACRO does not get SIMPLE mode ability
+            if (motors.flybar_mode == 1) {
+                g.rc_1.servo_out = g.rc_1.control_in;
+                g.rc_2.servo_out = g.rc_2.control_in;
+            } else {
+                get_acro_roll(g.rc_1.control_in);
+                get_acro_pitch(g.rc_2.control_in);
+            }
+		}
+#else  // !HELI_FRAME
+		if(g.axis_enabled) {
             get_roll_rate_stabilized_ef(g.rc_1.control_in);
             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
         }else{
             // ACRO does not get SIMPLE mode ability
             get_acro_roll(g.rc_1.control_in);
             get_acro_pitch(g.rc_2.control_in);
-        }
+		}
+#endif  // HELI_FRAME
         break;
 
     case ROLL_PITCH_STABLE:
@@ -1632,10 +1648,12 @@ void update_roll_pitch_mode(void)
         break;
     }
 
+  #if FRAME_CONFIG != HELI_FRAME
     if(g.rc_3.control_in == 0 && control_mode == STABILIZE /*control_mode <= ACRO*/) {
         reset_rate_I();
         reset_stability_I();
     }
+	#endif //HELI_FRAME
 
     if(ap_system.new_radio_frame) {
         // clear new radio frame info
@@ -1764,6 +1782,14 @@ void update_throttle_mode(void)
         set_target_alt_for_reporting(0);
         return;
     }
+
+#if FRAME_CONFIG == HELI_FRAME
+	if (control_mode == STABILIZE){
+		motors.stab_throttle = true;
+	} else {
+		motors.stab_throttle = false;
+	}
+#endif // HELI_FRAME
 
     switch(throttle_mode) {
 
@@ -2113,6 +2139,9 @@ static void tuning(){
 }
 #endif // #if 0
 
+//////////////////////////////////////////////////////////////////////////////////////
+// This function is temporary until these values can be calibrated from APM Planner //
+//////////////////////////////////////////////////////////////////////////////////////
 void setup_radio(void)
 {
   hal.console->println("\n\nRadio Setup:");

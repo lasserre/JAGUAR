@@ -613,7 +613,7 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case STABILIZE:
         port->print_P(PSTR("STABILIZE"));
         break;
-#if 0 //TODO: enable RTL and LAND modes
+#if 0 //TODO: enable ACRO, RTL, and LAND modes
     case ACRO:
         port->print_P(PSTR("ACRO"));
         break;

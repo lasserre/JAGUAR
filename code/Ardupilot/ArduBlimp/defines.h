@@ -119,9 +119,9 @@
 
 // Auto Pilot modes
 // ----------------
-// JBW - TODO: enable RTL and LAND modes for ArduBlimp
+// JBW - TODO: enable ACRO, RTL, and LAND modes for ArduBlimp
 #define STABILIZE 0                     // hold level position
-// #define ACRO 1                          // rate control
+#define ACRO 1                          // rate control
 // #define ALT_HOLD 2                      // AUTO control
 // #define AUTO 3                          // AUTO control
 // #define GUIDED 4                        // AUTO control
@@ -132,7 +132,7 @@
 // #define LAND 9                          // AUTO control
 // #define OF_LOITER 10                    // Hold a single location using optical flow
 //                                         // sensor
-#define NUM_MODES 1
+#define NUM_MODES 2
 
 // CH_6 Tuning
 // -----------

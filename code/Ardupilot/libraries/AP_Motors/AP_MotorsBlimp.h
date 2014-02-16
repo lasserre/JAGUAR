@@ -9,7 +9,7 @@
 #include <AP_Common.h>
 #include <AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
 #include <RC_Channel.h>     // RC Channel Library
-#include "AP_Motors.h"    // Parent Motors Matrix library
+#include "AP_Motors.h"      // Parent Motors library
 
 // motor definitions
 #define THRUST_MOTOR            AP_MOTORS_MOT_1  // this is actually 2 motors tied together

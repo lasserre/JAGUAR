@@ -14,14 +14,14 @@ static void failsafe_radio_on_event()
     // This is how to handle a failsafe.
     switch(control_mode) {
         case STABILIZE:
-#if 0 //TODO:remove
+#if 0 //TODO:enable
         case ACRO:
 #endif // #if 0
             // if throttle is zero disarm motors
             if (g.rc_3.control_in == 0) {
                 init_disarm_motors();
             }
-#if 0 //TODO:enable RTL and LAND modes
+#if 0 //TODO:enable ACRO, RTL, and LAND modes
             else if(ap.home_is_set == true && g_gps->status() == GPS::GPS_OK_FIX_3D && home_distance > wp_nav.get_waypoint_radius()) {
                 set_mode(RTL);
             }
@@ -46,7 +46,7 @@ static void failsafe_radio_on_event()
             break;
 #endif // #if 0
         default:
-#if 0 //TODO: enable RTL and LAND modes
+#if 0 //TODO: enable ACRO, RTL, and LAND modes
             if(ap.home_is_set == true && g_gps->status() == GPS::GPS_OK_FIX_3D && home_distance > wp_nav.get_waypoint_radius()) {
                 set_mode(RTL);
             }else{
@@ -228,14 +228,14 @@ static void failsafe_gcs_check()
     // use the throttle failsafe setting to decide what to do
     switch(control_mode) {
         case STABILIZE:
-#if 0 //TODO:remove
+#if 0 //TODO:enable
         case ACRO:
 #endif // #if 0
             // if throttle is zero disarm motors
             if (g.rc_3.control_in == 0) {
                 init_disarm_motors();
             }
-#if 0 //TODO: enable RTL and LAND modes
+#if 0 //TODO: enable ACRO, RTL, and LAND modes
             else if(ap.home_is_set == true && g_gps->status() == GPS::GPS_OK_FIX_3D && home_distance > wp_nav.get_waypoint_radius()) {
                 set_mode(RTL);
             }
@@ -260,7 +260,7 @@ static void failsafe_gcs_check()
             break;
 #endif // #if 0
         default:
-#if 0 //TODO:enable RTL and LAND modes
+#if 0 //TODO:enable ACRO, RTL, and LAND modes
             if(ap.home_is_set == true && g_gps->status() == GPS::GPS_OK_FIX_3D && home_distance > wp_nav.get_waypoint_radius()) {
                 set_mode(RTL);
             }else{
