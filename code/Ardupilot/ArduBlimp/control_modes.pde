@@ -49,6 +49,7 @@ static void reset_control_switch()
 }
 
 // read_aux_switches - checks aux switch positions and invokes configured actions
+// JBW - TODO: Should the RC Channel we are using for lift be removed from this function?
 static void read_aux_switches()
 {
     // check for camera switch

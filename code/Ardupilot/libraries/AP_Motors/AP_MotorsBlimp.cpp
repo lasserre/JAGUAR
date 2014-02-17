@@ -9,8 +9,9 @@
 
 extern const AP_HAL::HAL& hal;
 
-AP_MotorsBlimp::AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, uint16_t speed_hz) :
-  AP_Motors(rc_roll, rc_pitch, rc_throttle, rc_yaw, speed_hz)
+AP_MotorsBlimp::AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, RC_Channel* rc_lift, uint16_t speed_hz) :
+  AP_Motors(rc_roll, rc_pitch, rc_throttle, rc_yaw, speed_hz),
+  _rc_lift(rc_lift)
 {
 }
 
@@ -74,23 +75,11 @@ void AP_MotorsBlimp::output_test()
 
 void AP_MotorsBlimp::output_armed()
 {
-	//TODO: add code for motor output when armed
-
     _rc_throttle->calc_pwm();
-    hal.console->println(_rc_throttle->radio_in);
 
+    motor_out[THRUST_MOTOR] = _rc_throttle->radio_out;
 
-    if (_rc_throttle->radio_in > 1500)
-    {
-        motor_out[2] = _rc_throttle->radio_min + _min_throttle;
-        if(_rc_throttle->radio_in > 1700)
-            motor_out[3] = _rc_throttle->radio_min + _min_throttle;
-    }
-    else
-    {
-        motor_out[2] = _rc_throttle->radio_min;
-        motor_out[3] = _rc_throttle->radio_min;
-    }
+    hal.console->printf("%d,  %d\n", _rc_throttle->radio_in, _rc_throttle->radio_out);
 
     //TODO: update _reached_limit
 

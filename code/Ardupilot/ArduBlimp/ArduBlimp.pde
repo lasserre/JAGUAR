@@ -364,7 +364,7 @@ static struct AP_System{
 ////////////////////////////////////////////////////////////////////////////////
 // This is the state of the flight control system
 // There are multiple states defined such as STABILIZE, ACRO,
-static int8_t control_mode = STABILIZE;
+static int8_t control_mode = ACRO;
 // Used to maintain the state of the previous control switch position
 // This is set to -1 when we need to re-read the switch
 static uint8_t oldSwitchPosition;
@@ -376,7 +376,7 @@ static uint8_t receiver_rssi;
 ////////////////////////////////////////////////////////////////////////////////
 // Motor Output
 ////////////////////////////////////////////////////////////////////////////////
-static AP_MotorsBlimp motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4);
+static AP_MotorsBlimp motors(&g.rc_1, &g.rc_2, &g.rc_3, &g.rc_4, &g.rc_6);
 
 ////////////////////////////////////////////////////////////////////////////////
 // PIDs
@@ -1764,7 +1764,6 @@ bool set_throttle_mode( uint8_t new_throttle_mode )
     return throttle_initialised;
 }
 
-#if 0 //TODO:enable following code
 // update_throttle_mode - run high level throttle controllers
 // 50 hz update rate
 void update_throttle_mode(void)
@@ -1821,6 +1820,7 @@ void update_throttle_mode(void)
         set_target_alt_for_reporting(0);
         break;
 
+#if 0 // enable if needed
     case THROTTLE_MANUAL_TILT_COMPENSATED:
         // manual throttle but with angle boost
         if (g.rc_3.control_in <= 0) {
@@ -1882,8 +1882,10 @@ void update_throttle_mode(void)
         set_target_alt_for_reporting(0);
         break;
     }
+#endif // #if 0
 }
 
+#if 0 //TODO:enable following code
 // set_target_alt_for_reporting - set target altitude in cm for reporting purposes (logs and gcs)
 static void set_target_alt_for_reporting(float alt_cm)
 {

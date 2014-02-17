@@ -29,15 +29,18 @@
 class AP_MotorsBlimp : public AP_Motors
 {
 public:
+	RC_Channel* _rc_lift; ///< RC Channel for lift motor input
+
     /**
      * @brief Constructor
      * @param rc_roll     RC Channel for roll
      * @param rc_pitch    RC Channel for pitch
      * @param rc_throttle RC Channel for throttle
      * @param rc_yaw      RC Channel for yaw
+     * @param rc_lift     RC Channel for lift
      * @param speed_hz    motors speed in Hz
      */
-    AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT);
+    AP_MotorsBlimp(RC_Channel* rc_roll, RC_Channel* rc_pitch, RC_Channel* rc_throttle, RC_Channel* rc_yaw, RC_Channel* rc_lift, uint16_t speed_hz = AP_MOTORS_SPEED_DEFAULT);
 
     /**
      * @brief set update rate to motors - a value in hertz
