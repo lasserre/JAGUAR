@@ -356,7 +356,6 @@ static void set_mode(uint8_t mode)
 
     switch(control_mode)
     {
-#if 0 //TODO:remove
     case ACRO:
     	ap.manual_throttle = true;
     	ap.manual_attitude = true;
@@ -371,7 +370,6 @@ static void set_mode(uint8_t mode)
             nav_yaw 	= ahrs.yaw_sensor;
         }
         break;
-#endif // #if 0
 
     case STABILIZE:
     	ap.manual_throttle = true;

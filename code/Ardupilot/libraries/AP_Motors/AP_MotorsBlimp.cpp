@@ -79,8 +79,6 @@ void AP_MotorsBlimp::output_armed()
 
     motor_out[THRUST_MOTOR] = _rc_throttle->radio_out;
 
-    hal.console->printf("%d,  %d\n", _rc_throttle->radio_in, _rc_throttle->radio_out);
-
     //TODO: update _reached_limit
 
     // send output to each motor

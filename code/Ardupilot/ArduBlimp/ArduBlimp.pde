@@ -786,8 +786,8 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = { /****** JBW - comm
     // { update_GPS,            2,     900 },
     // { update_navigation,     10,    500 },
     // { medium_loop,           2,     700 },
-    { update_altitude,      10,    1000 }//,
-    // { fifty_hz_loop,         2,     950 },
+    { update_altitude,      10,    1000 },
+    { fifty_hz_loop,         2,     950 }//,
     // { run_nav_updates,      10,     800 },
     // { slow_loop,            10,     500 },
     // { gcs_check_input,       2,     700 },
@@ -885,7 +885,8 @@ void loop()
 
     // We want this to execute fast
     // ----------------------------
-    if (ins.num_samples_available() >= 2) {
+    if (ins.num_samples_available() >= 2)
+    {
 
         // check loop time
         perf_info_check_loop_time(timer - fast_loopTimer);
@@ -902,9 +903,12 @@ void loop()
 
         // tell the scheduler one tick has passed
         scheduler.tick();
-    } else {
+    }
+    else
+    {
         uint16_t dt = timer - fast_loopTimer;
-        if (dt < 10000) {
+        if (dt < 10000)
+        {
             uint16_t time_to_next_loop = 10000 - dt;
             scheduler.run(time_to_next_loop);
         }
@@ -914,11 +918,11 @@ void loop()
 // Main loop - 100hz
 static void fast_loop()
 {
-#if 0 // TODO: enable when needed
     // IMU DCM Algorithm
     // --------------------
     read_AHRS();
 
+#if 0 // TODO: enable when needed
     // reads all of the necessary trig functions for cameras, throttle, etc.
     // --------------------------------------------------------------------
     update_trig();
@@ -931,7 +935,6 @@ static void fast_loop()
     // ------------------------------
     motors.output();
 
-#if 0 // TODO: enable when needed
     // Inertial Nav
     // --------------------
     read_inertia();
@@ -943,7 +946,6 @@ static void fast_loop()
         update_optical_flow();
     }
 #endif  // OPTFLOW == ENABLED
-#endif // #if 0
 
     // Read radio and 3-position switch on radio
     // -----------------------------------------
@@ -966,20 +968,19 @@ static void fast_loop()
 #endif // #if 0
 }
 
-#if 0 // TODO: Enable the following code
 // stuff that happens at 50 hz
 // ---------------------------
 static void fifty_hz_loop()
 {
     // get altitude and climb rate from inertial lib
-    read_inertial_altitude();
+    // read_inertial_altitude(); TODO: enable
 
     // Update the throttle ouput
     // -------------------------
     update_throttle_mode();
 
-    // check auto_armed status
-    update_auto_armed();
+//     // check auto_armed status
+//     update_auto_armed();
 
 #ifdef USERHOOK_50HZLOOP
     USERHOOK_50HZLOOP
@@ -988,7 +989,7 @@ static void fifty_hz_loop()
 
 #if HIL_MODE != HIL_MODE_DISABLED && FRAME_CONFIG != HELI_FRAME
     // HIL for a copter needs very fast update of the servo values
-    gcs_send_message(MSG_RADIO_OUT);
+    // gcs_send_message(MSG_RADIO_OUT); TODO: enable when GCS code is added
 #endif
 
 #if MOUNT == ENABLED
@@ -1005,6 +1006,7 @@ static void fifty_hz_loop()
     camera.trigger_pic_cleanup();
 #endif
 
+#if 0 //TODO: enable
 # if HIL_MODE == HIL_MODE_DISABLED
     if (g.log_bitmask & MASK_LOG_ATTITUDE_FAST && motors.armed()) {
         Log_Write_Attitude();
@@ -1016,9 +1018,10 @@ static void fifty_hz_loop()
     if (g.log_bitmask & MASK_LOG_IMU && motors.armed())
         DataFlash.Log_Write_IMU(&ins);
 #endif
-
+#endif // #if 0
 }
 
+#if 0 // TODO: Enable the following code
 // medium_loop - runs at 10hz
 static void medium_loop()
 {
@@ -1727,6 +1730,7 @@ bool set_throttle_mode( uint8_t new_throttle_mode )
             throttle_initialised = true;
             break;
 
+#if 0 //TODO: enable as needed
         case THROTTLE_HOLD:
         case THROTTLE_AUTO:
             controller_desired_alt = get_initial_alt_hold(current_loc.alt, climb_rate);     // reset controller desired altitude to current altitude
@@ -1744,6 +1748,7 @@ bool set_throttle_mode( uint8_t new_throttle_mode )
             controller_desired_alt = get_initial_alt_hold(current_loc.alt, climb_rate);   // reset controller desired altitude to current altitude
             throttle_initialised = true;
             break;
+#endif // #if 0
 
         default:
             // To-Do: log an error message to the dataflash or tlogs instead of printing to the serial port
@@ -1771,14 +1776,13 @@ void update_throttle_mode(void)
     int16_t pilot_climb_rate;
     int16_t pilot_throttle_scaled;
 
-    if(ap.do_flip)     // this is pretty bad but needed to flip in AP modes.
-        return;
-
     // do not run throttle controllers if motors disarmed
     if( !motors.armed() ) {
         set_throttle_out(0, false);
         throttle_accel_deactivate();    // do not allow the accel based throttle to override our command
+#if 0 //TODO: enable when adding GCS code
         set_target_alt_for_reporting(0);
+#endif // #if 0
         return;
     }
 
@@ -1794,13 +1798,17 @@ void update_throttle_mode(void)
 
     case THROTTLE_MANUAL:
         // completely manual throttle
-        if(g.rc_3.control_in <= 0){
+        if(g.rc_3.control_in <= 0)
+        {
             set_throttle_out(0, false);
-        }else{
+        }
+        else
+        {
             // send pilot's output directly to motors
             pilot_throttle_scaled = get_pilot_desired_throttle(g.rc_3.control_in);
             set_throttle_out(pilot_throttle_scaled, false);
 
+#if 0 //TODO: enable if needed
             // update estimate of throttle cruise
             #if FRAME_CONFIG == HELI_FRAME
             update_throttle_cruise(motors.coll_out);
@@ -1816,8 +1824,11 @@ void update_throttle_mode(void)
                     set_takeoff_complete(true);
                 }
             }
+#endif //#if 0
         }
+#if 0 //TODO: enable when adding GCS code
         set_target_alt_for_reporting(0);
+#endif // #if 0
         break;
 
 #if 0 // enable if needed
@@ -1881,8 +1892,8 @@ void update_throttle_mode(void)
         get_throttle_land();
         set_target_alt_for_reporting(0);
         break;
-    }
 #endif // #if 0
+    }
 }
 
 #if 0 //TODO:enable following code
@@ -1897,6 +1908,7 @@ static float get_target_alt_for_reporting()
 {
     return target_alt_for_reporting;
 }
+#endif // #if 0
 
 static void read_AHRS(void)
 {
@@ -1915,6 +1927,7 @@ static void read_AHRS(void)
 #endif
 }
 
+#if 0 //TODO: enable as needed
 static void update_trig(void){
     Vector2f yawvector;
     const Matrix3f &temp   = ahrs.get_dcm_matrix();
