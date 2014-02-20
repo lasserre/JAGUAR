@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>QGCSettingsWidget</class>
+ <widget class="QDialog" name="QGCSettingsWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>694</width>
+    <height>459</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <widget class="QWidget" name="general">
+      <attribute name="title">
+       <string>General</string>
+      </attribute>
+      <attribute name="toolTip">
+       <string>General Settings</string>
+      </attribute>
+      <widget class="QCheckBox" name="lowPowerCheckBox">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>51</y>
+         <width>175</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Lowers all update rates to save battery power</string>
+       </property>
+       <property name="text">
+        <string>Enable low power mode</string>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="audioMuteCheckBox">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>9</y>
+         <width>181</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Mute all audio output</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/status/audio-volume-muted.svg</normaloff>:/files/images/status/audio-volume-muted.svg</iconset>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="titleBarCheckBox">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>70</y>
+         <width>409</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Show Docked Widget title bars when NOT in advanced Mode.</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+      <widget class="QCheckBox" name="reconnectCheckBox">
+       <property name="geometry">
+        <rect>
+         <x>18</x>
+         <y>30</y>
+         <width>394</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <property name="text">
+        <string>Automatically reconnect last link on application startup</string>
+       </property>
+       <property name="icon">
+        <iconset resource="../../qgroundcontrol.qrc">
+         <normaloff>:/files/images/devices/network-wireless.svg</normaloff>:/files/images/devices/network-wireless.svg</iconset>
+       </property>
+      </widget>
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>190</y>
+         <width>471</width>
+         <height>221</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>File Locations</string>
+       </property>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>24</y>
+          <width>451</width>
+          <height>191</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>App Data</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="appDataDirEdit"/>
+         </item>
+         <item row="0" column="2">
+          <widget class="QPushButton" name="appDirSetButton">
+           <property name="text">
+            <string>Set...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Log output:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="logDirEdit"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QPushButton" name="logDirSetButton">
+           <property name="text">
+            <string>Set...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>tlog output:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="mavlinkLogDirEdit"/>
+         </item>
+         <item row="2" column="2">
+          <widget class="QPushButton" name="mavlinkDirSetButton">
+           <property name="text">
+            <string>Set...</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Parameters</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="paramDirEdit"/>
+         </item>
+         <item row="3" column="2">
+          <widget class="QPushButton" name="paramDirSetButton">
+           <property name="text">
+            <string>Set...</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>90</y>
+         <width>471</width>
+         <height>101</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Themes</string>
+       </property>
+       <widget class="QRadioButton" name="nativeStyle">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>60</y>
+          <width>235</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Use native platform look and feel</string>
+        </property>
+        <property name="autoExclusive">
+         <bool>true</bool>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="indoorStyle">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>40</y>
+          <width>305</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Use indoor mission style (black background)</string>
+        </property>
+       </widget>
+       <widget class="QRadioButton" name="outdoorStyle">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>20</y>
+          <width>310</width>
+          <height>20</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Use outdoor mission style (light background)</string>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_5">
+        <property name="geometry">
+         <rect>
+          <x>50</x>
+          <y>80</y>
+          <width>254</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>(Windows/Linux/Mac OS) (Experimental)</string>
+        </property>
+       </widget>
+      </widget>
+      <zorder>groupBox</zorder>
+      <zorder>lowPowerCheckBox</zorder>
+      <zorder>audioMuteCheckBox</zorder>
+      <zorder>titleBarCheckBox</zorder>
+      <zorder>reconnectCheckBox</zorder>
+      <zorder>groupBox_2</zorder>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../qgroundcontrol.qrc"/>
+ </resources>
+ <connections/>
+</ui>
