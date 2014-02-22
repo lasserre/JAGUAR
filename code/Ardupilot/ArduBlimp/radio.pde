@@ -21,6 +21,7 @@ static void init_rc_in()
     g.rc_2.set_angle(MAX_INPUT_PITCH_ANGLE);
     g.rc_3.set_range(g.throttle_min, g.throttle_max);
     g.rc_4.set_angle(4500);
+    g.rc_6.set_range(MINIMUM_LIFT, MAXIMUM_LIFT);
 
     // reverse: CW = left
     // normal:  CW = left???
@@ -40,7 +41,6 @@ static void init_rc_in()
 
     //set auxiliary ranges
     g.rc_5.set_range(0,1000);
-    g.rc_6.set_range(0,1000);
     g.rc_7.set_range(0,1000);
     g.rc_8.set_range(0,1000);
 
@@ -67,6 +67,7 @@ static void init_rc_out()
 
     // we want the input to be scaled correctly
     g.rc_3.set_range_out(0,1000);
+    g.rc_6.set_range_out(0,1000);
 
     // full throttle means to enter ESC calibration
     if(g.rc_3.control_in >= (MAXIMUM_THROTTLE - 50)) {

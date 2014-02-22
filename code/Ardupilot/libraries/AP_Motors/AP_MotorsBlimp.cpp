@@ -75,9 +75,41 @@ void AP_MotorsBlimp::output_test()
 
 void AP_MotorsBlimp::output_armed()
 {
-    _rc_throttle->calc_pwm();
+    const int16_t& lift_radio_out = _rc_lift->radio_out;
+    const int16_t& lift_radio_min = _rc_lift->radio_min;
+    const int16_t& lift_radio_max = _rc_lift->radio_max;
+    int16_t lift_radio_mid = (lift_radio_min + lift_radio_max) / 2;
 
+    _rc_throttle->calc_pwm();
+    _rc_lift->calc_pwm();
+
+    // thrust motors
     motor_out[THRUST_MOTOR] = _rc_throttle->radio_out;
+
+    // lift motor
+    if (lift_radio_out > lift_radio_mid + LIFT_PAD)
+    {
+        // convert the amount the stick is above mid position to
+        // the full motor speed range
+        motor_out[LIFT_MOTOR] = ( ((long)(lift_radio_out - lift_radio_mid) * (long)(lift_radio_max - lift_radio_min)) / (lift_radio_max - lift_radio_mid) ) + lift_radio_min;
+    }
+    else
+    {
+        motor_out[LIFT_MOTOR] = lift_radio_min;
+    }
+
+    // anti-lift motors
+    if (lift_radio_out < lift_radio_mid - LIFT_PAD)
+    {
+        int16_t value = ( ((long)(lift_radio_mid - lift_radio_out) * (long)(lift_radio_max - lift_radio_min)) / (lift_radio_mid - lift_radio_min) ) + lift_radio_min;
+        motor_out[LEFT_ANTI_LIFT_MOTOR] = value;
+        motor_out[RIGHT_ANTI_LIFT_MOTOR] = value;
+    }
+    else
+    {
+        motor_out[LEFT_ANTI_LIFT_MOTOR] = lift_radio_min;
+        motor_out[RIGHT_ANTI_LIFT_MOTOR] = lift_radio_min;
+    }
 
     //TODO: update _reached_limit
 

@@ -37,6 +37,8 @@
 #define THROTTLE_AUTO                       3   // auto pilot altitude controller with target altitude held in next_WP.alt
 #define THROTTLE_LAND                       4   // landing throttle controller
 
+#define LIFT_MANUAL         0           // manual lift mode - pilot input goes directly to motors
+
 
 // sonar - for use with CONFIG_SONAR_SOURCE
 #define SONAR_SOURCE_ADC 1

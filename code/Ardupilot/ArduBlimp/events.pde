@@ -14,9 +14,7 @@ static void failsafe_radio_on_event()
     // This is how to handle a failsafe.
     switch(control_mode) {
         case STABILIZE:
-#if 0 //TODO:enable
         case ACRO:
-#endif // #if 0
             // if throttle is zero disarm motors
             if (g.rc_3.control_in == 0) {
                 init_disarm_motors();
@@ -82,9 +80,7 @@ static void low_battery_event(void)
     if (g.failsafe_battery_enabled && !ap.low_battery && motors.armed()) {
         switch(control_mode) {
             case STABILIZE:
-#if 0 //TODO:needed?
             case ACRO:
-#endif // #if 0
                 // if throttle is zero disarm motors
                 if (g.rc_3.control_in == 0) {
                     init_disarm_motors();

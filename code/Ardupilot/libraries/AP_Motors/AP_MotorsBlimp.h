@@ -15,13 +15,15 @@
 #define THRUST_MOTOR            AP_MOTORS_MOT_1  // this is actually 2 motors tied together
 #define LIFT_MOTOR              AP_MOTORS_MOT_2
 #define LEFT_ANTI_LIFT_MOTOR    AP_MOTORS_MOT_3
-#define RIGHT_ANTI_LEFT_MOTOR   AP_MOTORS_MOT_4
+#define RIGHT_ANTI_LIFT_MOTOR   AP_MOTORS_MOT_4
 #define LEFT_YAW_MOTOR	        AP_MOTORS_MOT_5
 #define RIGHT_YAW_MOTOR         AP_MOTORS_MOT_6
 #define TOP_PITCH_MOTOR         AP_MOTORS_MOT_7
 #define BOTTOM_PITCH_MOTOR      AP_MOTORS_MOT_8
 
 #define NUM_BLIMP_MOTORS    8
+
+#define LIFT_PAD           30
 
 /**
  * @class AP_MotorsBlimp

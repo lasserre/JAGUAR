@@ -312,7 +312,7 @@ static AP_RangeFinder_MaxsonarXL *sonar;
  *                       3  Throttle
  *                       4  Rudder (if we have ailerons)
  *                       5  Mode - 3 position switch
- *                       6  User assignable
+ *                       6  Lift
  *                       7  trainer switch - sets throttle nominal (toggle switch), sets accels to Level (hold > 1 second)
  *                       8  TBD
  *               Each Aux channel can be configured to have any of the available auxiliary functions assigned to it.
@@ -570,7 +570,7 @@ static int16_t saved_toy_throttle;
 ////////////////////////////////////////////////////////////////////////////////
 // flight modes
 ////////////////////////////////////////////////////////////////////////////////
-// Flight modes are combinations of Roll/Pitch, Yaw and Throttle control modes
+// Flight modes are combinations of Roll/Pitch, Yaw, Throttle, and Lift control modes
 // Each Flight mode is a unique combination of these modes
 //
 // The current desired control scheme for Yaw
@@ -579,6 +579,8 @@ static uint8_t yaw_mode;
 static uint8_t roll_pitch_mode;
 // The current desired control scheme for altitude hold
 static uint8_t throttle_mode;
+// The current desired control scheme for lift
+static uint8_t lift_mode = LIFT_MANUAL;
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -834,7 +836,12 @@ void setup() {
     board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 
     init_ardupilot();
+
+    /*** This should be removed when motors can be armed from the controller ***/
+    g.rc_3.servo_out = 0;
+    g.rc_6.servo_out = (g.rc_6.radio_min + g.rc_6.radio_max) / 2;
     motors.armed(true);
+    /***************************************************************************/
 
 
     // initialise the main loop scheduler
@@ -978,6 +985,10 @@ static void fifty_hz_loop()
     // Update the throttle ouput
     // -------------------------
     update_throttle_mode();
+
+    // Update the lift output
+    // ----------------------
+    update_lift_mode();
 
 //     // check auto_armed status
 //     update_auto_armed();
@@ -1893,6 +1904,24 @@ void update_throttle_mode(void)
         set_target_alt_for_reporting(0);
         break;
 #endif // #if 0
+    }
+}
+
+// set_lift_mode - sets the lift mode and initialises any variables as required
+bool set_lift_mode( uint8_t new_lift_mode )
+{
+    lift_mode = new_lift_mode;
+}
+
+// update_lift_mode - run high level lift controllers
+// 50 hz update rate
+void update_lift_mode(void)
+{
+    switch (lift_mode)
+    {
+    case LIFT_MANUAL:
+        g.rc_6.servo_out = g.rc_6.control_in;
+        break;
     }
 }
 
