@@ -264,9 +264,6 @@ RC_Channel::pwm_to_angle()
 int16_t
 RC_Channel::angle_to_pwm()
 {
-    hal.console->print(radio_trim);
-    hal.console->print(_high);
-    hal.console->print("\n");
     if((servo_out * _reverse) > 0)
         return _reverse * ((long)servo_out * (long)(radio_max - radio_trim)) / (long)_high;
     else

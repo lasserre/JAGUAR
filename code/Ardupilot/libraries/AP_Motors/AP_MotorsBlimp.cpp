@@ -73,10 +73,16 @@ void AP_MotorsBlimp::output_test()
     output_min();
 }
 
+/**
+ * @brief [brief description]
+ * @details [long description]
+ */
 void AP_MotorsBlimp::output_armed()
 {
     _rc_throttle->calc_pwm();
     _rc_lift->calc_pwm();
+    _rc_roll->calc_pwm();
+    _rc_pitch->calc_pwm();
     _rc_yaw->calc_pwm();
 
     // lift variables
@@ -85,16 +91,28 @@ void AP_MotorsBlimp::output_armed()
     const int16_t& lift_radio_max = _rc_lift->radio_max;
     int16_t lift_radio_mid = (lift_radio_min + lift_radio_max) / 2;
 
+    // roll variables
+    const int16_t& roll_radio_out = _rc_roll->radio_out;
+    const int16_t& roll_radio_min = _rc_roll->radio_min;
+    const int16_t& roll_radio_max = _rc_roll->radio_max;
+    int16_t roll_radio_mid = (roll_radio_min + roll_radio_max) / 2;
+
+    // pitch variables
+    const int16_t& pitch_radio_out = _rc_pitch->radio_out;
+    const int16_t& pitch_radio_min = _rc_pitch->radio_min;
+    const int16_t& pitch_radio_max = _rc_pitch->radio_max;
+    int16_t pitch_radio_mid = (pitch_radio_min + pitch_radio_max) / 2;
+
     // yaw variables
     const int16_t& yaw_radio_out = _rc_yaw->radio_out;
-    const int16_t& yaw_radio_min = _rc_yaw->radio_min;
-    const int16_t& yaw_radio_max = _rc_yaw->radio_max;
-    int16_t yaw_radio_mid = (yaw_radio_min + yaw_radio_max) / 2;
+    const int16_t& yaw_radio_min = _rc_yaw->radio_min;  // Control stick is pushed to the right
+    const int16_t& yaw_radio_max = _rc_yaw->radio_max;  // Control stick is pushed to the left
+    int16_t yaw_radio_mid = (yaw_radio_min + yaw_radio_max) / 2;    // Control stick is neutral position
 
-    // thrust motors
+    /* ---------- THRUST MOTORS ---------- */
     motor_out[THRUST_MOTOR] = _rc_throttle->radio_out;
 
-    // lift motor
+    /* ---------- LIFT MOTOR ---------- */
     if (lift_radio_out > lift_radio_mid + STICK_PAD)
     {
         // convert the amount the stick is above mid position to
@@ -106,7 +124,7 @@ void AP_MotorsBlimp::output_armed()
         motor_out[LIFT_MOTOR] = lift_radio_min;
     }
 
-    // anti-lift motors
+    /* ---------- ANTI-LIFT MOTORS ---------- */
     if (lift_radio_out < lift_radio_mid - STICK_PAD)
     {
         int16_t value = ( ((long)(lift_radio_mid - lift_radio_out) * (long)(lift_radio_max - lift_radio_min)) / (lift_radio_mid - lift_radio_min) ) + lift_radio_min;
@@ -119,23 +137,57 @@ void AP_MotorsBlimp::output_armed()
         motor_out[RIGHT_ANTI_LIFT_MOTOR] = lift_radio_min;
     }
 
-    // yaw motors
-    if (yaw_radio_out < yaw_radio_mid - STICK_PAD)
+    /* ---------- YAW MOTORS ---------- */
+    if (yaw_radio_out > yaw_radio_mid + STICK_PAD)
     {
-        motor_out[RIGHT_YAW_MOTOR] = yaw_radio_out;
+        // Control stick in the RIGHT region (Right ON, Left off)
+        long yawStickOffset = yaw_radio_out - yaw_radio_mid;    // Offset from center pos
+
+        motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
+        motor_out[RIGHT_YAW_MOTOR] = (yawStickOffset * 2) + yaw_radio_min;
+    }
+    else if (yaw_radio_out < yaw_radio_mid - STICK_PAD)
+    {
+        // Control stick in the LEFT region (Right off, Left ON)
+
+        long yawStickOffset = yaw_radio_mid - yaw_radio_out;    // Offset from center pos
+
+        motor_out[LEFT_YAW_MOTOR] = (yawStickOffset * 2) + yaw_radio_min;;
+        motor_out[RIGHT_YAW_MOTOR] = yaw_radio_min;
     }
     else
     {
+        // Control stick in the NEUTRAL region (Right off, Left off)
+        motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
         motor_out[RIGHT_YAW_MOTOR] = yaw_radio_min;
     }
 
-    if (yaw_radio_out > yaw_radio_mid + STICK_PAD)
+    hal.console->printf("pitch_radio_out: %i\n", pitch_radio_out);
+
+    /* ---------- PITCH MOTORS ---------- */
+    if (pitch_radio_out > pitch_radio_mid + STICK_PAD)
     {
-        motor_out[LEFT_YAW_MOTOR] = yaw_radio_out;
+        // Control stick in the UPPER region - we want to pitch DOWN 
+
+        long pitchStickOffset = pitch_radio_out - pitch_radio_mid;
+
+        motor_out[PITCH_UP_MOTOR] = pitch_radio_min;
+        motor_out[PITCH_DOWN_MOTOR] = (pitchStickOffset * 2) + pitch_radio_min;
+    }
+    else if (pitch_radio_out < pitch_radio_mid - STICK_PAD)
+    {
+        // Control stick in the LOWER region - we want to pitch UP
+
+        long pitchStickOffset = pitch_radio_mid - pitch_radio_out;
+
+        motor_out[PITCH_UP_MOTOR] = (pitchStickOffset * 2) + pitch_radio_min;
+        motor_out[PITCH_DOWN_MOTOR] = pitch_radio_min;
     }
     else
     {
-        motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
+        // Control stick in the NEUTRAL region (Pitch motors off)
+        motor_out[PITCH_UP_MOTOR] = pitch_radio_min;
+        motor_out[PITCH_DOWN_MOTOR] = pitch_radio_min;
     }
 
     //TODO: update _reached_limit

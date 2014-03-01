@@ -17,18 +17,18 @@ static void default_dead_zones()
 static void init_rc_in()
 {
     // set rc channel ranges
-    g.rc_1.set_angle(MAX_INPUT_ROLL_ANGLE);
-    g.rc_2.set_angle(MAX_INPUT_PITCH_ANGLE);
+    g.rc_1.set_range(MINIMUM_ROLL, MAXIMUM_ROLL);
+    g.rc_2.set_range(MINIMUM_PITCH, MAXIMUM_PITCH);
     g.rc_3.set_range(g.throttle_min, g.throttle_max);
-    g.rc_4.set_angle(4500);
+    g.rc_4.set_range(MINIMUM_YAW, MAXIMUM_YAW);
     g.rc_6.set_range(MINIMUM_LIFT, MAXIMUM_LIFT);
 
     // reverse: CW = left
     
     // normal:  CW = left???
 
-    g.rc_1.set_type(RC_CHANNEL_TYPE_ANGLE_RAW);
-    g.rc_2.set_type(RC_CHANNEL_TYPE_ANGLE_RAW);
+    // g.rc_1.set_type(RC_CHANNEL_TYPE_ANGLE_RAW);
+    // g.rc_2.set_type(RC_CHANNEL_TYPE_ANGLE_RAW);
     // g.rc_4.set_type(RC_CHANNEL_TYPE_ANGLE_RAW);
 
     rc_ch[CH_1] = &g.rc_1;

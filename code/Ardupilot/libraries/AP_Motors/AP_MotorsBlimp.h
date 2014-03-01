@@ -18,8 +18,8 @@
 #define RIGHT_ANTI_LIFT_MOTOR   AP_MOTORS_MOT_4
 #define LEFT_YAW_MOTOR	        AP_MOTORS_MOT_5
 #define RIGHT_YAW_MOTOR         AP_MOTORS_MOT_6
-#define TOP_PITCH_MOTOR         AP_MOTORS_MOT_7
-#define BOTTOM_PITCH_MOTOR      AP_MOTORS_MOT_8
+#define PITCH_UP_MOTOR         AP_MOTORS_MOT_7     // TOP pitch motor
+#define PITCH_DOWN_MOTOR      AP_MOTORS_MOT_8     // BOTTOM pitch motor
 
 #define NUM_BLIMP_MOTORS       8
 

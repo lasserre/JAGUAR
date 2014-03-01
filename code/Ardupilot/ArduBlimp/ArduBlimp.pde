@@ -968,9 +968,9 @@ static void fast_loop()
     // custom code/exceptions for flight modes
     // ---------------------------------------
     update_yaw_mode();
-#if 0 //TODO: enable when needed
     update_roll_pitch_mode();
 
+#if 0 //TODO: enable when needed
     // update targets to rate controllers
     update_rate_contoller_targets();
 
@@ -1537,8 +1537,8 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
 
     switch( new_roll_pitch_mode ) {
         case ROLL_PITCH_STABLE:
-#if 0 //TODO:enable necessary modes
         case ROLL_PITCH_ACRO:
+#if 0 //TODO:enable necessary modes
         case ROLL_PITCH_AUTO:
         case ROLL_PITCH_STABLE_OF:
         case ROLL_PITCH_TOY:
@@ -1569,38 +1569,45 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
 // 100hz update rate
 void update_roll_pitch_mode(void)
 {
+  hal.console->printf("roll_pitch_mode: %i\n", roll_pitch_mode);
+
     switch(roll_pitch_mode) {
     case ROLL_PITCH_ACRO:
-        // copy user input for reporting purposes
-        control_roll            = g.rc_1.control_in;
-        control_pitch           = g.rc_2.control_in;
+    
+    hal.console->printf("case ROLL_PITCH_ACRO detected \n");
+    g.rc_2.servo_out = g.rc_2.control_in;   // Pass pitch value directly through
 
-#if FRAME_CONFIG == HELI_FRAME
-		if(g.axis_enabled) {
-            get_roll_rate_stabilized_ef(g.rc_1.control_in);
-            get_pitch_rate_stabilized_ef(g.rc_2.control_in);
-        }else{
-            // ACRO does not get SIMPLE mode ability
-            if (motors.flybar_mode == 1) {
-                g.rc_1.servo_out = g.rc_1.control_in;
-                g.rc_2.servo_out = g.rc_2.control_in;
-            } else {
-                get_acro_roll(g.rc_1.control_in);
-                get_acro_pitch(g.rc_2.control_in);
-            }
-		}
-#else  // !HELI_FRAME
-		if(g.axis_enabled) {
-            get_roll_rate_stabilized_ef(g.rc_1.control_in);
-            get_pitch_rate_stabilized_ef(g.rc_2.control_in);
-        }else{
-            // ACRO does not get SIMPLE mode ability
-            get_acro_roll(g.rc_1.control_in);
-            get_acro_pitch(g.rc_2.control_in);
-		}
-#endif  // HELI_FRAME
+//         // copy user input for reporting purposes
+//         control_roll            = g.rc_1.control_in;
+//         control_pitch           = g.rc_2.control_in;
+
+// #if FRAME_CONFIG == HELI_FRAME
+// 		if(g.axis_enabled) {
+//             get_roll_rate_stabilized_ef(g.rc_1.control_in);
+//             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
+//         }else{
+//             // ACRO does not get SIMPLE mode ability
+//             if (motors.flybar_mode == 1) {
+//                 g.rc_1.servo_out = g.rc_1.control_in;
+//                 g.rc_2.servo_out = g.rc_2.control_in;
+//             } else {
+//                 get_acro_roll(g.rc_1.control_in);
+//                 get_acro_pitch(g.rc_2.control_in);
+//             }
+// 		}
+// #else  // !HELI_FRAME
+// 		if(g.axis_enabled) {
+//             get_roll_rate_stabilized_ef(g.rc_1.control_in);
+//             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
+//         }else{
+//             // ACRO does not get SIMPLE mode ability
+//             get_acro_roll(g.rc_1.control_in);
+//             get_acro_pitch(g.rc_2.control_in);
+// 		}
+// #endif  // HELI_FRAME
         break;
 
+#if 0 // Temp commented out switch statements
     case ROLL_PITCH_STABLE:
 #if 0 //TODO:Do we need SIMPLE mode?
         // apply SIMPLE mode transform
@@ -1673,8 +1680,11 @@ void update_roll_pitch_mode(void)
         get_stabilize_roll(nav_roll);
         get_stabilize_pitch(nav_pitch);
         break;
+
+        #endif // Temp commented out switch statements
     }
 
+#if 0 // Temp 2
   #if FRAME_CONFIG != HELI_FRAME
     if(g.rc_3.control_in == 0 && control_mode == STABILIZE /*control_mode <= ACRO*/) {
         reset_rate_I();
@@ -1686,6 +1696,7 @@ void update_roll_pitch_mode(void)
         // clear new radio frame info
         ap_system.new_radio_frame = false;
     }
+  #endif  // Temp 2
 }
 
 #if 0 //TODO: Is this needed? It's for SIMPLE mode
@@ -2190,7 +2201,7 @@ static void tuning(){
     case CH6_CIRCLE_RATE:
         // set circle rate
         g.circle_rate.set(g.rc_6.control_in/25-20);     // allow approximately 45 degree turn rate in either direction
-        //cliSerial->printf_P(PSTR("\nRate:%4.2f"),(float)g.circle_rate);
+        //cliSerial->upPf_P(PSTR("\nRate:%4.2f"),(float)g.circle_rate);
         break;
     }
 }
