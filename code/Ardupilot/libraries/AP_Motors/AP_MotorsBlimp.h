@@ -21,9 +21,9 @@
 #define TOP_PITCH_MOTOR         AP_MOTORS_MOT_7
 #define BOTTOM_PITCH_MOTOR      AP_MOTORS_MOT_8
 
-#define NUM_BLIMP_MOTORS    8
+#define NUM_BLIMP_MOTORS       8
 
-#define LIFT_PAD           30
+#define STICK_PAD             30
 
 /**
  * @class AP_MotorsBlimp

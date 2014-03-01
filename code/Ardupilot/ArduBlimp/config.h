@@ -464,22 +464,22 @@
 //
 
 #if !defined(FLIGHT_MODE_1)
- # define FLIGHT_MODE_1                  STABILIZE
+ # define FLIGHT_MODE_1                  ACRO
 #endif
 #if !defined(FLIGHT_MODE_2)
- # define FLIGHT_MODE_2                  STABILIZE
+ # define FLIGHT_MODE_2                  ACRO
 #endif
 #if !defined(FLIGHT_MODE_3)
- # define FLIGHT_MODE_3                  STABILIZE
+ # define FLIGHT_MODE_3                  ACRO
 #endif
 #if !defined(FLIGHT_MODE_4)
- # define FLIGHT_MODE_4                  STABILIZE
+ # define FLIGHT_MODE_4                  ACRO
 #endif
 #if !defined(FLIGHT_MODE_5)
- # define FLIGHT_MODE_5                  STABILIZE
+ # define FLIGHT_MODE_5                  ACRO
 #endif
 #if !defined(FLIGHT_MODE_6)
- # define FLIGHT_MODE_6                  STABILIZE
+ # define FLIGHT_MODE_6                  ACRO
 #endif
 
 

@@ -224,6 +224,7 @@ void set_yaw_rate_target( int32_t desired_rate, uint8_t earth_or_body_frame ) {
     }
 }
 
+#if 0 //TODO: needed???
 // update_rate_contoller_targets - converts earth frame rates to body frame rates for rate controllers
 void
 update_rate_contoller_targets()
@@ -251,6 +252,7 @@ run_rate_controllers()
         set_throttle_out(get_throttle_accel(throttle_accel_target_ef), true);
     }
 }
+#endif // #if 0
 
 static int16_t
 get_rate_roll(int32_t target_rate)

@@ -811,9 +811,12 @@ void setup() {
     // Load the default values of variables listed in var_info[]s
     AP_Param::setup_sketch_defaults();
 
-    //******************* ADDED 02/15/14 *********************
-    //Temporary function to calibrate controller. This functionality will eventually be in mission planner
+    //********************  Temporary  ************************
+    // calibrates controller. This functionality will eventually be in mission planner
     setup_radio();
+
+    // set mode
+    set_mode(ACRO);
     //*********************************************************
 
 #if CONFIG_SONAR == ENABLED
@@ -949,7 +952,8 @@ static void fast_loop()
     // optical flow
     // --------------------
 #if OPTFLOW == ENABLED
-    if(g.optflow_enabled) {
+    if(g.optflow_enabled)
+    {
         update_optical_flow();
     }
 #endif  // OPTFLOW == ENABLED
@@ -959,10 +963,12 @@ static void fast_loop()
     read_radio();
 #if 0 //TODO: enable when needed
     read_control_switch();
+#endif // #if 0
 
     // custom code/exceptions for flight modes
     // ---------------------------------------
     update_yaw_mode();
+#if 0 //TODO: enable when needed
     update_roll_pitch_mode();
 
     // update targets to rate controllers
@@ -1400,20 +1406,26 @@ void update_yaw_mode(void)
 {
     switch(yaw_mode) {
 
+#if 0 //TODO: enable if needed
     case YAW_HOLD:
         // heading hold at heading held in nav_yaw but allow input from pilot
         get_yaw_rate_stabilized_ef(g.rc_4.control_in);
         break;
+#endif // #if 0
 
     case YAW_ACRO:
+        g.rc_4.servo_out = g.rc_4.control_in;
+#if 0 //TODO: needed???
         // pilot controlled yaw using rate controller
         if(g.axis_enabled) {
             get_yaw_rate_stabilized_ef(g.rc_4.control_in);
         }else{
             get_acro_yaw(g.rc_4.control_in);
         }
+#endif // #if 0
         break;
 
+#if 0 //TODO: enable if needed
     case YAW_LOOK_AT_NEXT_WP:
         // point towards next waypoint (no pilot input accepted)
         // we don't use wp_bearing because we don't want the copter to turn too much during flight
@@ -1479,6 +1491,7 @@ void update_yaw_mode(void)
         }
 
         break;
+#endif // #if 0
     }
 }
 
@@ -2188,63 +2201,65 @@ static void tuning(){
 //////////////////////////////////////////////////////////////////////////////////////
 void setup_radio(void)
 {
-  hal.console->println("\n\nRadio Setup:");
-  uint8_t i;
-  
-  for(i = 0; i < 100;i++){
+    hal.console->println("\n\nRadio Setup:");
+    uint8_t i;
+
+    for(i = 0; i < 100;i++){
     hal.scheduler->delay(20);
     read_radio();
-  }
-    
-  g.rc_1.radio_min = g.rc_1.radio_in;
-  g.rc_2.radio_min = g.rc_2.radio_in;
-  g.rc_3.radio_min = g.rc_3.radio_in;
-  g.rc_4.radio_min = g.rc_4.radio_in;
-  g.rc_5.radio_min = g.rc_5.radio_in;
-  g.rc_6.radio_min = g.rc_6.radio_in;
-  g.rc_7.radio_min = g.rc_7.radio_in;
-  g.rc_8.radio_min = g.rc_8.radio_in;
+    }
 
-  g.rc_1.radio_max = g.rc_1.radio_in;
-  g.rc_2.radio_max = g.rc_2.radio_in;
-  g.rc_3.radio_max = g.rc_3.radio_in;
-  g.rc_4.radio_max = g.rc_4.radio_in;
-  g.rc_5.radio_max = g.rc_5.radio_in;
-  g.rc_6.radio_max = g.rc_6.radio_in;
-  g.rc_7.radio_max = g.rc_7.radio_in;
-  g.rc_8.radio_max = g.rc_8.radio_in;
+    g.rc_1.radio_min = g.rc_1.radio_in;
+    g.rc_2.radio_min = g.rc_2.radio_in;
+    g.rc_3.radio_min = g.rc_3.radio_in;
+    g.rc_4.radio_min = g.rc_4.radio_in;
+    g.rc_5.radio_min = g.rc_5.radio_in;
+    g.rc_6.radio_min = g.rc_6.radio_in;
+    g.rc_7.radio_min = g.rc_7.radio_in;
+    g.rc_8.radio_min = g.rc_8.radio_in;
 
-  g.rc_1.radio_trim = g.rc_1.radio_in;
-  g.rc_2.radio_trim = g.rc_2.radio_in;
-  g.rc_4.radio_trim = g.rc_4.radio_in;
-  // 3 is not trimed
-  g.rc_5.radio_trim = 1500;
-  g.rc_6.radio_trim = 1500;
-  g.rc_7.radio_trim = 1500;
-  g.rc_8.radio_trim = 1500;
+    g.rc_1.radio_max = g.rc_1.radio_in;
+    g.rc_2.radio_max = g.rc_2.radio_in;
+    g.rc_3.radio_max = g.rc_3.radio_in;
+    g.rc_4.radio_max = g.rc_4.radio_in;
+    g.rc_5.radio_max = g.rc_5.radio_in;
+    g.rc_6.radio_max = g.rc_6.radio_in;
+    g.rc_7.radio_max = g.rc_7.radio_in;
+    g.rc_8.radio_max = g.rc_8.radio_in;
+
+    g.rc_1.radio_trim = g.rc_1.radio_in;
+    g.rc_2.radio_trim = g.rc_2.radio_in;
+    g.rc_4.radio_trim = g.rc_4.radio_in;
+    // 3 is not trimed
+    g.rc_5.radio_trim = 1500;
+    g.rc_6.radio_trim = 1500;
+    g.rc_7.radio_trim = 1500;
+    g.rc_8.radio_trim = 1500;
       
-  hal.console->println("\nMove all controls to each extreme. Hit Enter to save:");
-  while(1){
-    
-    hal.scheduler->delay(20);
-    // Filters radio input - adjust filters in the radio.pde file
-    // ----------------------------------------------------------
-    read_radio();
+    hal.console->println("\nMove all controls to each extreme. Hit Enter to save:");
+    while(1)
+    {
+        hal.scheduler->delay(20);
+        // Filters radio input - adjust filters in the radio.pde file
+        // ----------------------------------------------------------
+        read_radio();
 
-    g.rc_1.update_min_max();
-    g.rc_2.update_min_max();
-    g.rc_3.update_min_max();
-    g.rc_4.update_min_max();
-    g.rc_5.update_min_max();
-    g.rc_6.update_min_max();
-    g.rc_7.update_min_max();
-    g.rc_8.update_min_max();
-    
-        if(hal.console->available() > 0) {
+        g.rc_1.update_min_max();
+        g.rc_2.update_min_max();
+        g.rc_3.update_min_max();
+        g.rc_4.update_min_max();
+        g.rc_5.update_min_max();
+        g.rc_6.update_min_max();
+        g.rc_7.update_min_max();
+        g.rc_8.update_min_max();
+        
+        if(hal.console->available() > 0)
+        {
             hal.console->println("Radio calibrated, Showing control values:");
             break;
         }
     }
+
     g.rc_1.radio_min.save();
     g.rc_2.radio_min.save();
     g.rc_3.radio_min.save();
@@ -2253,7 +2268,6 @@ void setup_radio(void)
     g.rc_6.radio_min.save();
     g.rc_7.radio_min.save();
     g.rc_8.radio_min.save();
-    return;
 }
 
 

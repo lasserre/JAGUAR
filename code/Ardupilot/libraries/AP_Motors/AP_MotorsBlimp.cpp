@@ -75,19 +75,27 @@ void AP_MotorsBlimp::output_test()
 
 void AP_MotorsBlimp::output_armed()
 {
+    _rc_throttle->calc_pwm();
+    _rc_lift->calc_pwm();
+    _rc_yaw->calc_pwm();
+
+    // lift variables
     const int16_t& lift_radio_out = _rc_lift->radio_out;
     const int16_t& lift_radio_min = _rc_lift->radio_min;
     const int16_t& lift_radio_max = _rc_lift->radio_max;
     int16_t lift_radio_mid = (lift_radio_min + lift_radio_max) / 2;
 
-    _rc_throttle->calc_pwm();
-    _rc_lift->calc_pwm();
+    // yaw variables
+    const int16_t& yaw_radio_out = _rc_yaw->radio_out;
+    const int16_t& yaw_radio_min = _rc_yaw->radio_min;
+    const int16_t& yaw_radio_max = _rc_yaw->radio_max;
+    int16_t yaw_radio_mid = (yaw_radio_min + yaw_radio_max) / 2;
 
     // thrust motors
     motor_out[THRUST_MOTOR] = _rc_throttle->radio_out;
 
     // lift motor
-    if (lift_radio_out > lift_radio_mid + LIFT_PAD)
+    if (lift_radio_out > lift_radio_mid + STICK_PAD)
     {
         // convert the amount the stick is above mid position to
         // the full motor speed range
@@ -99,7 +107,7 @@ void AP_MotorsBlimp::output_armed()
     }
 
     // anti-lift motors
-    if (lift_radio_out < lift_radio_mid - LIFT_PAD)
+    if (lift_radio_out < lift_radio_mid - STICK_PAD)
     {
         int16_t value = ( ((long)(lift_radio_mid - lift_radio_out) * (long)(lift_radio_max - lift_radio_min)) / (lift_radio_mid - lift_radio_min) ) + lift_radio_min;
         motor_out[LEFT_ANTI_LIFT_MOTOR] = value;
@@ -109,6 +117,25 @@ void AP_MotorsBlimp::output_armed()
     {
         motor_out[LEFT_ANTI_LIFT_MOTOR] = lift_radio_min;
         motor_out[RIGHT_ANTI_LIFT_MOTOR] = lift_radio_min;
+    }
+
+    // yaw motors
+    if (yaw_radio_out < yaw_radio_mid - STICK_PAD)
+    {
+        motor_out[RIGHT_YAW_MOTOR] = yaw_radio_out;
+    }
+    else
+    {
+        motor_out[RIGHT_YAW_MOTOR] = yaw_radio_min;
+    }
+
+    if (yaw_radio_out > yaw_radio_mid + STICK_PAD)
+    {
+        motor_out[LEFT_YAW_MOTOR] = yaw_radio_out;
+    }
+    else
+    {
+        motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
     }
 
     //TODO: update _reached_limit
