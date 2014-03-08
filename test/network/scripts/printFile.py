@@ -7,9 +7,9 @@
 
 # Config parameters ----------------------
 # SERIAL_PORT = "/dev/cu.usbserial-A600eIjc"
-# SERIAL_PORT = "/dev/cu.usbserial-A40081Ez"
-SERIAL_PORT = "/dev/cu.usbmodemfd121"
-BAUD = 57600
+SERIAL_PORT = "/dev/cu.usbserial-A40081Ez"
+# SERIAL_PORT = "/dev/cu.usbmodemfd121"
+BAUD = 9600
 # ----------------------------------------
 
 import time, serial, sys
@@ -45,7 +45,7 @@ while loops == 0 or count < loops:
 	f = open(filename, "rb")
 
 	try:
-		byte = f.read(1)
+		byte = str(count) + " " + f.read(1)
 		while byte != "":
 			# byte = f.read(1)
 			print " " + byte.encode("hex").upper() + (" " * 6) + byte
