@@ -31,7 +31,9 @@ static int8_t   main_menu_help(uint8_t argc, const Menu::arg *argv)
 const struct Menu::command main_menu_commands[] PROGMEM = {
 //   command		function called
 //   =======        ===============
+#if 0 //TODO: enable when needed - JBW
     {"logs",                process_logs},
+#endif // #if 0
     {"setup",               setup_mode},
     {"test",                test_mode},
     {"reboot",              reboot_board},

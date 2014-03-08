@@ -13,7 +13,6 @@
 #define AC_FENCE         DISABLED
 #define CAMERA           DISABLED
 #define CONFIG_SONAR     DISABLED
-#define CLI_ENABLED      DISABLED
 #define LOGGING_ENABLED  DISABLED
 #define MOUNT            DISABLED
 #define MOUNT2           DISABLED

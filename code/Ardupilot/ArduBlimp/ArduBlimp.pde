@@ -21,7 +21,7 @@
 // Common dependencies
 #include <AP_Common.h>
 #include <AP_Progmem.h>
-// #include <AP_Menu.h>
+#include <AP_Menu.h>
 #include <AP_Param.h>
 // AP_HAL
 #include <AP_HAL.h>
@@ -102,13 +102,13 @@ static Parameters g;
 // main loop scheduler
 static AP_Scheduler scheduler;
 
-#if 0 // TODO: enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
 ////////////////////////////////////////////////////////////////////////////////
 static void update_events(void);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
 
+#if 0 // TODO: enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
 ////////////////////////////////////////////////////////////////////////////////
@@ -1569,12 +1569,9 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
 // 100hz update rate
 void update_roll_pitch_mode(void)
 {
-  hal.console->printf("roll_pitch_mode: %i\n", roll_pitch_mode);
-
     switch(roll_pitch_mode) {
     case ROLL_PITCH_ACRO:
     
-    hal.console->printf("case ROLL_PITCH_ACRO detected \n");
     g.rc_2.servo_out = g.rc_2.control_in;   // Pass pitch value directly through
 
 //         // copy user input for reporting purposes

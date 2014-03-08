@@ -1,7 +1,7 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 /*
  *       AP_MotorsBlimp.cpp - ArduBlimp motors library
- *       Code by Wesley Eledui.
+ *       Code by Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
  */
 
 #include "AP_MotorsBlimp.h"
@@ -161,8 +161,6 @@ void AP_MotorsBlimp::output_armed()
         motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
         motor_out[RIGHT_YAW_MOTOR] = yaw_radio_min;
     }
-
-    hal.console->printf("pitch_radio_out: %i\n", pitch_radio_out);
 
     /* ---------- PITCH MOTORS ---------- */
     if (pitch_radio_out > pitch_radio_mid + STICK_PAD)
