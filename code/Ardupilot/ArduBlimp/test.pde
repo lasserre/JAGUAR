@@ -595,6 +595,7 @@ static int8_t
 test_tuning(uint8_t argc, const Menu::arg *argv)
 {
     cliSerial->printf_P(PSTR("tuning disabled for ArduBlimp\n"));
+    return 0;
 #if 0 //TODO: enable if needed - JBW
     print_hit_enter();
 

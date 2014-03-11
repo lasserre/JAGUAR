@@ -112,6 +112,7 @@ void AP_MotorsBlimp::output_armed()
     /* ---------- THRUST MOTORS ---------- */
     motor_out[THRUST_MOTOR] = _rc_throttle->radio_out;
 
+#if USING_LIFT_MOTOR == 1
     /* ---------- LIFT MOTOR ---------- */
     if (lift_radio_out > lift_radio_mid + STICK_PAD)
     {
@@ -136,6 +137,11 @@ void AP_MotorsBlimp::output_armed()
         motor_out[LEFT_ANTI_LIFT_MOTOR] = lift_radio_min;
         motor_out[RIGHT_ANTI_LIFT_MOTOR] = lift_radio_min;
     }
+#else
+    /* ---------- ANTI-LIFT MOTORS ---------- */
+    motor_out[LEFT_ANTI_LIFT_MOTOR] = lift_radio_out;
+    motor_out[RIGHT_ANTI_LIFT_MOTOR] = lift_radio_out;
+#endif // USING_LIFT_MOTOR
 
     /* ---------- YAW MOTORS ---------- */
     if (yaw_radio_out > yaw_radio_mid + STICK_PAD)

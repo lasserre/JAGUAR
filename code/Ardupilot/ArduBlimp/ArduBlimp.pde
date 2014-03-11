@@ -842,7 +842,7 @@ void setup() {
 
     /*** This should be removed when motors can be armed from the controller ***/
     g.rc_3.servo_out = 0;
-    g.rc_6.servo_out = (g.rc_6.radio_min + g.rc_6.radio_max) / 2;
+    g.rc_6.servo_out = 0;
     motors.armed(true);
     /***************************************************************************/
 
