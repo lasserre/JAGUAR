@@ -813,7 +813,13 @@ void setup() {
 
     //********************  Temporary  ************************
     // calibrates controller. This functionality will eventually be in mission planner
-    setup_radio();
+    cliSerial->printf("Setup motors? (y/n)\n");
+    hal.scheduler->delay(4000);
+    char ch = cliSerial->read();
+    if (ch == 'y' || ch == 'Y')
+    {
+    	setup_radio();
+    }
 
     // set mode
     set_mode(ACRO);
@@ -851,7 +857,7 @@ void setup() {
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 }
 
-#if 0 // TODO: Enable the following code
+#if 0 // TODO: enable the following code if needed - JBW
 /*
   if the compass is enabled then try to accumulate a reading
  */
@@ -932,7 +938,7 @@ static void fast_loop()
     // --------------------
     read_AHRS();
 
-#if 0 // TODO: enable when needed
+#if 0 // TODO: enable if needed - JBW
     // reads all of the necessary trig functions for cameras, throttle, etc.
     // --------------------------------------------------------------------
     update_trig();
@@ -970,15 +976,15 @@ static void fast_loop()
     update_yaw_mode();
     update_roll_pitch_mode();
 
-#if 0 //TODO: enable when needed
+#if 0 //TODO: enable when needed - JBW
     // update targets to rate controllers
     update_rate_contoller_targets();
+#endif // #if 0
 
     // agmatthews - USERHOOKS
 #ifdef USERHOOK_FASTLOOP
     USERHOOK_FASTLOOP
 #endif
-#endif // #if 0
 }
 
 // stuff that happens at 50 hz
@@ -1038,7 +1044,6 @@ static void fifty_hz_loop()
 #endif // #if 0
 }
 
-#if 0 // TODO: Enable the following code
 // medium_loop - runs at 10hz
 static void medium_loop()
 {
@@ -1051,6 +1056,7 @@ static void medium_loop()
     case 0:
         medium_loopCounter++;
 
+#if 0 // TODO: enable if needed - JBW
         // read battery before compass because it may be used for motor interference compensation
         if (g.battery_monitoring != 0) {
             read_battery();
@@ -1071,6 +1077,7 @@ static void medium_loop()
         // record throttle output
         // ------------------------------
         throttle_integrator += g.rc_3.servo_out;
+#endif // #if 0
         break;
 
     // This case reads rssi information and performs auto trim
@@ -1078,11 +1085,13 @@ static void medium_loop()
     case 1:
         medium_loopCounter++;
 
+#if 0 // TODO: enable if needed - JBW
         // read receiver rssi information
         read_receiver_rssi();
 
         // auto_trim - stores roll and pitch radio inputs to ahrs
         auto_trim();
+#endif // #if 0
         break;
 
     // This case deals with aux switches and toy mode's throttle
@@ -1090,6 +1099,7 @@ static void medium_loop()
     case 2:
         medium_loopCounter++;
 
+#if 0 // TODO: enable if needed - JBW
         // check ch7 and ch8 aux switches
         read_aux_switches();
 
@@ -1100,6 +1110,7 @@ static void medium_loop()
                 update_toy_altitude();
             }
         }
+#endif // #if 0
         break;
 
     // This case deals with logging attitude and motor information to dataflash
@@ -1107,6 +1118,7 @@ static void medium_loop()
     case 3:
         medium_loopCounter++;
 
+#if 0 // TODO: enable if needed - JBW
         if(motors.armed()) {
             if (g.log_bitmask & MASK_LOG_ATTITUDE_MED) {
                 Log_Write_Attitude();
@@ -1117,9 +1129,10 @@ static void medium_loop()
             if (g.log_bitmask & MASK_LOG_MOTORS)
                 Log_Write_Motors();
         }
+#endif // #if 0
         break;
 
-    // This case deals with arming checks, copter LEDs and 10hz user hooks
+    // This case deals with arming checks, blimp LEDs and 10hz user hooks
     // -------------------------------------------------------------------------------
     case 4:
         medium_loopCounter = 0;
@@ -1135,7 +1148,7 @@ static void medium_loop()
         // update board leds
         update_board_leds();
 #if BLIMP_LEDS == ENABLED
-        update_copter_leds();
+        update_blimp_leds();
 #endif
         break;
 
@@ -1147,6 +1160,7 @@ static void medium_loop()
     }
 }
 
+#if 0 // TODO: enable the following code if needed
 // slow_loop - 3.3hz loop
 static void slow_loop()
 {

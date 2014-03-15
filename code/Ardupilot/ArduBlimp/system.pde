@@ -503,19 +503,6 @@ static void set_mode(uint8_t mode)
 #endif // LOGGING_ENABLED
 }
 
-#if 0 // TODO: evaluate if this should be removed, Simple mode is not currently available on the blimp
-static void
-init_simple_bearing()
-{
-    initial_simple_bearing = ahrs.yaw_sensor;
-    if (g.log_bitmask != 0) {
-#if LOGGING_ENABLED == ENABLED
-        Log_Write_Data(DATA_INIT_SIMPLE_BEARING, initial_simple_bearing);
-#endif // LOGGING_ENABLED
-    }
-}
-#endif // #if 0
-
 // update_auto_armed - update status of auto_armed flag
 static void update_auto_armed()
 {

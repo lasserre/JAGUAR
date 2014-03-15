@@ -1,86 +1,64 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define ARM_DELAY               20  // called at 10hz so 2 seconds
-#define DISARM_DELAY            20  // called at 10hz so 2 seconds
-#define AUTO_TRIM_DELAY         100 // called at 10hz so 10 seconds
-#define AUTO_DISARMING_DELAY    25  // called at 1hz so 25 seconds
+#define ARMING_TOLERANCE    5
 
 // arm_motors_check - checks for pilot input to arm or disarm the blimp
 // called at 10hz
 static void arm_motors_check()
 {
-    static int16_t arming_counter;
+    static bool armingError = false;
 
-    // ensure throttle is down
-    if (g.rc_3.control_in > 0) {
-        arming_counter = 0;
+    // ensure we are in Stabilize or Acro mode
+    if (control_mode != STABILIZE && control_mode != ACRO)
+    {
         return;
     }
 
-    // ensure we are in Stabilize, Acro or TOY mode
-    // if ((control_mode > ACRO) && ((control_mode != TOY_A) && (control_mode != TOY_M))) {
-    if (control_mode != STABILIZE) {
-        arming_counter = 0;
-        return;
-    }
-	
-	#if FRAME_CONFIG == HELI_FRAME
-	if ((motors.rsc_mode > 0) && (g.rc_8.control_in >= 10)){
-		arming_counter = 0;
-		return;
-	}
-	#endif  // HELI_FRAME
+    int16_t radio_mid = (g.rc_7.radio_min + g.rc_7.radio_max) / 2;
 
-#if TOY_EDF == ENABLED
-    int16_t tmp = g.rc_1.control_in;
-#else
-    int16_t tmp = g.rc_4.control_in;
-#endif
+    // check if switch is in the armed position
+    if (g.rc_7.radio_in > radio_mid)
+    {
+        if (!motors.armed())
+        {
+            // ensure all control sticks are at their min values
+            if ((g.rc_3.radio_in > g.rc_3.radio_min + ARMING_TOLERANCE) || // thrust
+                (g.rc_6.radio_in > g.rc_6.radio_min + ARMING_TOLERANCE))   // anti-lift
+            {
+                armingError = true;
+            }
 
-    // full right
-    if (tmp > 4000) {
-
-        // increase the arming counter to a maximum of 1 beyond the auto trim counter
-        if( arming_counter <= AUTO_TRIM_DELAY ) {
-            arming_counter++;
-        }
-
-        // arm the motors and configure for flight
-        if (arming_counter == ARM_DELAY && !motors.armed()) {
-            // run pre-arm-checks and display failures
-            pre_arm_checks(true);
-            if(ap.pre_arm_check) {
-                init_arm_motors();
-            }else{
-                // reset arming counter if pre-arm checks fail
-                arming_counter = 0;
+            if (!armingError)
+            {
+                // run pre-arm-checks and display failures
+                pre_arm_checks(true);
+                if (ap.pre_arm_check)
+                {
+                    init_arm_motors();
+                }
+                else
+                {
+                    // set arming error flag if pre-arm checks fail
+                    armingError = true;
+                }
             }
         }
+    }
+    else // switch is in the disarm position
+    {
+        armingError = false; // reset arming error flag
 
-        // arm the motors and configure for flight
-        if (arming_counter == AUTO_TRIM_DELAY && motors.armed()) {
-            auto_trim_counter = 250;
-        }
-
-    // full left
-    }else if (tmp < -4000) {
-
-        // increase the counter to a maximum of 1 beyond the disarm delay
-        if( arming_counter <= DISARM_DELAY ) {
-            arming_counter++;
-        }
-
-        // disarm the motors
-        if (arming_counter == DISARM_DELAY && motors.armed()) {
+        if (motors.armed())
+        {
+            // disarm the motors
             init_disarm_motors();
         }
-
-    // Yaw is centered so reset arming counter
-    }else{
-        arming_counter = 0;
     }
 }
 
+// TODO: Do we need this? It should be refactored if we do. We don't want the blimp
+// to automatically disarm if the thrust motors are off for 25 sec - JBW
+#if 0
 // auto_disarm_check - disarms the blimp if it has been sitting on the ground in manual mode with throttle low for at least 25 seconds
 // called at 1hz
 static void auto_disarm_check()
@@ -100,6 +78,7 @@ static void auto_disarm_check()
         auto_disarming_counter = 0;
     }
 }
+#endif // #if 0
 
 // init_arm_motors - performs arming process including initialisation of barometer and gyros
 static void init_arm_motors()
@@ -138,8 +117,6 @@ static void init_arm_motors()
 
     // Remember Orientation
     // --------------------
-    init_simple_bearing();
-
     initial_armed_bearing = ahrs.yaw_sensor;
 
     // Reset home position
@@ -215,17 +192,20 @@ static void pre_arm_checks(bool display_failure)
     pre_arm_rc_checks();
     if(!ap.pre_arm_rc_check) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: RC not calibrated"));
 #endif // #if 0
         }
         return;
     }
 
+// TODO: Do we want to check these? If the blimp gets disarmed in mid-air
+// and needs to be re-armed, we don't care about the following - JBW
+#if 0
     // check accelerometers have been calibrated
     if(!ins.calibrated()) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: INS not calibrated"));
 #endif // #if 0
         }
@@ -235,7 +215,7 @@ static void pre_arm_checks(bool display_failure)
     // check the compass is healthy
     if(!compass.healthy) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not healthy"));
 #endif // #if 0
         }
@@ -246,7 +226,7 @@ static void pre_arm_checks(bool display_failure)
     Vector3f offsets = compass.get_offsets();
     if(!compass._learn && offsets.length() == 0) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not calibrated"));
 #endif // #if 0
         }
@@ -256,7 +236,7 @@ static void pre_arm_checks(bool display_failure)
     // check for unreasonable compass offsets
     if(offsets.length() > 500) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass offsets too high"));
 #endif // #if 0
         }
@@ -267,7 +247,7 @@ static void pre_arm_checks(bool display_failure)
     float mag_field = pythagorous3(compass.mag_x, compass.mag_y, compass.mag_z);
     if (mag_field > COMPASS_MAGFIELD_EXPECTED*1.65 || mag_field < COMPASS_MAGFIELD_EXPECTED*0.35) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
 #endif // #if 0
         }
@@ -277,7 +257,7 @@ static void pre_arm_checks(bool display_failure)
     // barometer health check
     if(!barometer.healthy) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Baro not healthy"));
 #endif // #if 0
         }
@@ -288,7 +268,7 @@ static void pre_arm_checks(bool display_failure)
     // check fence is initialised
     if(!fence.pre_arm_check()) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: No GPS Lock"));
 #endif // #if 0
         }
@@ -300,13 +280,14 @@ static void pre_arm_checks(bool display_failure)
     // check board voltage
     if(board_voltage() < BOARD_VOLTAGE_MIN || board_voltage() > BOARD_VOLTAGE_MAX) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code
+#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Board Voltage"));
 #endif // #if 0
         }
         return;
     }
 #endif
+#endif // #if 0
 
     // if we've gotten this far then pre arm checks have completed
     ap.pre_arm_check = true;
