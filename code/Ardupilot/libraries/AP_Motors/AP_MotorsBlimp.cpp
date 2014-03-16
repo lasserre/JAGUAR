@@ -146,20 +146,19 @@ void AP_MotorsBlimp::output_armed()
     /* ---------- YAW MOTORS ---------- */
     if (yaw_radio_out > yaw_radio_mid + STICK_PAD)
     {
-        // Control stick in the RIGHT region (Right ON, Left off)
+        // Control stick in the RIGHT region (Right off, Left ON)
         long yawStickOffset = yaw_radio_out - yaw_radio_mid;    // Offset from center pos
 
-        motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
-        motor_out[RIGHT_YAW_MOTOR] = (yawStickOffset * 2) + yaw_radio_min;
+        motor_out[LEFT_YAW_MOTOR] = (yawStickOffset * 2) + yaw_radio_min;
+        motor_out[RIGHT_YAW_MOTOR] = yaw_radio_min;
     }
     else if (yaw_radio_out < yaw_radio_mid - STICK_PAD)
     {
-        // Control stick in the LEFT region (Right off, Left ON)
-
+        // Control stick in the LEFT region (Right ON, Left off)
         long yawStickOffset = yaw_radio_mid - yaw_radio_out;    // Offset from center pos
 
-        motor_out[LEFT_YAW_MOTOR] = (yawStickOffset * 2) + yaw_radio_min;;
-        motor_out[RIGHT_YAW_MOTOR] = yaw_radio_min;
+        motor_out[LEFT_YAW_MOTOR] = yaw_radio_min;
+        motor_out[RIGHT_YAW_MOTOR] = (yawStickOffset * 2) + yaw_radio_min;
     }
     else
     {

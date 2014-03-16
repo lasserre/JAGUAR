@@ -1,8 +1,8 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduBlimp V0.1.0"
+#define THISFIRMWARE "ArduBlimp V0.2.0"
 /*
- *  ArduBlimp Version 0.1
+ *  ArduBlimp Version 0.2
  *  Creators:       Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
  *  Based on code and ideas from the Arducopter team: Pat Hickey, Jose Julio, Jani Hirvinen, Andrew Tridgell, Justin Beech, Adam Rivera, Jean-Louis Naudin, Roberto Navoni
  *
