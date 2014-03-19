@@ -181,7 +181,7 @@ void JPTMainWindow::ConnectSignalsAndSlots()
 void JPTMainWindow::RefreshPortList()
 {
     this->ui->portListWidget->clear();
-    this->ui->portListWidget->addItems(JPTestPort::GetAvailablePortNames());
+    this->ui->portListWidget->addItems(JPTestPort::GetAvailableSerialPortNames());
     this->ui->portListWidget->setCurrentRow(0);
     return;
 }

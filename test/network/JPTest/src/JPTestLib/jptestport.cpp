@@ -1,73 +1,80 @@
 #include "jptestport.h"
 
 JPTestPort::JPTestPort(QObject* parent /*= 0*/) : QObject(parent)
-  , serialPort(new QSerialPort(this))
+  , portType(TestPort::SERIAL_PORT)
+  , port(ConstructTestPort())
 {
-    this->SetPortName("UNSET_PORT_NAME");   // Help ourselves out for debugging!
-
-    connect(this->serialPort, SIGNAL(readyRead()), this, SLOT(DataReceivedHandler()), Qt::DirectConnection);
+    connect(port, SIGNAL(readyRead()), this, SLOT(DataReceivedHandler()), Qt::DirectConnection);
 }
 
 JPTestPort::~JPTestPort()
 {
-    delete this->serialPort;
+    delete this->port;
 }
 
 bool JPTestPort::OpenPort()
 {
-    if (this->serialPort->isOpen()) return true;
-
-    // Always open in R/W mode
-    if (this->serialPort->open(QSerialPort::ReadWrite))
+    if (portType == TestPort::SERIAL_PORT)
     {
-        qDebug() << "Opened serial port: " + this->serialPort->portName();
+        QSerialPort* serialPort = static_cast<QSerialPort*>(port);
 
-        // Configure serialPort
-        this->serialPort->setBaudRate(SERIAL_CONFIG::BAUD);
-        this->serialPort->setDataBits(SERIAL_CONFIG::DATA_BITS);
-        this->serialPort->setParity(SERIAL_CONFIG::PARITY);
-        this->serialPort->setStopBits(SERIAL_CONFIG::STOP_BITS);
-        this->serialPort->setFlowControl(SERIAL_CONFIG::FLOW_CTRL);
+        if (serialPort->isOpen()) return true;
 
-        return true;
-    }
-    else
-    {
-        qDebug() << "Failed attempt to open serial port: " + this->serialPort->portName();
-        return false;
+        // Always open in R/W mode
+        if (serialPort->open(QSerialPort::ReadWrite))
+        {
+            qDebug() << "Opened serial port: " + serialPort->portName();
+
+            // Configure serialPort
+            serialPort->setBaudRate(SERIAL_CONFIG::BAUD);
+            serialPort->setDataBits(SERIAL_CONFIG::DATA_BITS);
+            serialPort->setParity(SERIAL_CONFIG::PARITY);
+            serialPort->setStopBits(SERIAL_CONFIG::STOP_BITS);
+            serialPort->setFlowControl(SERIAL_CONFIG::FLOW_CTRL);
+
+            return true;
+        }
+        else
+        {
+            qDebug() << "Failed attempt to open serial port: " + serialPort->portName();
+            return false;
+        }
     }
 }
 
 bool JPTestPort::IsOpen() const
 {
-    return serialPort->isOpen();
+    return port->isOpen();
 }
 
 void JPTestPort::SetPortName(const QString &PortName)
 {
-    this->serialPort->setPortName(PortName);
+    if (portType == TestPort::SERIAL_PORT)
+    {
+        QSerialPort* serialPort = static_cast<QSerialPort*>(port);
+        serialPort->setPortName(PortName);
+    }
     return;
 }
 
-QList<QString> JPTestPort::GetAvailablePortNames()
+QList<QString> JPTestPort::GetAvailableSerialPortNames()
 {
     QList<QString> portNames;
     foreach(const QSerialPortInfo& portInfo, QSerialPortInfo::availablePorts())
-    {
         portNames.append(portInfo.portName());
-    }
+
     return portNames;
 }
 
 bool JPTestPort::SendData(const QByteArray& payload)
 {
-    this->serialPort->write(payload);
-    return this->serialPort->waitForBytesWritten(SERIAL_CONFIG::WRITETIMEOUT_MSEC);
+    port->write(payload);
+    return port->waitForBytesWritten(SERIAL_CONFIG::WRITETIMEOUT_MSEC);
 }
 
 QByteArray JPTestPort::ReadData()
 {
-    return this->serialPort->readAll();
+    return port->readAll();
 }
 
 // --------------- SLOTS -------------------
@@ -80,5 +87,35 @@ void JPTestPort::DataReceivedHandler()
 
 bool JPTestPort::WaitForData(const int &msecs)
 {
-    return this->serialPort->waitForReadyRead(msecs);
+    return port->waitForReadyRead(msecs);
+}
+
+QIODevice* JPTestPort::ConstructTestPort()
+{
+    QIODevice* portPointer;
+
+    switch (portType)
+    {
+    case TestPort::SERIAL_PORT:
+    {
+        QSerialPort* serialPort = new QSerialPort(this);
+        SetPortName("UNSET_PORT_NAME");   // Help ourselves out for debugging!
+        portPointer = serialPort;
+        break;
+    }
+    case TestPort::UDP_SOCKET:
+    {
+        QUdpSocket* udpSocket = new QUdpSocket(this);
+        udpSocket->bind(QHostAddress::LocalHost, 5534);
+        portPointer = udpSocket;
+        break;
+    }
+    default:
+    {
+        qDebug() << "Unrecognized TestPort::TestPortType!";
+        break;
+    }
+    }
+
+    return portPointer;
 }
