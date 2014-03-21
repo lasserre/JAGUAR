@@ -35,7 +35,7 @@ void AP_MotorsBlimp::set_update_rate(uint16_t speed_hz)
 void AP_MotorsBlimp::enable()
 {
     // enable output channels
-    for (uint8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    for (uint8_t i = 0; i < NUM_OUTPUTS; ++i)
     {
         hal.rcout->enable_ch(_motor_to_channel_map[i]);
     }
@@ -44,7 +44,7 @@ void AP_MotorsBlimp::enable()
 void AP_MotorsBlimp::output_min()
 {
     // fill the motor_out[] array for HIL use and send minimum value to each motor
-    for (int8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    for (int8_t i = 0; i < NUM_OUTPUTS; ++i)
     {
         motor_out[i] = _rc_throttle->radio_min;
         hal.rcout->write(_motor_to_channel_map[i], motor_out[i]);
@@ -60,7 +60,7 @@ void AP_MotorsBlimp::output_test()
     hal.scheduler->delay(3000);
 
     // loop through all the possible orders spinning any motors that match that description
-    for (uint8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    for (uint8_t i = 0; i < NUM_OUTPUTS; ++i)
     {
         // turn on this motor and wait 1/3rd of a second
         hal.rcout->write(_motor_to_channel_map[i], _rc_throttle->radio_min + _min_throttle);
@@ -196,7 +196,7 @@ void AP_MotorsBlimp::output_armed()
     //TODO: update _reached_limit
 
     // send output to each motor
-    for (uint8_t i = 0; i < NUM_BLIMP_MOTORS; ++i)
+    for (uint8_t i = 0; i < NUM_OUTPUTS; ++i)
     {
         hal.rcout->write(_motor_to_channel_map[i], motor_out[i]);
     }

@@ -22,14 +22,10 @@
 #define PITCH_UP_MOTOR          AP_MOTORS_MOT_7     // TOP pitch motor
 #define PITCH_DOWN_MOTOR        AP_MOTORS_MOT_8     // BOTTOM pitch motor
 #if USING_LIFT_MOTOR == 1
-#define LIFT_MOTOR              AP_MOTORS_MOT_8
+#define LIFT_MOTOR              AP_MOTORS_MOT_5
 #endif // USING_LIFT_MOTOR
 
-#if USING_LIFT_MOTOR == 1
-#define NUM_BLIMP_MOTORS       8
-#else
-#define NUM_BLIMP_MOTORS       8
-#endif // USING_LIFT_MOTOR
+#define NUM_OUTPUTS             8
 
 #define STICK_PAD             30
 

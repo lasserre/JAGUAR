@@ -1,6 +1,44 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define ARMING_TOLERANCE    5
+#define THRUST_ARMING_TOLERANCE     20
+#define ANTI_LIFT_ARMING_TOLERANCE  40
+#define PITCH_ARMING_TOLERANCE      10
+#define YAW_ARMING_TOLERANCE        10
+
+/**
+ * @brief ensure RC inputs are positioned for motors to be off
+ * @return true if RC inputs are positioned for motors to be off
+ */
+bool check_rc_values()
+{
+    // ensure thrust control is at its minimum value
+    if (g.rc_3.radio_in > g.rc_3.radio_min + THRUST_ARMING_TOLERANCE)
+    {
+        return false;
+    }
+
+    // ensure anti-lift control is at its minimum value
+    if (g.rc_6.radio_in > g.rc_6.radio_min + ANTI_LIFT_ARMING_TOLERANCE)
+    {
+        return false;
+    }
+
+    // ensure pitch control stick is at its mid value
+    int16_t pitch_radio_mid = (g.rc_2.radio_min + g.rc_2.radio_max) / 2;
+    if (g.rc_2.radio_in < pitch_radio_mid - PITCH_ARMING_TOLERANCE || g.rc_2.radio_in > pitch_radio_mid + PITCH_ARMING_TOLERANCE)
+    {
+        return false;
+    }
+
+    // ensure yaw control stick is at its mid value
+    int16_t yaw_radio_mid = (g.rc_4.radio_min + g.rc_4.radio_max) / 2;
+    if (g.rc_4.radio_in < yaw_radio_mid - YAW_ARMING_TOLERANCE || g.rc_4.radio_in > yaw_radio_mid + YAW_ARMING_TOLERANCE)
+    {
+        return false;
+    }
+
+    return true;
+}
 
 // arm_motors_check - checks for pilot input to arm or disarm the blimp
 // called at 10hz
@@ -9,7 +47,7 @@ static void arm_motors_check()
     static bool armingError = false;
 
     // ensure we are in Stabilize or Acro mode
-    if (control_mode != STABILIZE && control_mode != ACRO)
+    if (control_mode != ACRO && control_mode != STABILIZE)
     {
         return;
     }
@@ -21,18 +59,11 @@ static void arm_motors_check()
     {
         if (!motors.armed())
         {
-            // ensure all control sticks are at their min values
-            if ((g.rc_3.radio_in > g.rc_3.radio_min + ARMING_TOLERANCE) || // thrust
-                (g.rc_6.radio_in > g.rc_6.radio_min + ARMING_TOLERANCE))   // anti-lift
-            {
-                armingError = true;
-            }
-
             if (!armingError)
             {
                 // run pre-arm-checks and display failures
                 pre_arm_checks(true);
-                if (ap.pre_arm_check)
+                if (ap.pre_arm_check && check_rc_values())
                 {
                     init_arm_motors();
                 }
@@ -323,28 +354,34 @@ static void init_disarm_motors()
 
     motors.armed(false);
 
+#if 0 //TODO: enable if needed - JBW
     compass.save_offsets();
 
     g.throttle_cruise.save();
 
     // we are not in the air
     set_takeoff_complete(false);
+#endif // #if 0
 
 #if BLIMP_LEDS == ENABLED
     piezo_beep();
 #endif
 
+#if 0 //TODO: enable if needed - JBW
     // setup fast AHRS gains to get right attitude
     ahrs.set_fast_gains(true);
 #if SECONDARY_DMP_ENABLED == ENABLED
     ahrs2.set_fast_gains(true);
 #endif
+#endif // #if 0
 
 #if LOGGING_ENABLED == ENABLED
     // log disarm to the dataflash
     Log_Write_Event(DATA_DISARMED);
 #endif // LOGGING_ENABLED
 
+#if 0 //TODO: enable if needed - JBW
     // disable gps velocity based centrefugal force compensation
     ahrs.set_correct_centrifugal(false);
+#endif // #if 0
 }

@@ -787,7 +787,7 @@ AP_Param param_loader(var_info, WP_START_BYTE);
 static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = { /****** JBW - commenting out tasks until we need them ******/
     // { update_GPS,            2,     900 },
     // { update_navigation,     10,    500 },
-    // { medium_loop,           2,     700 },
+    { medium_loop,           2,     700 },
     { update_altitude,      10,    1000 },
     { fifty_hz_loop,         2,     950 }//,
     // { run_nav_updates,      10,     800 },
@@ -813,7 +813,7 @@ void setup() {
 
     //********************  Temporary  ************************
     // calibrates controller. This functionality will eventually be in mission planner
-    cliSerial->printf("Setup motors? (y/n)\n");
+    cliSerial->printf("Setup radio? (y/n)\n");
     hal.scheduler->delay(4000);
     char ch = cliSerial->read();
     if (ch == 'y' || ch == 'Y')
@@ -849,7 +849,6 @@ void setup() {
     /*** This should be removed when motors can be armed from the controller ***/
     g.rc_3.servo_out = 0;
     g.rc_6.servo_out = 0;
-    motors.armed(true);
     /***************************************************************************/
 
 
