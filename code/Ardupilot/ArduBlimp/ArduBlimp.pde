@@ -689,14 +689,12 @@ static AP_InertialNav inertial_nav(&ahrs, &ins, &barometer, &g_gps);
 ////////////////////////////////////////////////////////////////////////////////
 static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon, &g.pid_loiter_rate_lat, &g.pid_loiter_rate_lon);
 
-#if 0 //TODO: Enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
 // The number of GPS fixes we have had
 static uint8_t gps_fix_count;
 static int16_t pmTest1;
-#endif // #if 0
 
 // System Timers
 // --------------
@@ -790,12 +788,12 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = { /****** JBW - comm
     { fifty_hz_loop,         2,     950 },
     // { run_nav_updates,      10,     800 },
     // { slow_loop,            10,     500 },
-    { gcs_check_input,       2,     700 }//,
-    // { gcs_send_heartbeat,  100,     700 },
-    // { gcs_data_stream_send,  2,    1500 },
+    { gcs_check_input,       2,     700 },
+    { gcs_send_heartbeat,  100,     700 },
+    { gcs_data_stream_send,  2,    1500 },
     // { gcs_send_deferred,     2,    1200 },
-    // { compass_accumulate,    2,     700 },
-    // { barometer_accumulate,  2,     900 },
+    { compass_accumulate,    2,     700 },
+    { barometer_accumulate,  2,     900 }//,
     // { super_slow_loop,     100,    1100 },
     // { perf_update,        1000,     500 }
 };
@@ -839,7 +837,6 @@ void setup() {
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 }
 
-#if 0 // TODO: enable the following code if needed - JBW
 /*
   if the compass is enabled then try to accumulate a reading
  */
@@ -858,6 +855,7 @@ static void barometer_accumulate(void)
     barometer.accumulate();
 }
 
+#if 0 // TODO: enable the following code if needed - JBW
 // enable this to get console logging of scheduler performance
 #define SCHEDULER_DEBUG 0
 
@@ -1043,19 +1041,23 @@ static void medium_loop()
         if (g.battery_monitoring != 0) {
             read_battery();
         }
+#endif // #if 0
 
 #if HIL_MODE != HIL_MODE_ATTITUDE                                                               // don't execute in HIL mode
         if(g.compass_enabled) {
             if (compass.read()) {
                 compass.null_offsets();
             }
+#if LOGGING_ENABLED == ENABLED
             // log compass information
             if (motors.armed() && (g.log_bitmask & MASK_LOG_COMPASS)) {
                 Log_Write_Compass();
             }
+#endif // LOGGING_ENABLED == ENABLED
         }
 #endif
 
+#if 0 // TODO: enable if needed - JBW
         // record throttle output
         // ------------------------------
         throttle_integrator += g.rc_3.servo_out;

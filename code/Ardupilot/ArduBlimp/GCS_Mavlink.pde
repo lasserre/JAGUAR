@@ -885,9 +885,7 @@ GCS_MAVLINK::update(void)
             if (msg.msgid != MAVLINK_MSG_ID_RADIO) {
                 mavlink_active = true;
             }
-#if 0 //TODO: enable when handleMessage has been added - JBW
             handleMessage(&msg);
-#endif // #if 0
         }
     }
 
@@ -1085,7 +1083,6 @@ GCS_MAVLINK::send_text_P(gcs_severity severity, const prog_char_t *str)
     mavlink_send_text(chan, severity, (const char *)m.text);
 }
 
-#if 0 //TODO: enable code to handle MAVLink messages - JBW
 void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 {
     struct Location tell_command = {};                                  // command for telemetry
@@ -1229,6 +1226,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 if (packet.param1 == 1.0f) {
                     // run pre-arm-checks and display failures
                     pre_arm_checks(true);
+                    //TODO: ensure motor outputs are at a min before arming
                     if(ap.pre_arm_check) {
                         init_arm_motors();
                     }
@@ -1265,6 +1263,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         break;
     }
 
+#if 0 //TODO: enable MAVLink message cases as needed - JBW
     case MAVLINK_MSG_ID_SET_MODE:      //11
     {
         // decode
@@ -1896,7 +1895,14 @@ mission_failed:
 
         break;
     }             // end case
+#endif // #if 0
 
+    case MAVLINK_MSG_ID_MANUAL_CONTROL: // 69
+    {
+        break;
+    }
+
+#if 0 //TODO: enable MAVLink message cases as needed - JBW
     case MAVLINK_MSG_ID_RC_CHANNELS_OVERRIDE: //70
     {
         // allow override of RC channel values for HIL
@@ -1982,7 +1988,7 @@ mission_failed:
         break;
     }
 #endif //  HIL_MODE != HIL_MODE_DISABLED
-
+#endif // #if 0
 
     case MAVLINK_MSG_ID_HEARTBEAT:
     {
@@ -2027,6 +2033,7 @@ mission_failed:
     }
 #endif // MOUNT == ENABLED
 
+#if 0 //TODO: enable MAVLink message cases as needed - JBW
     case MAVLINK_MSG_ID_RADIO:
     {
         mavlink_radio_t packet;
@@ -2049,6 +2056,7 @@ mission_failed:
         }
         break;
     }
+#endif // #if 0
 
 /* To-Do: add back support for polygon type fence
 #if AC_FENCE == ENABLED
@@ -2087,7 +2095,6 @@ mission_failed:
 
     }     // end switch
 } // end handle mavlink
-#endif // #if 0
 
 uint16_t
 GCS_MAVLINK::_count_parameters()
