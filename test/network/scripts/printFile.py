@@ -7,7 +7,8 @@
 
 # Config parameters ----------------------
 # SERIAL_PORT = "/dev/cu.usbserial-A600eIjc"
-SERIAL_PORT = "/dev/cu.usbserial-A40081Ez"
+# SERIAL_PORT = "/dev/cu.usbserial-A40081Ez"
+SERIAL_PORT = "/dev/cu.usbserial-A603H5JC"
 # SERIAL_PORT = "/dev/cu.usbmodemfd121"
 BAUD = 9600
 # ----------------------------------------
