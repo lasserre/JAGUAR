@@ -52,7 +52,7 @@ static void reset_control_switch()
 static void read_aux_switches()
 {
     // check for camera switch
-    if (g.rc_6.radio_in >= AUX_SWITCH_PWM_TRIGGER)
+    if (g.rc_7.radio_in >= AUX_SWITCH_PWM_TRIGGER)
     {
         digitalWrite(AN0, HIGH);
     }
