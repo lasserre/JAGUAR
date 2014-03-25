@@ -15,6 +15,7 @@ code/MSP430/settings
 # Documentation
 documentation/JPTest
 documentation/MSP430
+documentation/XbeeAPILib
 
 # Cool-term settings
 *.stc
@@ -28,6 +29,9 @@ bin
 .qmake*
 Makefile*
 build
+build*
 *.a
 object_script*
 *.o
+Contents # Ignore .app/Contents folder
+*.app
