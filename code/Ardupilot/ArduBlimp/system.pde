@@ -152,7 +152,6 @@ static void init_ardupilot()
     barometer.init();
 #endif
 
-#if 0 //TODO:enable
     // init the GCS
     gcs0.init(hal.uartA);
 
@@ -160,7 +159,6 @@ static void init_ardupilot()
     // anytime there are more than 5ms remaining in a call to
     // hal.scheduler->delay.
     hal.scheduler->register_delay_callback(mavlink_delay_cb, 5);
-#endif
 
 #if USB_MUX_PIN > 0
     if (!ap_system.usb_connected) {
@@ -600,10 +598,10 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case STABILIZE:
         port->print_P(PSTR("STABILIZE"));
         break;
-#if 0 //TODO: enable ACRO, RTL, and LAND modes
     case ACRO:
         port->print_P(PSTR("ACRO"));
         break;
+#if 0 //TODO: enable RTL and LAND modes
     case ALT_HOLD:
         port->print_P(PSTR("ALT_HOLD"));
         break;

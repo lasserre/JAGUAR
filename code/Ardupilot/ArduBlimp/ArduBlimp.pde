@@ -72,7 +72,7 @@
 
 // Local modules
 #include "Parameters.h"
-// #include "GCS.h"
+#include "GCS.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // cliSerial
@@ -276,13 +276,11 @@ static AP_OpticalFlow_ADNS3080 optflow;
 static AP_OpticalFlow optflow;
  #endif
 
-#if 0 //TODO: Enable when we add GCS capability
 ////////////////////////////////////////////////////////////////////////////////
 // GCS selection
 ////////////////////////////////////////////////////////////////////////////////
 static GCS_MAVLINK gcs0;
 static GCS_MAVLINK gcs3;
-#endif // #if 0
 
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR selection
@@ -691,14 +689,12 @@ static AP_InertialNav inertial_nav(&ahrs, &ins, &barometer, &g_gps);
 ////////////////////////////////////////////////////////////////////////////////
 static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon, &g.pid_loiter_rate_lat, &g.pid_loiter_rate_lon);
 
-#if 0 //TODO: Enable the following code
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
 // The number of GPS fixes we have had
 static uint8_t gps_fix_count;
 static int16_t pmTest1;
-#endif // #if 0
 
 // System Timers
 // --------------
@@ -787,17 +783,17 @@ AP_Param param_loader(var_info, WP_START_BYTE);
 static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = { /****** JBW - commenting out tasks until we need them ******/
     // { update_GPS,            2,     900 },
     // { update_navigation,     10,    500 },
-    // { medium_loop,           2,     700 },
+    { medium_loop,           2,     700 },
     { update_altitude,      10,    1000 },
-    { fifty_hz_loop,         2,     950 }//,
+    { fifty_hz_loop,         2,     950 },
     // { run_nav_updates,      10,     800 },
     // { slow_loop,            10,     500 },
-    // { gcs_check_input,       2,     700 },
-    // { gcs_send_heartbeat,  100,     700 },
-    // { gcs_data_stream_send,  2,    1500 },
+    { gcs_check_input,       2,     700 },
+    { gcs_send_heartbeat,  100,     700 },
+    { gcs_data_stream_send,  2,    1500 },
     // { gcs_send_deferred,     2,    1200 },
-    // { compass_accumulate,    2,     700 },
-    // { barometer_accumulate,  2,     900 },
+    { compass_accumulate,    2,     700 },
+    { barometer_accumulate,  2,     900 }//,
     // { super_slow_loop,     100,    1100 },
     // { perf_update,        1000,     500 }
 };
@@ -812,15 +808,6 @@ void setup() {
     AP_Param::setup_sketch_defaults();
 
     //********************  Temporary  ************************
-    // calibrates controller. This functionality will eventually be in mission planner
-    cliSerial->printf("Setup motors? (y/n)\n");
-    hal.scheduler->delay(4000);
-    char ch = cliSerial->read();
-    if (ch == 'y' || ch == 'Y')
-    {
-    	setup_radio();
-    }
-
     // set mode
     set_mode(ACRO);
     //*********************************************************
@@ -846,18 +833,10 @@ void setup() {
 
     init_ardupilot();
 
-    /*** This should be removed when motors can be armed from the controller ***/
-    g.rc_3.servo_out = 0;
-    g.rc_6.servo_out = 0;
-    motors.armed(true);
-    /***************************************************************************/
-
-
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 }
 
-#if 0 // TODO: enable the following code if needed - JBW
 /*
   if the compass is enabled then try to accumulate a reading
  */
@@ -876,6 +855,7 @@ static void barometer_accumulate(void)
     barometer.accumulate();
 }
 
+#if 0 // TODO: enable the following code if needed - JBW
 // enable this to get console logging of scheduler performance
 #define SCHEDULER_DEBUG 0
 
@@ -1012,7 +992,7 @@ static void fifty_hz_loop()
 
 #if HIL_MODE != HIL_MODE_DISABLED && FRAME_CONFIG != HELI_FRAME
     // HIL for a copter needs very fast update of the servo values
-    // gcs_send_message(MSG_RADIO_OUT); TODO: enable when GCS code is added
+    gcs_send_message(MSG_RADIO_OUT);
 #endif
 
 #if MOUNT == ENABLED
@@ -1061,19 +1041,23 @@ static void medium_loop()
         if (g.battery_monitoring != 0) {
             read_battery();
         }
+#endif // #if 0
 
 #if HIL_MODE != HIL_MODE_ATTITUDE                                                               // don't execute in HIL mode
         if(g.compass_enabled) {
             if (compass.read()) {
                 compass.null_offsets();
             }
+#if LOGGING_ENABLED == ENABLED
             // log compass information
             if (motors.armed() && (g.log_bitmask & MASK_LOG_COMPASS)) {
                 Log_Write_Compass();
             }
+#endif // LOGGING_ENABLED == ENABLED
         }
 #endif
 
+#if 0 // TODO: enable if needed - JBW
         // record throttle output
         // ------------------------------
         throttle_integrator += g.rc_3.servo_out;
@@ -2217,80 +2201,6 @@ static void tuning(){
     }
 }
 #endif // #if 0
-
-//////////////////////////////////////////////////////////////////////////////////////
-// This function is temporary until these values can be calibrated from APM Planner //
-//////////////////////////////////////////////////////////////////////////////////////
-void setup_radio(void)
-{
-    hal.console->println("\n\nRadio Setup:");
-    uint8_t i;
-
-    for(i = 0; i < 100;i++){
-    hal.scheduler->delay(20);
-    read_radio();
-    }
-
-    g.rc_1.radio_min = g.rc_1.radio_in;
-    g.rc_2.radio_min = g.rc_2.radio_in;
-    g.rc_3.radio_min = g.rc_3.radio_in;
-    g.rc_4.radio_min = g.rc_4.radio_in;
-    g.rc_5.radio_min = g.rc_5.radio_in;
-    g.rc_6.radio_min = g.rc_6.radio_in;
-    g.rc_7.radio_min = g.rc_7.radio_in;
-    g.rc_8.radio_min = g.rc_8.radio_in;
-
-    g.rc_1.radio_max = g.rc_1.radio_in;
-    g.rc_2.radio_max = g.rc_2.radio_in;
-    g.rc_3.radio_max = g.rc_3.radio_in;
-    g.rc_4.radio_max = g.rc_4.radio_in;
-    g.rc_5.radio_max = g.rc_5.radio_in;
-    g.rc_6.radio_max = g.rc_6.radio_in;
-    g.rc_7.radio_max = g.rc_7.radio_in;
-    g.rc_8.radio_max = g.rc_8.radio_in;
-
-    g.rc_1.radio_trim = g.rc_1.radio_in;
-    g.rc_2.radio_trim = g.rc_2.radio_in;
-    g.rc_4.radio_trim = g.rc_4.radio_in;
-    // 3 is not trimed
-    g.rc_5.radio_trim = 1500;
-    g.rc_6.radio_trim = 1500;
-    g.rc_7.radio_trim = 1500;
-    g.rc_8.radio_trim = 1500;
-      
-    hal.console->println("\nMove all controls to each extreme. Hit Enter to save:");
-    while(1)
-    {
-        hal.scheduler->delay(20);
-        // Filters radio input - adjust filters in the radio.pde file
-        // ----------------------------------------------------------
-        read_radio();
-
-        g.rc_1.update_min_max();
-        g.rc_2.update_min_max();
-        g.rc_3.update_min_max();
-        g.rc_4.update_min_max();
-        g.rc_5.update_min_max();
-        g.rc_6.update_min_max();
-        g.rc_7.update_min_max();
-        g.rc_8.update_min_max();
-        
-        if(hal.console->available() > 0)
-        {
-            hal.console->println("Radio calibrated, Showing control values:");
-            break;
-        }
-    }
-
-    g.rc_1.radio_min.save();
-    g.rc_2.radio_min.save();
-    g.rc_3.radio_min.save();
-    g.rc_4.radio_min.save();
-    g.rc_5.radio_min.save();
-    g.rc_6.radio_min.save();
-    g.rc_7.radio_min.save();
-    g.rc_8.radio_min.save();
-}
 
 
 AP_HAL_MAIN();

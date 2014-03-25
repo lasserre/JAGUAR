@@ -14,17 +14,18 @@ static int8_t   test_gps(uint8_t argc,                  const Menu::arg *argv);
 static int8_t   test_ins(uint8_t argc,                  const Menu::arg *argv);
 static int8_t   test_logging(uint8_t argc,              const Menu::arg *argv);
 static int8_t   test_motors(uint8_t argc,               const Menu::arg *argv);
+#if OPTFLOW == ENABLED
 static int8_t   test_optflow(uint8_t argc,              const Menu::arg *argv);
+#endif
 static int8_t   test_radio_pwm(uint8_t argc,            const Menu::arg *argv);
 static int8_t   test_radio(uint8_t argc,                const Menu::arg *argv);
 static int8_t   test_relay(uint8_t argc,                const Menu::arg *argv);
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
 static int8_t   test_shell(uint8_t argc,                const Menu::arg *argv);
 #endif
-#if HIL_MODE != HIL_MODE_ATTITUDE && HIL_MODE != HIL_MODE_SENSORS
+#if HIL_MODE != HIL_MODE_ATTITUDE && HIL_MODE != HIL_MODE_SENSORS && CONFIG_SONAR == ENABLED
 static int8_t   test_sonar(uint8_t argc,                const Menu::arg *argv);
 #endif
-//static int8_t	test_toy(uint8_t argc,                  const Menu::arg *argv);
 static int8_t   test_tuning(uint8_t argc,               const Menu::arg *argv);
 
 // This is the help function
@@ -57,17 +58,18 @@ const struct Menu::command test_menu_commands[] PROGMEM = {
     {"ins",                 test_ins},
     {"logging",             test_logging},
     {"motors",              test_motors},
+#if OPTFLOW == ENABLED
     {"optflow",             test_optflow},
+#endif
     {"pwm",                 test_radio_pwm},
     {"radio",               test_radio},
     {"relay",               test_relay},
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     {"shell", 				test_shell},
 #endif
-#if HIL_MODE != HIL_MODE_ATTITUDE && HIL_MODE != HIL_MODE_SENSORS
+#if HIL_MODE != HIL_MODE_ATTITUDE && HIL_MODE != HIL_MODE_SENSORS && CONFIG_SONAR == ENABLED
     {"sonar",               test_sonar},
 #endif
-//	{"toy",			        test_toy},
     {"tune",                test_tuning}
 };
 
@@ -342,9 +344,7 @@ test_motors(uint8_t argc, const Menu::arg *argv)
 {
     cliSerial->printf_P(PSTR(
                         "Connect battery for this test.\n"
-                        "Motors will not spin in channel order (1,2,3,4) but by frame position order.\n"
-                        "Front (& right of centerline) motor first, then in clockwise order around frame.\n"
-                        "http://code.google.com/p/arducopter/wiki/AC2_Props_2 for demo video.\n"
+                        "Motors will spin in channel order (1,2,3,4,5,6,7,8).\n"
                         "Remember to disconnect battery after this test.\n"
                         "Any key to exit.\n"));
 
@@ -369,13 +369,13 @@ test_motors(uint8_t argc, const Menu::arg *argv)
     }
 }
 
+#if OPTFLOW == ENABLED
 static int8_t
 test_optflow(uint8_t argc, const Menu::arg *argv)
 {
 #if OPTFLOW == ENABLED
     #error "OPTFLOW = ENABLED"
 #endif
-#if OPTFLOW == ENABLED
     if(g.optflow_enabled) {
         cliSerial->printf_P(PSTR("man id: %d\t"),optflow.read_register(ADNS3080_PRODUCT_ID));
         print_hit_enter();
@@ -400,10 +400,8 @@ test_optflow(uint8_t argc, const Menu::arg *argv)
         print_enabled(false);
     }
     return (0);
-#else
-    return (0);
-#endif      // OPTFLOW == ENABLED
 }
+#endif // OPTFLOW == ENABLED
 
 static int8_t
 test_radio_pwm(uint8_t argc, const Menu::arg *argv)
@@ -421,7 +419,7 @@ test_radio_pwm(uint8_t argc, const Menu::arg *argv)
         // servo Yaw
         //APM_RC.OutputCh(CH_7, g.rc_4.radio_out);
 
-        cliSerial->printf_P(PSTR("IN: 1: %d\t2: %d\t3: %d\t4: %d\t5: %d\t6: %d\t7: %d\t8: %d\n"),
+        cliSerial->printf_P(PSTR("IN  1: %4d  2: %4d  3: %4d  4: %4d  5: %4d  6: %4d  7: %4d  8: %4d\n"),
                         g.rc_1.radio_in,
                         g.rc_2.radio_in,
                         g.rc_3.radio_in,
@@ -448,14 +446,15 @@ test_radio(uint8_t argc, const Menu::arg *argv)
         read_radio();
 
 
-        cliSerial->printf_P(PSTR("IN  1: %d\t2: %d\t3: %d\t4: %d\t5: %d\t6: %d\t7: %d\n"),
+        cliSerial->printf_P(PSTR("IN  1: %4d  2: %4d  3: %4d  4: %4d  5: %4d  6: %4d  7: %4d  8: %4d\n"),
                         g.rc_1.control_in,
                         g.rc_2.control_in,
                         g.rc_3.control_in,
                         g.rc_4.control_in,
                         g.rc_5.control_in,
                         g.rc_6.control_in,
-                        g.rc_7.control_in);
+                        g.rc_7.control_in,
+                        g.rc_8.control_in);
 
         //cliSerial->printf_P(PSTR("OUT 1: %d\t2: %d\t3: %d\t4: %d\n"), (g.rc_1.servo_out / 100), (g.rc_2.servo_out / 100), g.rc_3.servo_out, (g.rc_4.servo_out / 100));
 
@@ -511,14 +510,13 @@ test_shell(uint8_t argc, const Menu::arg *argv)
 }
 #endif
 
-#if HIL_MODE != HIL_MODE_ATTITUDE && HIL_MODE != HIL_MODE_SENSORS
+#if HIL_MODE != HIL_MODE_ATTITUDE && HIL_MODE != HIL_MODE_SENSORS && CONFIG_SONAR == ENABLED
 /*
  *  test the sonar
  */
 static int8_t
 test_sonar(uint8_t argc, const Menu::arg *argv)
 {
-#if CONFIG_SONAR == ENABLED
     if(g.sonar_enabled == false) {
         cliSerial->printf_P(PSTR("Sonar disabled\n"));
         return (0);
@@ -537,64 +535,14 @@ test_sonar(uint8_t argc, const Menu::arg *argv)
             return (0);
         }
     }
-#endif
     return (0);
 }
 #endif
 
-/*
-//static int8_t
-//test_toy(uint8_t argc, const Menu::arg *argv)
-{
-
- 	for(altitude_error = 2000; altitude_error > -100; altitude_error--){
- 		int16_t temp = get_desired_climb_rate();
-		cliSerial->printf("%ld, %d\n", altitude_error, temp);
-	}
- 	return 0;
-}
-{	wp_distance = 0;
-	int16_t max_speed = 0;
-
- 	for(int16_t i = 0; i < 200; i++){
-	 	int32_t temp = 2 * 100 * (wp_distance - wp_nav.get_waypoint_radius());
-		max_speed = sqrtf((float)temp);
-		max_speed = min(max_speed, wp_nav.get_horizontal_speed());
-		cliSerial->printf("Zspeed: %ld, %d, %ld\n", temp, max_speed, wp_distance);
-	 	wp_distance += 100;
-	}
- 	return 0;
- }
-//*/
-
-/*static int8_t
- *  //test_toy(uint8_t argc, const Menu::arg *argv)
- *  {
- *       int16_t yaw_rate;
- *       int16_t roll_rate;
- *       g.rc_1.control_in = -2500;
- *       g.rc_2.control_in = 2500;
- *
- *       g.toy_yaw_rate = 3;
- *       yaw_rate = g.rc_1.control_in / g.toy_yaw_rate;
- *       roll_rate = ((int32_t)g.rc_2.control_in * (yaw_rate/100)) /40;
- *       cliSerial->printf("yaw_rate, %d, roll_rate, %d\n", yaw_rate, roll_rate);
- *
- *       g.toy_yaw_rate = 2;
- *       yaw_rate = g.rc_1.control_in / g.toy_yaw_rate;
- *       roll_rate = ((int32_t)g.rc_2.control_in * (yaw_rate/100)) /40;
- *       cliSerial->printf("yaw_rate, %d, roll_rate, %d\n", yaw_rate, roll_rate);
- *
- *       g.toy_yaw_rate = 1;
- *       yaw_rate = g.rc_1.control_in / g.toy_yaw_rate;
- *       roll_rate = ((int32_t)g.rc_2.control_in * (yaw_rate/100)) /40;
- *       cliSerial->printf("yaw_rate, %d, roll_rate, %d\n", yaw_rate, roll_rate);
- *  }*/
-
 static int8_t
 test_tuning(uint8_t argc, const Menu::arg *argv)
 {
-    cliSerial->printf_P(PSTR("tuning disabled for ArduBlimp\n"));
+    cliSerial->printf_P(PSTR("Tuning disabled for ArduBlimp\n"));
     return 0;
 #if 0 //TODO: enable if needed - JBW
     print_hit_enter();

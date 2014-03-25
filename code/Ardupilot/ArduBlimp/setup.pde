@@ -10,13 +10,11 @@ static int8_t   setup_compassmot        (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_declination       (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_erase             (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_frame             (uint8_t argc, const Menu::arg *argv);
- #if FRAME_CONFIG == HELI_FRAME
-static int8_t   setup_gyro              (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_heli              (uint8_t argc, const Menu::arg *argv);
- #endif
 static int8_t   setup_accel             (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_flightmodes       (uint8_t argc, const Menu::arg *argv);
+#if OPTFLOW == ENABLED
 static int8_t   setup_optflow           (uint8_t argc, const Menu::arg *argv);
+#endif
 static int8_t   setup_radio             (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_range             (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_factory           (uint8_t argc, const Menu::arg *argv);
@@ -39,7 +37,9 @@ const struct Menu::command setup_menu_commands[] PROGMEM = {
     {"frame",                       setup_frame},
     {"level",                       setup_accel},
     {"modes",                       setup_flightmodes},
+#if OPTFLOW == ENABLED
     {"optflow",                     setup_optflow},
+#endif
     {"radio",                       setup_radio},
     {"range",                       setup_range},
     {"reset",                       setup_factory},
@@ -59,7 +59,7 @@ setup_mode(uint8_t argc, const Menu::arg *argv)
     // Give the user some guidance
     cliSerial->printf_P(PSTR("Setup Mode\n\n\n"));
 
-    if(g.rc_1.radio_min >= 1300) {
+    if(g.rc_3.radio_min >= 1300) {
         delay(1000);
         cliSerial->printf_P(PSTR("\n!Warning, radio not configured!"));
         delay(1000);
@@ -386,21 +386,7 @@ setup_erase(uint8_t argc, const Menu::arg *argv)
 static int8_t
 setup_frame(uint8_t argc, const Menu::arg *argv)
 {
-    if (!strcmp_P(argv[1].str, PSTR("x"))) {
-        g.frame_orientation.set_and_save(X_FRAME);
-    } else if (!strcmp_P(argv[1].str, PSTR("p"))) {
-        g.frame_orientation.set_and_save(PLUS_FRAME);
-    } else if (!strcmp_P(argv[1].str, PSTR("+"))) {
-        g.frame_orientation.set_and_save(PLUS_FRAME);
-    } else if (!strcmp_P(argv[1].str, PSTR("v"))) {
-        g.frame_orientation.set_and_save(V_FRAME);
-    }else{
-        cliSerial->printf_P(PSTR("\nOp:[x,+,v]\n"));
-        report_frame();
-        return 0;
-    }
-
-    report_frame();
+    cliSerial->printf("There are not multiple ArduBlimp frames\n");
     return 0;
 }
 
@@ -489,10 +475,10 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
     }
 }
 
+#if OPTFLOW == ENABLED
 static int8_t
 setup_optflow(uint8_t argc, const Menu::arg *argv)
 {
- #if OPTFLOW == ENABLED
     if (!strcmp_P(argv[1].str, PSTR("on"))) {
         g.optflow_enabled = true;
         init_optflow();
@@ -508,9 +494,10 @@ setup_optflow(uint8_t argc, const Menu::arg *argv)
 
     g.optflow_enabled.save();
     report_optflow();
- #endif     // OPTFLOW == ENABLED
+
     return 0;
 }
+#endif // OPTFLOW == ENABLED
 
 // Perform radio setup.
 // Called by the setup menu 'radio' command.
@@ -730,7 +717,9 @@ setup_show(uint8_t argc, const Menu::arg *argv)
     report_flight_modes();
     report_ins();
     report_compass();
+#if OPTFLOW == ENABLED
     report_optflow();
+#endif
 
     AP_Param::show_all(cliSerial);
 
@@ -884,17 +873,17 @@ static void report_flight_modes()
     print_blanks(2);
 }
 
+#if OPTFLOW == ENABLED
 void report_optflow()
 {
- #if OPTFLOW == ENABLED
     cliSerial->printf_P(PSTR("OptFlow\n"));
     print_divider();
 
     print_enabled(g.optflow_enabled);
 
     print_blanks(2);
- #endif     // OPTFLOW == ENABLED
 }
+#endif // OPTFLOW == ENABLED
 
 /***************************************************************************/
 // CLI utilities
@@ -920,7 +909,7 @@ print_radio_values()
     cliSerial->printf_P(PSTR("CH5: %d | %d\n"), (int)g.rc_5.radio_min, (int)g.rc_5.radio_max);
     cliSerial->printf_P(PSTR("CH6: %d | %d\n"), (int)g.rc_6.radio_min, (int)g.rc_6.radio_max);
     cliSerial->printf_P(PSTR("CH7: %d | %d\n"), (int)g.rc_7.radio_min, (int)g.rc_7.radio_max);
-    //cliSerial->printf_P(PSTR("CH8: %d | %d\n"), (int)g.rc_8.radio_min, (int)g.rc_8.radio_max);
+    cliSerial->printf_P(PSTR("CH8: %d | %d\n"), (int)g.rc_8.radio_min, (int)g.rc_8.radio_max);
 }
 
 static void
@@ -976,42 +965,6 @@ print_gyro_offsets(void)
                     (float)gyro_offsets.y,
                     (float)gyro_offsets.z);
 }
-
- #if FRAME_CONFIG == HELI_FRAME
-
-static RC_Channel *
-heli_get_servo(int16_t servo_num){
-    if( servo_num == CH_1 )
-        return motors._servo_1;
-    if( servo_num == CH_2 )
-        return motors._servo_2;
-    if( servo_num == CH_3 )
-        return motors._servo_3;
-    if( servo_num == CH_4 )
-        return motors._servo_4;
-    return NULL;
-}
-
-// Used to read integer values from the serial port
-static int16_t read_num_from_serial() {
-    uint8_t index = 0;
-    uint8_t timeout = 0;
-    char data[5] = "";
-
-    do {
-        if (cliSerial->available() == 0) {
-            delay(10);
-            timeout++;
-        }else{
-            data[index] = cliSerial->read();
-            timeout = 0;
-            index++;
-        }
-    } while (timeout < 5 && index < 5);
-
-    return atoi(data);
-}
- #endif
 
 #endif // CLI_ENABLED
 
