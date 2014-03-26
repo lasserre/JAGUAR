@@ -3,7 +3,7 @@
 #include <QtSerialPort>
 #include <QDebug>
 #include "xbee_frameconstructor.h"
-#include "xbee_frame_params.h"
+#include "xbee_frame_structs.h"
 
 const int BAUD = 9600;
 
@@ -213,7 +213,7 @@ QByteArray MainWindow::GetATCommand()
 QByteArray MainWindow::GetTxReqXBFrame()
 {
 
-    XbeeAPI::TxRequestParams options;
+    XbeeAPI::TxRequest options;
     options.DestAddress = BROADCAST_ADDRESS;
     options.PayloadLength = 10;
     options.PayloadStart = new char[options.PayloadLength];

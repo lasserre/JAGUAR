@@ -1,3 +1,4 @@
+#include "xbee_api_frame_defines.h"
 #include "xbee_api_basetypes.h"
 
 namespace XbeeAPI {
@@ -25,7 +26,7 @@ uint8_t CalcChecksum(const int& Size, char *Start)
 
 uint8_t CalcFrameChecksum(const int& FrameSize, char* FrameStart)
 {
-    return CalcChecksum(FrameSize - BASE_FRAME_LENGTH, FrameStart + BASE_HEADER_LENGTH);
+    return CalcChecksum(FrameSize - XB_FRAME_LENGTH, FrameStart + XB_HEADER_LENGTH);
 }
 
 void WriteXbeeFrameHeader(char *FrameStart, const uint16_t &LengthField, const Frame::Type& FrameType)

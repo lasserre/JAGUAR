@@ -2,18 +2,31 @@
 #define XBEE_FRAMECONSTRUCTOR_H
 
 #include "xbee_api_basetypes.h"
-#include "xbee_frame_params.h"
+
+/** @file */
 
 // XBee broadcast address
 #define BROADCAST_ADDRESS 0x000000000000FFFF
 
 namespace XbeeAPI {
 
+struct TxRequest;
+
 namespace FrameConstructor {
 
-uint16_t GetTxRequestFrameSize(const TxRequestParams& Options);
+/**
+ * @brief GetTxRequestFrameSize
+ * @param Options
+ * @return
+ */
+uint16_t GetTxRequestFrameSize(const TxRequest& Options);
 
-void WriteTxRequestFrame(const TxRequestParams& Options, char* FrameStart);
+/**
+ * @brief WriteTxRequestFrame
+ * @param Options
+ * @param FrameStart
+ */
+void WriteTxRequestFrame(const TxRequest& Options, char* FrameStart);
 
 } // FrameConstructor
 

@@ -7,37 +7,11 @@
 
 #include <stdint.h>
 
-#define BASE_HEADER_LENGTH 3 // start byte and 2 length bytes
-#define BASE_FRAME_LENGTH  4 // BASE_HEADER_LENGTH + checksum byte
+/** @file */
 
-/* ---------- FT - Frame Type Byte Definitions (hex) ---------- *
- * Frame Type is the hex value corresponding to the frame
- * type. This value is written to the Frame Type field in
- * the actual Xbee frame.
- * ------------------------------------------------------- */
-#define FT_DEFAULT_FRAMETYPE 0x00
-#define FT_TRANSMIT_REQUEST 0x10
-
-/* ---------- PO - Payload Offsets (decimal) ---------- *
- * Payload Offset is the offset into the Xbee frame
- * that points to the start of the payload.
- * ----------------------------------------------- */
-#define PO_TRANSMIT_REQUEST 17
-
-/* ---------- FLO - Frame Length Offsets (decimal) ---------- *
- * Frame Length Offset is the fixed-length offset to add
- * to the size of the payload to get the value of
- * the Length field in the Xbee frame.
- *
- * FLO + PS = LEN
- *
- * where:
- *   FLO - Frame Length Offset
- *   PS - Payload size
- *   LEN - Length field in Xbee frame
- * ---------------------------------------------- */
-#define FLO_TRANSMIT_REQUEST 14
-
+/** @namespace XbeeAPI
+ * The XbeeAPI namespace is the top-level namespace for the XbeeAPI library
+ */
 namespace XbeeAPI
 {
     namespace Frame
@@ -47,7 +21,9 @@ namespace XbeeAPI
          */
         enum Type
         {
-            TransmitRequest
+            UnknownFrameType,
+            TransmitRequest,
+            TransmitStatus
         };
     }
 

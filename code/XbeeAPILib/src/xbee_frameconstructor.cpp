@@ -1,3 +1,4 @@
+#include "xbee_frame_structs.h"
 #include "xbee_frameconstructor.h"
 #include <cstring>
 
@@ -5,12 +6,12 @@ namespace XbeeAPI {
 
 namespace FrameConstructor {
 
-uint16_t GetTxRequestFrameSize(const TxRequestParams& Options)
+uint16_t GetTxRequestFrameSize(const TxRequest& Options)
 {
-    return CalcFrameSpecificLength(Frame::TransmitRequest, Options.PayloadLength) + BASE_FRAME_LENGTH;
+    return CalcFrameSpecificLength(Frame::TransmitRequest, Options.PayloadLength) + XB_FRAME_LENGTH;
 }
 
-void WriteTxRequestFrame(const TxRequestParams &Options, char *FrameStart)
+void WriteTxRequestFrame(const TxRequest &Options, char *FrameStart)
 {
     WriteXbeeFrameHeader(FrameStart, CalcFrameSpecificLength(Frame::TransmitRequest, Options.PayloadLength), Frame::TransmitRequest);
 

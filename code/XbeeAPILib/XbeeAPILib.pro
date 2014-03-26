@@ -19,7 +19,8 @@ HEADERS += \
     include/xbee_api_basetypes.h \
     include/xbee_frameconstructor.h \
     include/xbee_frameparser.h \
-    include/xbee_frame_params.h
+    include/xbee_api_frame_defines.h \
+    include/xbee_frame_structs.h
 unix {
     target.path = /usr/lib
     INSTALLS += target

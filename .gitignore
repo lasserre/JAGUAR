@@ -16,6 +16,9 @@ code/MSP430/settings
 documentation/JPTest
 documentation/MSP430
 documentation/XbeeAPILib
+html
+latex
+rtf
 
 # Cool-term settings
 *.stc
