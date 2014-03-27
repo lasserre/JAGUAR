@@ -23,7 +23,8 @@ namespace XbeeAPI
         {
             UnknownFrameType,
             TransmitRequest,
-            TransmitStatus
+            TransmitStatus,
+            ReceivePacket
         };
     }
 

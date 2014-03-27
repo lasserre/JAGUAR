@@ -8,7 +8,9 @@ uint16_t CalcFrameSpecificLength(const Frame::Type &FrameType, const uint16_t &P
     switch (FrameType)
     {
     case Frame::TransmitRequest:
-        return PayloadLength + FLO_TRANSMIT_REQUEST;
+        return PayloadLength + TXR_BASEFRAME_SIZE;
+    case Frame::ReceivePacket:
+        return PayloadLength + RXP_BASEFRAME_SIZE;
     default:
         return 0;
     }
@@ -31,12 +33,12 @@ uint8_t CalcFrameChecksum(const int& FrameSize, char* FrameStart)
 
 void WriteXbeeFrameHeader(char *FrameStart, const uint16_t &LengthField, const Frame::Type& FrameType)
 {
-    FrameStart[0] = 0x7e;   // Start byte
+    FrameStart[XB_START_IDX] = 0x7e;   // Start byte
 
-    FrameStart[1] = ((LengthField >> 8) & 0x00ff);  // Length MSB
-    FrameStart[2] = (LengthField & 0x00ff);         // Length LSB
+    FrameStart[XB_LENMSB_IDX] = ((LengthField >> 8) & 0x00ff);  // Length MSB
+    FrameStart[XB_LENLSB_IDX] = (LengthField & 0x00ff);         // Length LSB
 
-    WriteFrameTypeField(FrameType, &FrameStart[3]); // Frame Type
+    WriteFrameTypeField(FrameType, &FrameStart[XB_FRAMETYPE_IDX]); // Frame Type
 
     return;
 }
@@ -55,10 +57,13 @@ void WriteFrameTypeField(const Frame::Type &FrameType, char* FrameTypeByte)
     switch (FrameType)
     {
     case Frame::TransmitRequest:
-        *FrameTypeByte = FT_TRANSMIT_REQUEST;
+        *FrameTypeByte = TXR_FRAMETYPE_ENUM;
+        break;
+    case Frame::ReceivePacket:
+        *FrameTypeByte = RXP_FRAMETYPE_ENUM;
         break;
     default:
-        *FrameTypeByte = FT_DEFAULT_FRAMETYPE;
+        *FrameTypeByte = XB_FRAMETYPE_DEFAULT;
         break;
     }
 }

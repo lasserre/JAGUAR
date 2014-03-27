@@ -24,10 +24,8 @@ public slots:
 private:
     Ui::MainWindow *ui;
     QSerialPort* port;
+    QByteArray frameBuffer;
 
-    QByteArray GetTestXBFrame();
-    QByteArray GetTrRequest();
-    QByteArray GetATCommand();
     QByteArray GetTxReqXBFrame();
 
     void DebugQByteArray(const QByteArray& Array);

@@ -5,30 +5,55 @@ namespace XbeeAPI {
 
 namespace FrameParser {
 
-Frame::Type ParseFrameType(char *FrameStart)
+ParseResult ParseFrameType(char *FrameStart, const int& FrameLen, Frame::Type& FrameType)
 {
+    if (FrameLen <= XB_FRAMETYPE_IDX)
+    {
+        // FrameType byte not received yet!
+        FrameType = Frame::UnknownFrameType;
+        return Success;    /// @todo RETURN ERROR
+    }
+
     uint8_t typeByte = FrameStart[XB_FRAMETYPE_IDX];
 
     switch (typeByte)
     {
-    case FT_TRANSMIT_REQUEST:
-        return Frame::TransmitRequest;
-    case FT_TRANSMIT_STATUS:
-        return Frame::TransmitStatus;
+    case TXR_FRAMETYPE_ENUM:
+        FrameType = Frame::TransmitRequest;
+        break;
+    case TXS_FRAMETYPE_ENUM:
+        FrameType = Frame::TransmitStatus;
+        break;
     default:
-        return Frame::UnknownFrameType;
+        FrameType = Frame::UnknownFrameType;
+        break;
     }
+
+    return Success;
 }
 
-TxStatus ParseTxRequest(char *FrameStart)
+ParseResult ParseTxStatus(char *FrameStart, const int& FrameLen, TxStatus &Status)
 {
-    TxStatus txStatus;
+    if (TXS_MIN_TOTALSIZE <= FrameLen)
+    {
+        // TxStatus frames are fixed size, so go ahead and read it!
 
-    txStatus.TxRetryCount = FrameStart[7];
-    //txStatus.DelivStat = FrameStart[];
-    //txStatus.DiscvStat = FrameStart[];
+        Status.TxRetryCount = FrameStart[TXS_RTRYCOUNT_IDX];
+        Status.DelivStat = FrameStart[TXS_DELIVSTAT_IDX];
+        Status.DiscvStat = FrameStart[TXS_DISCVSTAT_IDX];
 
-    return txStatus;
+        return Success;
+    }
+
+    return Success;     /// @todo RETURN ERROR HERE
+}
+
+ParseResult ParseRxPacket(char *FrameStart, const int &FrameLen, RxPacket &Packet)
+{
+    if (RXP_MIN_TOTALSIZE <= FrameLen)
+    {
+        // Minimum size of a RxPacket frame received!
+    }
 }
 
 } // FrameParser

@@ -3,14 +3,17 @@
 #include <QtSerialPort>
 #include <QDebug>
 #include "xbee_frameconstructor.h"
+#include "xbee_frameparser.h"
 #include "xbee_frame_structs.h"
 
 const int BAUD = 9600;
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+using namespace XbeeAPI;
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+  , ui(new Ui::MainWindow)
   , port(new QSerialPort(this))
+  , frameBuffer(QByteArray())
 {
     ui->setupUi(this);
 
@@ -67,147 +70,37 @@ void MainWindow::SendFrame()
 
 void MainWindow::ReceiveFrame()
 {
-    QByteArray Frame = port->readAll();
-    qDebug() << "Received data: " << Frame;
+    QByteArray ReceivedBytes = port->readAll();
+
+    frameBuffer.append(ReceivedBytes);    // Add received bytes to buffer
+
+    qDebug() << "Received data: ";
+    DebugQByteArray(ReceivedBytes);
+
+    Frame::Type type;
+    if (FrameParser::ParseFrameType(frameBuffer.data(), frameBuffer.count(), type))
+    {
+        if (type == Frame::TransmitStatus)
+        {
+            qDebug() << "TransmitStatus frame received!";
+
+            TxStatus status;
+            if (FrameParser::ParseTxStatus(frameBuffer.data(), frameBuffer.count(), status))
+            {
+                qDebug() << "TxRetryCount: " << status.TxRetryCount;
+                qDebug() << "DelivStatus: " << status.DelivStat;
+                qDebug() << "DiscvStatus: " << status.DiscvStat;
+
+                frameBuffer.clear();
+            }
+        }
+        else
+        {
+            frameBuffer.clear();
+        }
+    }
+
     return;
-}
-
-QByteArray MainWindow::GetTestXBFrame()
-{
-    QByteArray testFrame;
-
-    // START
-    testFrame.append(char(0x7e));
-
-    // LENGTH
-    testFrame.append(char(0x00));
-    testFrame.append(0x1a);
-
-    // TYPE
-    testFrame.append(0x11);
-
-    // FRAME ID
-    testFrame.append(0x01);
-
-    // 8B (64-bit) DEST ADDRESS
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(0xff);
-    testFrame.append(0xff);
-
-    // RESERVED
-    testFrame.append(0xff);
-    testFrame.append(0xfe);
-
-    // SRC ENDPOINT
-    testFrame.append(0xe8);
-
-    // DST ENDPOINT
-    testFrame.append(0xe8);
-
-    // CID
-    testFrame.append(char(0x00));
-    testFrame.append(0x12);
-
-    // PROFILE ID
-    testFrame.append(0xc1);
-    testFrame.append(0x05);
-
-    // BROADCAST RADIUS
-    testFrame.append(char(0x00));
-
-    // TX OPTIONS
-    testFrame.append(char(0x00));
-
-    // PAYLOAD
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-    testFrame.append(char(0x00));
-
-    // CHECKSUM
-    testFrame.append(char(0x00));
-
-    return testFrame;
-}
-
-QByteArray MainWindow::GetTrRequest()
-{
-    QByteArray txRequest;
-
-    // Start
-    txRequest.append(0x7e);
-
-    // Length
-    txRequest.append(char(0x00));
-    txRequest.append(0x16);
-
-    // Type
-    txRequest.append(0x10);
-
-    // His address = 0013a200 408dd526
-
-    // Frame id
-    txRequest.append(char(0x01));
-
-    // Dest Addr
-   txRequest.append(char(0x00));
-   txRequest.append(char(0x00));
-   txRequest.append(char(0x00));
-   txRequest.append(char(0x00));
-
-   txRequest.append(char(0x00));
-   txRequest.append(char(0x00));
-    txRequest.append(0xff);
-    txRequest.append(0xff);
-
-    // Reserved
-    txRequest.append(0xff);
-    txRequest.append(0xfe);
-
-    // Broadcast Rad
-   txRequest.append(char(0x00));
-
-    // Tx Options
-    txRequest.append(char(0x00));
-
-    // Payload
-    txRequest.append(0x54);
-    txRequest.append(0x78);
-    txRequest.append(0x44);
-    txRequest.append(0x61);
-    txRequest.append(0x74);
-    txRequest.append(0x61);
-    txRequest.append(0x30);
-    txRequest.append(0x41);
-
-    char sum = 0;
-    for (int i = 3; i < txRequest.length(); i++)
-        sum += txRequest.at(i);
-    char checksum = 255 - sum;
-    qDebug() << "checksum: " << (unsigned int)checksum;
-    qDebug() << "sum: " << (uint) (sum & 0x000000ff);
-    qDebug() << "Check: " << (unsigned int)((sum + checksum) & 0x000000ff);
-    // Checksum
-    txRequest.append(checksum);
-
-    return txRequest;
-}
-
-QByteArray MainWindow::GetATCommand()
-{
-    QByteArray atCmd;
-
-    // Start
-    atCmd.append(0x7e);
-
-    return atCmd;
 }
 
 QByteArray MainWindow::GetTxReqXBFrame()

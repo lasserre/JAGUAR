@@ -26,6 +26,17 @@ struct TxStatus
     uint8_t DiscvStat;
 };
 
+/**
+ * @brief The RxPacket struct holds the fields parsed from the Receive Packet Xbee frame.
+ */
+struct RxPacket
+{
+    uint64_t SourceAddress;     ///< @brief SourceAddress is the 64-bit address of the sender
+    uint8_t ReceiveOpts;        ///< @brief ReceiveOpts is an 8-bit enum value describing the mode of reception
+    char* PayloadStart;         ///< @brief PayloadStart points to the start of the payload within the frame supplied
+    uint16_t ExpctdPayloadLen;  ///< @brief ExpctdPayloadLen is the expected payload length based on the LENGTH field
+};
+
 } // XbeeAPI
 
 #endif // XBEE_FRAME_STRUCTS_H
