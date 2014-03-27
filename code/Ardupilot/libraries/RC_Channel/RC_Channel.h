@@ -54,6 +54,18 @@ public:
     void        set_pwm(int16_t pwm);
     void        set_pwm_no_deadzone(int16_t pwm);
 
+    /**
+     * @brief get _high_out
+     * @return _high_out
+     */
+    int16_t get_high_out();
+
+    /**
+     * @brief get _low_out
+     * @return _low_out
+     */
+    int16_t get_low_out();
+
     // pwm is stored here
     int16_t        radio_in;
 

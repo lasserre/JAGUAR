@@ -127,6 +127,16 @@ public:
 private:
     void        handleMessage(mavlink_message_t * msg);
 
+    /**
+     * @brief update motor output based on MAVLink MANUAL_CONTROL packet
+     * @param x x-axis, range [-1000, 1000], generally corresponds to pitch
+     * @param y y-axis, range [-1000, 1000], generally corresponds to roll
+     * @param z z-axis, range [-1000, 1000], generally corresponds to thrust
+     * @param r r-axis, range [-1000, 1000], generally corresponds to yaw
+     * @param buttons bitfield corresponding to joystick buttons, 0 - released, 1 - pressed
+     */
+    void ManualControlUpdate(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons);
+
     /// Perform queued sending operations
     ///
     AP_Param *                  _queued_parameter;      ///< next parameter to

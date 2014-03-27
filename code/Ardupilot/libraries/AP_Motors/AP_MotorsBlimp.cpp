@@ -73,10 +73,6 @@ void AP_MotorsBlimp::output_test()
     output_min();
 }
 
-/**
- * @brief [brief description]
- * @details [long description]
- */
 void AP_MotorsBlimp::output_armed()
 {
     _rc_throttle->calc_pwm();

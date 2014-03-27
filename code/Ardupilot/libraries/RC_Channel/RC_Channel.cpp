@@ -158,6 +158,16 @@ RC_Channel::set_pwm_no_deadzone(int16_t pwm)
     }
 }
 
+int16_t RC_Channel::get_high_out()
+{
+    return _high_out;
+}
+
+int16_t RC_Channel::get_low_out()
+{
+    return _low_out;
+}
+
 int16_t
 RC_Channel::control_mix(float value)
 {

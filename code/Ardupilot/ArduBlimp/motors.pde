@@ -1,9 +1,9 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THRUST_ARMING_TOLERANCE     20
-#define ANTI_LIFT_ARMING_TOLERANCE  40
-#define PITCH_ARMING_TOLERANCE      10
-#define YAW_ARMING_TOLERANCE        10
+#define THRUST_ARMING_TOLERANCE      20
+#define ANTI_LIFT_ARMING_TOLERANCE  200
+#define PITCH_ARMING_TOLERANCE       25
+#define YAW_ARMING_TOLERANCE         15
 
 /**
  * @brief ensure RC inputs are positioned for motors to be off
@@ -14,12 +14,14 @@ bool check_rc_values()
     // ensure thrust control is at its minimum value
     if (g.rc_3.radio_in > g.rc_3.radio_min + THRUST_ARMING_TOLERANCE)
     {
+        hal.console->printf("rc_3:%i\n", g.rc_3.radio_in);//TODO:remove
         return false;
     }
 
     // ensure anti-lift control is at its minimum value
     if (g.rc_6.radio_in > g.rc_6.radio_min + ANTI_LIFT_ARMING_TOLERANCE)
     {
+        hal.console->printf("rc_6:%i\n", g.rc_6.radio_in);//TODO:remove
         return false;
     }
 
@@ -27,6 +29,7 @@ bool check_rc_values()
     int16_t pitch_radio_mid = (g.rc_2.radio_min + g.rc_2.radio_max) / 2;
     if (g.rc_2.radio_in < pitch_radio_mid - PITCH_ARMING_TOLERANCE || g.rc_2.radio_in > pitch_radio_mid + PITCH_ARMING_TOLERANCE)
     {
+        hal.console->printf("rc_2:%i\n", g.rc_2.radio_in);//TODO:remove
         return false;
     }
 
@@ -34,6 +37,7 @@ bool check_rc_values()
     int16_t yaw_radio_mid = (g.rc_4.radio_min + g.rc_4.radio_max) / 2;
     if (g.rc_4.radio_in < yaw_radio_mid - YAW_ARMING_TOLERANCE || g.rc_4.radio_in > yaw_radio_mid + YAW_ARMING_TOLERANCE)
     {
+        hal.console->printf("rc_4:%i\n", g.rc_4.radio_in);//TODO:remove
         return false;
     }
 
@@ -45,6 +49,13 @@ bool check_rc_values()
 static void arm_motors_check()
 {
     static bool armingError = false;
+
+    // return if we are being controlled by the joystick
+    if (!isRcControlled())
+    {
+        hal.console->printf("Joystick controlled\n");//TODO:remove
+        return;
+    }
 
     // ensure we are in Stabilize or Acro mode
     if (control_mode != ACRO && control_mode != STABILIZE)
@@ -65,10 +76,12 @@ static void arm_motors_check()
                 pre_arm_checks(true);
                 if (ap.pre_arm_check && check_rc_values())
                 {
+                    hal.console->printf("armed\n");//TODO:remove
                     init_arm_motors();
                 }
                 else
                 {
+                    hal.console->printf("arming error\n");//TODO:remove
                     // set arming error flag if pre-arm checks fail
                     armingError = true;
                 }
@@ -114,6 +127,7 @@ static void auto_disarm_check()
 // init_arm_motors - performs arming process including initialisation of barometer and gyros
 static void init_arm_motors()
 {
+    gcs_send_text_fmt(PSTR("Arming"));//TODO:remove
 	// arming marker
     // Flag used to track if we have armed the motors the first time.
     // This is used to decide if we should run the ground_start routine
@@ -348,6 +362,7 @@ static void pre_arm_rc_checks()
 
 static void init_disarm_motors()
 {
+    gcs_send_text_fmt(PSTR("Disarming"));//TODO:remove
 #if HIL_MODE != HIL_MODE_DISABLED || CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
     gcs_send_text_P(SEVERITY_HIGH, PSTR("DISARMING MOTORS"));
 #endif

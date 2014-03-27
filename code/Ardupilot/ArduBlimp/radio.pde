@@ -131,7 +131,7 @@ static void read_radio()
         g.rc_8.set_pwm(periods[7]);
 
         // limit our input to 800 so we can still pitch and roll
-        g.rc_3.control_in = min(g.rc_3.control_in, MAXIMUM_THROTTLE);
+        g.rc_3.control_in = min(g.rc_3.control_in, MAXIMUM_THROTTLE); //TODO: I think this should be removed for the blimp - JBW
     }else{
         uint32_t elapsed = millis() - last_update;
         // turn on throttle failsafe if no update from ppm encoder for 2 seconds
@@ -203,3 +203,12 @@ static void trim_radio()
     g.rc_4.save_eeprom();
 }
 
+/**
+ * @brief whether the radio controller or the joystick has control
+ * @return true if radio controller has control, false if joystick has control
+ */
+bool isRcControlled()
+{
+    int16_t radio_mid = (g.rc_8.radio_max + g.rc_8.radio_min) / 2;
+    return (g.rc_8.radio_in < radio_mid);
+}

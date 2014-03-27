@@ -1402,94 +1402,98 @@ bool set_yaw_mode(uint8_t new_yaw_mode)
 // 100hz update rate
 void update_yaw_mode(void)
 {
-    switch(yaw_mode) {
+    // only update if radio controller has control
+    if (isRcControlled())
+    {
+        switch(yaw_mode) {
 
 #if 0 //TODO: enable if needed
-    case YAW_HOLD:
-        // heading hold at heading held in nav_yaw but allow input from pilot
-        get_yaw_rate_stabilized_ef(g.rc_4.control_in);
-        break;
-#endif // #if 0
-
-    case YAW_ACRO:
-        g.rc_4.servo_out = g.rc_4.control_in;
-#if 0 //TODO: needed???
-        // pilot controlled yaw using rate controller
-        if(g.axis_enabled) {
+        case YAW_HOLD:
+            // heading hold at heading held in nav_yaw but allow input from pilot
             get_yaw_rate_stabilized_ef(g.rc_4.control_in);
-        }else{
-            get_acro_yaw(g.rc_4.control_in);
-        }
+            break;
 #endif // #if 0
-        break;
+
+        case YAW_ACRO:
+            g.rc_4.servo_out = g.rc_4.control_in;
+#if 0 //TODO: needed???
+            // pilot controlled yaw using rate controller
+            if(g.axis_enabled) {
+                get_yaw_rate_stabilized_ef(g.rc_4.control_in);
+            }else{
+                get_acro_yaw(g.rc_4.control_in);
+            }
+#endif // #if 0
+            break;
 
 #if 0 //TODO: enable if needed
-    case YAW_LOOK_AT_NEXT_WP:
-        // point towards next waypoint (no pilot input accepted)
-        // we don't use wp_bearing because we don't want the copter to turn too much during flight
-        nav_yaw = get_yaw_slew(nav_yaw, original_wp_bearing, AUTO_YAW_SLEW_RATE);
-        get_stabilize_yaw(nav_yaw);
+        case YAW_LOOK_AT_NEXT_WP:
+            // point towards next waypoint (no pilot input accepted)
+            // we don't use wp_bearing because we don't want the copter to turn too much during flight
+            nav_yaw = get_yaw_slew(nav_yaw, original_wp_bearing, AUTO_YAW_SLEW_RATE);
+            get_stabilize_yaw(nav_yaw);
 
-        // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
-            set_yaw_mode(YAW_HOLD);
-        }
-        break;
+            // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
+            if( g.rc_4.control_in != 0 ) {
+                set_yaw_mode(YAW_HOLD);
+            }
+            break;
 
-    case YAW_LOOK_AT_LOCATION:
-        // point towards a location held in yaw_look_at_WP
-        get_look_at_yaw();
+        case YAW_LOOK_AT_LOCATION:
+            // point towards a location held in yaw_look_at_WP
+            get_look_at_yaw();
 
-        // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
-            set_yaw_mode(YAW_HOLD);
-        }
-        break;
+            // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
+            if( g.rc_4.control_in != 0 ) {
+                set_yaw_mode(YAW_HOLD);
+            }
+            break;
 
-    case YAW_CIRCLE:
-        // points toward the center of the circle or does a panorama
-        get_circle_yaw();
+        case YAW_CIRCLE:
+            // points toward the center of the circle or does a panorama
+            get_circle_yaw();
 
-        // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
-            set_yaw_mode(YAW_HOLD);
-        }
-        break;
+            // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
+            if( g.rc_4.control_in != 0 ) {
+                set_yaw_mode(YAW_HOLD);
+            }
+            break;
 
-    case YAW_LOOK_AT_HOME:
-        // keep heading always pointing at home with no pilot input allowed
-        nav_yaw = get_yaw_slew(nav_yaw, home_bearing, AUTO_YAW_SLEW_RATE);
-        get_stabilize_yaw(nav_yaw);
+        case YAW_LOOK_AT_HOME:
+            // keep heading always pointing at home with no pilot input allowed
+            nav_yaw = get_yaw_slew(nav_yaw, home_bearing, AUTO_YAW_SLEW_RATE);
+            get_stabilize_yaw(nav_yaw);
 
-        // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
-            set_yaw_mode(YAW_HOLD);
-        }
-        break;
+            // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
+            if( g.rc_4.control_in != 0 ) {
+                set_yaw_mode(YAW_HOLD);
+            }
+            break;
 
-    case YAW_LOOK_AT_HEADING:
-        // keep heading pointing in the direction held in yaw_look_at_heading with no pilot input allowed
-        nav_yaw = get_yaw_slew(nav_yaw, yaw_look_at_heading, yaw_look_at_heading_slew);
-        get_stabilize_yaw(nav_yaw);
-        break;
+        case YAW_LOOK_AT_HEADING:
+            // keep heading pointing in the direction held in yaw_look_at_heading with no pilot input allowed
+            nav_yaw = get_yaw_slew(nav_yaw, yaw_look_at_heading, yaw_look_at_heading_slew);
+            get_stabilize_yaw(nav_yaw);
+            break;
 
-    case YAW_LOOK_AHEAD:
-        // Commanded Yaw to automatically look ahead.
-        get_look_ahead_yaw(g.rc_4.control_in);
-        break;
+        case YAW_LOOK_AHEAD:
+            // Commanded Yaw to automatically look ahead.
+            get_look_ahead_yaw(g.rc_4.control_in);
+            break;
 
-    case YAW_RESETTOARMEDYAW:
-        // changes yaw to be same as when quad was armed
-        nav_yaw = get_yaw_slew(nav_yaw, initial_armed_bearing, AUTO_YAW_SLEW_RATE);
-        get_stabilize_yaw(nav_yaw);
+        case YAW_RESETTOARMEDYAW:
+            // changes yaw to be same as when quad was armed
+            nav_yaw = get_yaw_slew(nav_yaw, initial_armed_bearing, AUTO_YAW_SLEW_RATE);
+            get_stabilize_yaw(nav_yaw);
 
-        // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
-        if( g.rc_4.control_in != 0 ) {
-            set_yaw_mode(YAW_HOLD);
-        }
+            // if there is any pilot input, switch to YAW_HOLD mode for the next iteration
+            if( g.rc_4.control_in != 0 ) {
+                set_yaw_mode(YAW_HOLD);
+            }
 
-        break;
+            break;
 #endif // #if 0
+        }
     }
 }
 
@@ -1567,131 +1571,135 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
 // 100hz update rate
 void update_roll_pitch_mode(void)
 {
-    switch(roll_pitch_mode) {
-    case ROLL_PITCH_ACRO:
-    
-    g.rc_2.servo_out = g.rc_2.control_in;   // Pass pitch value directly through
+    // only update if radio controller has control
+    if (isRcControlled())
+    {
+        switch(roll_pitch_mode) {
+        case ROLL_PITCH_ACRO:
+        
+        g.rc_2.servo_out = g.rc_2.control_in;   // Pass pitch value directly through
 
-//         // copy user input for reporting purposes
-//         control_roll            = g.rc_1.control_in;
-//         control_pitch           = g.rc_2.control_in;
+    //         // copy user input for reporting purposes
+    //         control_roll            = g.rc_1.control_in;
+    //         control_pitch           = g.rc_2.control_in;
 
-// #if FRAME_CONFIG == HELI_FRAME
-// 		if(g.axis_enabled) {
-//             get_roll_rate_stabilized_ef(g.rc_1.control_in);
-//             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
-//         }else{
-//             // ACRO does not get SIMPLE mode ability
-//             if (motors.flybar_mode == 1) {
-//                 g.rc_1.servo_out = g.rc_1.control_in;
-//                 g.rc_2.servo_out = g.rc_2.control_in;
-//             } else {
-//                 get_acro_roll(g.rc_1.control_in);
-//                 get_acro_pitch(g.rc_2.control_in);
-//             }
-// 		}
-// #else  // !HELI_FRAME
-// 		if(g.axis_enabled) {
-//             get_roll_rate_stabilized_ef(g.rc_1.control_in);
-//             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
-//         }else{
-//             // ACRO does not get SIMPLE mode ability
-//             get_acro_roll(g.rc_1.control_in);
-//             get_acro_pitch(g.rc_2.control_in);
-// 		}
-// #endif  // HELI_FRAME
-        break;
+    // #if FRAME_CONFIG == HELI_FRAME
+    // 		if(g.axis_enabled) {
+    //             get_roll_rate_stabilized_ef(g.rc_1.control_in);
+    //             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
+    //         }else{
+    //             // ACRO does not get SIMPLE mode ability
+    //             if (motors.flybar_mode == 1) {
+    //                 g.rc_1.servo_out = g.rc_1.control_in;
+    //                 g.rc_2.servo_out = g.rc_2.control_in;
+    //             } else {
+    //                 get_acro_roll(g.rc_1.control_in);
+    //                 get_acro_pitch(g.rc_2.control_in);
+    //             }
+    // 		}
+    // #else  // !HELI_FRAME
+    // 		if(g.axis_enabled) {
+    //             get_roll_rate_stabilized_ef(g.rc_1.control_in);
+    //             get_pitch_rate_stabilized_ef(g.rc_2.control_in);
+    //         }else{
+    //             // ACRO does not get SIMPLE mode ability
+    //             get_acro_roll(g.rc_1.control_in);
+    //             get_acro_pitch(g.rc_2.control_in);
+    // 		}
+    // #endif  // HELI_FRAME
+            break;
 
-#if 0 // Temp commented out switch statements
-    case ROLL_PITCH_STABLE:
-#if 0 //TODO:Do we need SIMPLE mode?
-        // apply SIMPLE mode transform
-        if(ap.simple_mode && ap_system.new_radio_frame) {
-            update_simple_mode();
+    #if 0 // Temp commented out switch statements
+        case ROLL_PITCH_STABLE:
+    #if 0 //TODO:Do we need SIMPLE mode?
+            // apply SIMPLE mode transform
+            if(ap.simple_mode && ap_system.new_radio_frame) {
+                update_simple_mode();
+            }
+    #endif // #if 0
+
+            control_roll            = g.rc_1.control_in;
+            control_pitch           = g.rc_2.control_in;
+
+            get_stabilize_roll(control_roll);
+            get_stabilize_pitch(control_pitch);
+
+            break;
+
+        case ROLL_PITCH_AUTO:
+            // copy latest output from nav controller to stabilize controller
+            nav_roll = wp_nav.get_desired_roll();
+            nav_pitch = wp_nav.get_desired_pitch();
+            get_stabilize_roll(nav_roll);
+            get_stabilize_pitch(nav_pitch);
+
+            // copy control_roll and pitch for reporting purposes
+            control_roll = nav_roll;
+            control_pitch = nav_pitch;
+            break;
+
+        case ROLL_PITCH_STABLE_OF:
+    #if 0 //TODO:Do we need SIMPLE mode?
+            // apply SIMPLE mode transform
+            if(ap.simple_mode && ap_system.new_radio_frame) {
+                update_simple_mode();
+            }
+    #endif // #if 0
+
+            control_roll            = g.rc_1.control_in;
+            control_pitch           = g.rc_2.control_in;
+
+            // mix in user control with optical flow
+            get_stabilize_roll(get_of_roll(control_roll));
+            get_stabilize_pitch(get_of_pitch(control_pitch));
+            break;
+
+    #if 0 //TODO:needed?
+        // THOR
+        // a call out to the main toy logic
+        case ROLL_PITCH_TOY:
+            roll_pitch_toy();
+            break;
+    #endif // #if 0
+
+        case ROLL_PITCH_LOITER:
+    #if 0 //TODO:Do we need SIMPLE mode?
+            // apply SIMPLE mode transform
+            if(ap.simple_mode && ap_system.new_radio_frame) {
+                update_simple_mode();
+            }
+    #endif // #if 0
+            // copy user input for logging purposes
+            control_roll            = g.rc_1.control_in;
+            control_pitch           = g.rc_2.control_in;
+
+            // update loiter target from user controls - max velocity is 5.0 m/s
+            wp_nav.move_loiter_target(control_roll, control_pitch,0.01f);
+
+            // copy latest output from nav controller to stabilize controller
+            nav_roll = wp_nav.get_desired_roll();
+            nav_pitch = wp_nav.get_desired_pitch();
+            get_stabilize_roll(nav_roll);
+            get_stabilize_pitch(nav_pitch);
+            break;
+
+            #endif // Temp commented out switch statements
         }
-#endif // #if 0
 
-        control_roll            = g.rc_1.control_in;
-        control_pitch           = g.rc_2.control_in;
-
-        get_stabilize_roll(control_roll);
-        get_stabilize_pitch(control_pitch);
-
-        break;
-
-    case ROLL_PITCH_AUTO:
-        // copy latest output from nav controller to stabilize controller
-        nav_roll = wp_nav.get_desired_roll();
-        nav_pitch = wp_nav.get_desired_pitch();
-        get_stabilize_roll(nav_roll);
-        get_stabilize_pitch(nav_pitch);
-
-        // copy control_roll and pitch for reporting purposes
-        control_roll = nav_roll;
-        control_pitch = nav_pitch;
-        break;
-
-    case ROLL_PITCH_STABLE_OF:
-#if 0 //TODO:Do we need SIMPLE mode?
-        // apply SIMPLE mode transform
-        if(ap.simple_mode && ap_system.new_radio_frame) {
-            update_simple_mode();
+    #if 0 // Temp 2
+      #if FRAME_CONFIG != HELI_FRAME
+        if(g.rc_3.control_in == 0 && control_mode == STABILIZE /*control_mode <= ACRO*/) {
+            reset_rate_I();
+            reset_stability_I();
         }
-#endif // #if 0
+    	#endif //HELI_FRAME
 
-        control_roll            = g.rc_1.control_in;
-        control_pitch           = g.rc_2.control_in;
-
-        // mix in user control with optical flow
-        get_stabilize_roll(get_of_roll(control_roll));
-        get_stabilize_pitch(get_of_pitch(control_pitch));
-        break;
-
-#if 0 //TODO:needed?
-    // THOR
-    // a call out to the main toy logic
-    case ROLL_PITCH_TOY:
-        roll_pitch_toy();
-        break;
-#endif // #if 0
-
-    case ROLL_PITCH_LOITER:
-#if 0 //TODO:Do we need SIMPLE mode?
-        // apply SIMPLE mode transform
-        if(ap.simple_mode && ap_system.new_radio_frame) {
-            update_simple_mode();
+        if(ap_system.new_radio_frame) {
+            // clear new radio frame info
+            ap_system.new_radio_frame = false;
         }
-#endif // #if 0
-        // copy user input for logging purposes
-        control_roll            = g.rc_1.control_in;
-        control_pitch           = g.rc_2.control_in;
-
-        // update loiter target from user controls - max velocity is 5.0 m/s
-        wp_nav.move_loiter_target(control_roll, control_pitch,0.01f);
-
-        // copy latest output from nav controller to stabilize controller
-        nav_roll = wp_nav.get_desired_roll();
-        nav_pitch = wp_nav.get_desired_pitch();
-        get_stabilize_roll(nav_roll);
-        get_stabilize_pitch(nav_pitch);
-        break;
-
-        #endif // Temp commented out switch statements
-    }
-
-#if 0 // Temp 2
-  #if FRAME_CONFIG != HELI_FRAME
-    if(g.rc_3.control_in == 0 && control_mode == STABILIZE /*control_mode <= ACRO*/) {
-        reset_rate_I();
-        reset_stability_I();
-    }
-	#endif //HELI_FRAME
-
-    if(ap_system.new_radio_frame) {
-        // clear new radio frame info
-        ap_system.new_radio_frame = false;
-    }
-  #endif  // Temp 2
+      #endif  // Temp 2
+  }
 }
 
 #if 0 //TODO: Is this needed? It's for SIMPLE mode
@@ -1806,123 +1814,119 @@ void update_throttle_mode(void)
     int16_t pilot_climb_rate;
     int16_t pilot_throttle_scaled;
 
-    // do not run throttle controllers if motors disarmed
-    if( !motors.armed() ) {
-        set_throttle_out(0, false);
-        throttle_accel_deactivate();    // do not allow the accel based throttle to override our command
-#if 0 //TODO: enable when adding GCS code
-        set_target_alt_for_reporting(0);
-#endif // #if 0
-        return;
-    }
-
-#if FRAME_CONFIG == HELI_FRAME
-	if (control_mode == STABILIZE){
-		motors.stab_throttle = true;
-	} else {
-		motors.stab_throttle = false;
-	}
-#endif // HELI_FRAME
-
-    switch(throttle_mode) {
-
-    case THROTTLE_MANUAL:
-        // completely manual throttle
-        if(g.rc_3.control_in <= 0)
-        {
+    // only update throttle if radio controller has control
+    if (isRcControlled())
+    {
+        // do not run throttle controllers if motors disarmed
+        if( !motors.armed() ) {
             set_throttle_out(0, false);
+            throttle_accel_deactivate();    // do not allow the accel based throttle to override our command
+#if 0 //TODO: enable when adding GCS code
+            set_target_alt_for_reporting(0);
+#endif // #if 0
+            return;
         }
-        else
-        {
-            // send pilot's output directly to motors
-            pilot_throttle_scaled = get_pilot_desired_throttle(g.rc_3.control_in);
-            set_throttle_out(pilot_throttle_scaled, false);
+
+        switch(throttle_mode) {
+
+        case THROTTLE_MANUAL:
+            // completely manual throttle
+            if(g.rc_3.control_in <= 0)
+            {
+                set_throttle_out(0, false);
+            }
+            else
+            {
+                // send pilot's output directly to motors
+                pilot_throttle_scaled = get_pilot_desired_throttle(g.rc_3.control_in);
+                set_throttle_out(pilot_throttle_scaled, false);
 
 #if 0 //TODO: enable if needed
-            // update estimate of throttle cruise
-            #if FRAME_CONFIG == HELI_FRAME
-            update_throttle_cruise(motors.coll_out);
-            #else
-            update_throttle_cruise(pilot_throttle_scaled);
-            #endif  //HELI_FRAME
+                // update estimate of throttle cruise
+                #if FRAME_CONFIG == HELI_FRAME
+                update_throttle_cruise(motors.coll_out);
+                #else
+                update_throttle_cruise(pilot_throttle_scaled);
+                #endif  //HELI_FRAME
 
 
-            // check if we've taken off yet
-            if (!ap.takeoff_complete && motors.armed()) {
-                if (pilot_throttle_scaled > g.throttle_cruise) {
-                    // we must be in the air by now
-                    set_takeoff_complete(true);
+                // check if we've taken off yet
+                if (!ap.takeoff_complete && motors.armed()) {
+                    if (pilot_throttle_scaled > g.throttle_cruise) {
+                        // we must be in the air by now
+                        set_takeoff_complete(true);
+                    }
                 }
-            }
 #endif //#if 0
-        }
+            }
 #if 0 //TODO: enable when adding GCS code
-        set_target_alt_for_reporting(0);
+            set_target_alt_for_reporting(0);
 #endif // #if 0
-        break;
+            break;
 
 #if 0 // enable if needed
-    case THROTTLE_MANUAL_TILT_COMPENSATED:
-        // manual throttle but with angle boost
-        if (g.rc_3.control_in <= 0) {
-            set_throttle_out(0, false); // no need for angle boost with zero throttle
-        }else{
-            pilot_throttle_scaled = get_pilot_desired_throttle(g.rc_3.control_in);
-            set_throttle_out(pilot_throttle_scaled, true);
+        case THROTTLE_MANUAL_TILT_COMPENSATED:
+            // manual throttle but with angle boost
+            if (g.rc_3.control_in <= 0) {
+                set_throttle_out(0, false); // no need for angle boost with zero throttle
+            }else{
+                pilot_throttle_scaled = get_pilot_desired_throttle(g.rc_3.control_in);
+                set_throttle_out(pilot_throttle_scaled, true);
 
-            // update estimate of throttle cruise
-            #if FRAME_CONFIG == HELI_FRAME
-            update_throttle_cruise(motors.coll_out);
-            #else
-            update_throttle_cruise(pilot_throttle_scaled);
-            #endif  //HELI_FRAME
+                // update estimate of throttle cruise
+                #if FRAME_CONFIG == HELI_FRAME
+                update_throttle_cruise(motors.coll_out);
+                #else
+                update_throttle_cruise(pilot_throttle_scaled);
+                #endif  //HELI_FRAME
 
-            if (!ap.takeoff_complete && motors.armed()) {
-                if (pilot_throttle_scaled > g.throttle_cruise) {
-                    // we must be in the air by now
-                    set_takeoff_complete(true);
+                if (!ap.takeoff_complete && motors.armed()) {
+                    if (pilot_throttle_scaled > g.throttle_cruise) {
+                        // we must be in the air by now
+                        set_takeoff_complete(true);
+                    }
                 }
             }
-        }
-        set_target_alt_for_reporting(0);
-        break;
+            set_target_alt_for_reporting(0);
+            break;
 
-    case THROTTLE_HOLD:
-        if(ap.auto_armed) {
-            // alt hold plus pilot input of climb rate
-            pilot_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
-            if( sonar_alt_health >= SONAR_ALT_HEALTH_MAX ) {
-                // if sonar is ok, use surface tracking
-                get_throttle_surface_tracking(pilot_climb_rate);    // this function calls set_target_alt_for_reporting for us
+        case THROTTLE_HOLD:
+            if(ap.auto_armed) {
+                // alt hold plus pilot input of climb rate
+                pilot_climb_rate = get_pilot_desired_climb_rate(g.rc_3.control_in);
+                if( sonar_alt_health >= SONAR_ALT_HEALTH_MAX ) {
+                    // if sonar is ok, use surface tracking
+                    get_throttle_surface_tracking(pilot_climb_rate);    // this function calls set_target_alt_for_reporting for us
+                }else{
+                    // if no sonar fall back stabilize rate controller
+                    get_throttle_rate_stabilized(pilot_climb_rate);     // this function calls set_target_alt_for_reporting for us
+                }
             }else{
-                // if no sonar fall back stabilize rate controller
-                get_throttle_rate_stabilized(pilot_climb_rate);     // this function calls set_target_alt_for_reporting for us
+                // pilot's throttle must be at zero so keep motors off
+                set_throttle_out(0, false);
+                set_target_alt_for_reporting(0);
             }
-        }else{
-            // pilot's throttle must be at zero so keep motors off
-            set_throttle_out(0, false);
-            set_target_alt_for_reporting(0);
-        }
-        break;
+            break;
 
-    case THROTTLE_AUTO:
-        // auto pilot altitude controller with target altitude held in wp_nav.get_desired_alt()
-        if(ap.auto_armed) {
-            get_throttle_althold_with_slew(wp_nav.get_desired_alt(), -wp_nav.get_descent_velocity(), wp_nav.get_climb_velocity());
-            set_target_alt_for_reporting(wp_nav.get_desired_alt()); // To-Do: return get_destination_alt if we are flying to a waypoint
-        }else{
-            // pilot's throttle must be at zero so keep motors off
-            set_throttle_out(0, false);
-            set_target_alt_for_reporting(0);
-        }
-        break;
+        case THROTTLE_AUTO:
+            // auto pilot altitude controller with target altitude held in wp_nav.get_desired_alt()
+            if(ap.auto_armed) {
+                get_throttle_althold_with_slew(wp_nav.get_desired_alt(), -wp_nav.get_descent_velocity(), wp_nav.get_climb_velocity());
+                set_target_alt_for_reporting(wp_nav.get_desired_alt()); // To-Do: return get_destination_alt if we are flying to a waypoint
+            }else{
+                // pilot's throttle must be at zero so keep motors off
+                set_throttle_out(0, false);
+                set_target_alt_for_reporting(0);
+            }
+            break;
 
-    case THROTTLE_LAND:
-        // landing throttle controller
-        get_throttle_land();
-        set_target_alt_for_reporting(0);
-        break;
+        case THROTTLE_LAND:
+            // landing throttle controller
+            get_throttle_land();
+            set_target_alt_for_reporting(0);
+            break;
 #endif // #if 0
+        }
     }
 }
 
@@ -1936,11 +1940,14 @@ bool set_lift_mode( uint8_t new_lift_mode )
 // 50 hz update rate
 void update_lift_mode(void)
 {
-    switch (lift_mode)
+    if (isRcControlled())
     {
-    case LIFT_MANUAL:
-        g.rc_6.servo_out = g.rc_6.control_in;
-        break;
+        switch (lift_mode)
+        {
+        case LIFT_MANUAL:
+            g.rc_6.servo_out = g.rc_6.control_in;
+            break;
+        }
     }
 }
 

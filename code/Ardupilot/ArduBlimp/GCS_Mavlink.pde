@@ -1,5 +1,32 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
+/*** defines for joystick ***/
+// axis
+#define JOYSTICK_AXIS_MIN  -1000   ///< minimum value input from a joystick axis
+#define JOYSTICK_AXIS_MAX   1000   ///< maximum value input from a joystick axis
+#define JOYSTICK_AXIS_MID  (JOYSTICK_AXIS_MIN + JOYSTICK_AXIS_MAX) / 2 ///< joystick axis value halfway between min and max
+
+#define ANTI_LIFT_AXIS_DEAD_ZONE 20 ///< offset around JOYSTICK_AXIS_MID where anti-lift motor input will not have an effect
+#define ANTI_LEFT_SPEED_MAX_INC      10 ///< value to increment anti-lift motor speed by
+
+// buttons
+#define JOYSTICK_BUTTON0   0x0001
+#define JOYSTICK_BUTTON1   0x0002
+#define JOYSTICK_BUTTON2   0x0004
+#define JOYSTICK_BUTTON3   0x0008
+#define JOYSTICK_BUTTON4   0x0010
+#define JOYSTICK_BUTTON5   0x0020
+#define JOYSTICK_BUTTON6   0x0040
+#define JOYSTICK_BUTTON7   0x0080
+#define JOYSTICK_BUTTON8   0x0100
+#define JOYSTICK_BUTTON9   0x0200
+#define JOYSTICK_BUTTON10  0x0400
+#define JOYSTICK_BUTTON11  0x0800
+#define JOYSTICK_BUTTON12  0x1000
+#define JOYSTICK_BUTTON13  0x2000
+#define JOYSTICK_BUTTON14  0x4000
+#define JOYSTICK_BUTTON15  0x8000
+
 // use this to prevent recursion during sensor init
 static bool in_mavlink_delay;
 
@@ -1226,7 +1253,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 if (packet.param1 == 1.0f) {
                     // run pre-arm-checks and display failures
                     pre_arm_checks(true);
-                    //TODO: ensure motor outputs are at a min before arming
+                    //TODO: ensure motor outputs are at a min before arming - JBW
                     if(ap.pre_arm_check) {
                         init_arm_motors();
                     }
@@ -1471,6 +1498,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         waypoint_sending = false;
         break;
     }
+#endif // #if 0
 
     case MAVLINK_MSG_ID_PARAM_REQUEST_LIST:     // 21
     {
@@ -1528,6 +1556,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         break;
     }
 
+#if 0 //TODO: enable MAVLink message cases as needed - JBW
     case MAVLINK_MSG_ID_MISSION_CLEAR_ALL:     // 45
     {
         //send_text_P(SEVERITY_LOW,PSTR("waypoint clear all"));
@@ -1811,6 +1840,7 @@ mission_failed:
             result);
         break;
     }
+#endif // #if 0
 
     case MAVLINK_MSG_ID_PARAM_SET:     // 23
     {
@@ -1890,15 +1920,20 @@ mission_failed:
                 mav_var_type(var_type),
                 _count_parameters(),
                 -1);                         // XXX we don't actually know what its index is...
+#if LOGGING_ENABLED == ENABLED
             DataFlash.Log_Write_Parameter(key, vp->cast_to_float(var_type));
+#endif
         }
 
         break;
     }             // end case
-#endif // #if 0
 
     case MAVLINK_MSG_ID_MANUAL_CONTROL: // 69
     {
+        mavlink_manual_control_t packet;
+        mavlink_msg_manual_control_decode(msg, &packet);
+
+        // ManualControlUpdate(packet.x, packet.y, packet.z, packet.r, packet.buttons);
         break;
     }
 
@@ -2095,6 +2130,80 @@ mission_failed:
 
     }     // end switch
 } // end handle mavlink
+
+void GCS_MAVLINK::ManualControlUpdate(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons)
+{
+    static int16_t new_speed = 0;
+    static bool firstTimeThrough = true;
+
+    // only send output to motors if the radio controller does not have control
+    if (!isRcControlled())
+    {
+        // set throttle
+        int16_t throttle_high_out = g.rc_3.get_high_out();
+        int16_t throttle_low_out = g.rc_3.get_low_out();
+        int32_t throttle_range = throttle_high_out - throttle_low_out;
+        int32_t throttle_offset = z - JOYSTICK_AXIS_MIN;
+        g.rc_3.servo_out = ((int32_t)(throttle_offset * throttle_range) / (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)) + throttle_low_out;
+
+        // set pitch
+        int16_t pitch_high_out = g.rc_2.get_high_out();
+        int16_t pitch_low_out = g.rc_2.get_low_out();
+        int32_t pitch_range = pitch_high_out - pitch_low_out;
+        int32_t pitch_offset = x - JOYSTICK_AXIS_MIN;
+        g.rc_2.servo_out = ((int32_t)(pitch_offset * pitch_range) / (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)) + pitch_low_out;
+
+        // set yaw
+        int16_t yaw_high_out = g.rc_4.get_high_out();
+        int16_t yaw_low_out = g.rc_4.get_low_out();
+        int32_t yaw_range = yaw_high_out - yaw_low_out;
+        int32_t yaw_offset = r - JOYSTICK_AXIS_MIN;
+        g.rc_4.servo_out = ((int32_t)(yaw_offset * yaw_range) / (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)) + yaw_low_out;
+
+        // set anti-lift
+        // anti-lift uses the roll input (y-axis)
+        // axis input:
+        //   centered - motor speed does not change
+        //   positive - motor speed increases
+        //   negative - motor speed decreases
+        int16_t anti_lift_high_out = g.rc_6.get_high_out();
+        int16_t anti_lift_low_out = g.rc_6.get_low_out();
+        int32_t anti_lift_range = anti_lift_high_out - anti_lift_low_out;
+        
+        // Debug...
+        gcs_send_text_fmt(PSTR("current rc_6.servo_out: %d"), g.rc_6.servo_out);
+
+        // Initially set new_speed to current speed
+        if (firstTimeThrough)
+        {
+            new_speed = g.rc_6.get_low_out();
+            firstTimeThrough = false;
+        }
+
+        //int16_t new_speed = g.rc_6.servo_out;
+        
+        // decrease motor speed
+        if (y < JOYSTICK_AXIS_MID - ANTI_LIFT_AXIS_DEAD_ZONE)
+        {
+
+            new_speed -= ANTI_LEFT_SPEED_MAX_INC;
+        }
+        // increase motor speed
+        else if (y > JOYSTICK_AXIS_MID + ANTI_LIFT_AXIS_DEAD_ZONE)
+        {
+            // Add dynamic increments....
+            new_speed += ANTI_LEFT_SPEED_MAX_INC;
+        }
+        // ensure new speed is within the bounds of the min and max speed
+        new_speed = constrain_int16(new_speed, anti_lift_low_out, anti_lift_high_out);
+        static int loopCtr = 0;
+        if (loopCtr++ == 100)
+            loopCtr = 0;
+        gcs_send_text_fmt(PSTR("old speed:%d, new speed:%d, loopctr: %d"), g.rc_6.servo_out, new_speed, loopCtr);//TODO:remove
+        gcs_send_text_fmt(PSTR("ALmin: %d, ALmax: %d, ALspeed: %d"), anti_lift_low_out, anti_lift_high_out, new_speed);
+        g.rc_6.servo_out = new_speed;
+    }
+}
 
 uint16_t
 GCS_MAVLINK::_count_parameters()
