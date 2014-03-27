@@ -12,7 +12,7 @@ namespace XbeeAPI {
 struct TxRequest
 {
     uint64_t DestAddress;
-    char* PayloadStart;
+    uint8_t* PayloadStart;
     uint16_t PayloadLength;
 };
 
@@ -33,8 +33,9 @@ struct RxPacket
 {
     uint64_t SourceAddress;     ///< @brief SourceAddress is the 64-bit address of the sender
     uint8_t ReceiveOpts;        ///< @brief ReceiveOpts is an 8-bit enum value describing the mode of reception
-    char* PayloadStart;         ///< @brief PayloadStart points to the start of the payload within the frame supplied
+    uint8_t* PayloadStart;         ///< @brief PayloadStart points to the start of the payload within the frame supplied
     uint16_t ExpctdPayloadLen;  ///< @brief ExpctdPayloadLen is the expected payload length based on the LENGTH field
+    uint32_t ActualFrameSize;   ///< @brief ActualFrameSize is the actual frame size detected by parsing
 };
 
 } // XbeeAPI

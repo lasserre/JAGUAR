@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QtSerialPort>
 #include <QDebug>
-#include "xbee_frameconstructor.h"
+#include "xbee_framewriter.h"
 #include "xbee_frameparser.h"
 #include "xbee_frame_structs.h"
 
@@ -77,15 +77,23 @@ void MainWindow::ReceiveFrame()
     qDebug() << "Received data: ";
     DebugQByteArray(ReceivedBytes);
 
-    Frame::Type type;
-    if (FrameParser::ParseFrameType(frameBuffer.data(), frameBuffer.count(), type))
+    XBFrame::FrameByteArray frame;
+    frame.FrameStart = (uint8_t*)frameBuffer.data();        // Point FrameStart to start of buffer
+    frame.SetFrameSize(frameBuffer.size());                 // Set Frame size appropriately
+
+    XBFrame::Type type;
+    XBFrame::ParseResult res;
+
+    if ((res = FrameParser::ParseFrameType(frame, type)) == XBFrame::PR_ParseSuccess)
     {
-        if (type == Frame::TransmitStatus)
+        if (type == XBFrame::TransmitStatus)
         {
             qDebug() << "TransmitStatus frame received!";
 
             TxStatus status;
-            if (FrameParser::ParseTxStatus(frameBuffer.data(), frameBuffer.count(), status))
+            res = FrameParser::ParseTxStatus(frame, status);
+
+            if (res == XBFrame::PR_ParseSuccess)
             {
                 qDebug() << "TxRetryCount: " << status.TxRetryCount;
                 qDebug() << "DelivStatus: " << status.DelivStat;
@@ -93,11 +101,19 @@ void MainWindow::ReceiveFrame()
 
                 frameBuffer.clear();
             }
+            else
+            {
+                qDebug() << QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
+                // frameBuffer.clear();
+            }
         }
         else
-        {
-            frameBuffer.clear();
-        }
+            qDebug() << "Unhandled frame type of: " << type;
+    }
+    else
+    {
+        qDebug() << "ParseFrameType res = " <<
+                    QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
     }
 
     return;
@@ -109,18 +125,21 @@ QByteArray MainWindow::GetTxReqXBFrame()
     XbeeAPI::TxRequest options;
     options.DestAddress = BROADCAST_ADDRESS;
     options.PayloadLength = 10;
-    options.PayloadStart = new char[options.PayloadLength];
-    strcpy(options.PayloadStart, "HELLOWORL");
+    options.PayloadStart = new uint8_t[options.PayloadLength];
+    strcpy((char*)options.PayloadStart, "HELLOWORLD");
 
-    int frameLen = XbeeAPI::FrameConstructor::GetTxRequestFrameSize(options);
+    XbeeAPI::XBFrame::FrameByteArray frame;
 
-    char* frame = new char[frameLen];
+    frame.SetFrameSize(XbeeAPI::FrameWriter::GetTxRequestFrameSize(options));   // Set size for TxRequest frame
+    frame.FrameStart = new uint8_t[frame.FrameSize()];      // Allocate memory for frame
 
-    XbeeAPI::FrameConstructor::WriteTxRequestFrame(options, frame);
+    XbeeAPI::FrameWriter::WriteTxRequestFrame(options, frame);
 
-    QByteArray result(frame, frameLen);
+    // Platform-specific code
+    QByteArray result((char*)frame.FrameStart, frame.FrameSize());
+    /////////////////////////
 
-    delete [] frame;
+    delete [] frame.FrameStart;
     delete [] options.PayloadStart;
 
     return result;

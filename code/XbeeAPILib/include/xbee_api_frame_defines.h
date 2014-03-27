@@ -19,15 +19,16 @@
  ** @{
  **/
 
-#define XB_HEADER_LENGTH        3       ///< START byte + 2 LENGTH bytes
-#define XB_FRAME_LENGTH         4       ///< 'XB_HEADER_LENGTH' + CHECKSUM byte
+#define XB_HEADER_SIZE          3       ///< START byte + 2 LENGTH bytes
+#define XB_CHECKSUM_SIZE        1       ///< Checksum size
+#define XB_BASEFRAME_SIZE       (XB_HEADER_SIZE + XB_CHECKSUM_SIZE)  ///< Xbee-generic header + CHECKSUM byte
 
-#define XB_START_IDX            0       ///< Index of START byte
-#define XB_LENMSB_IDX           1       ///< Index of MSB LENGTH byte
-#define XB_LENLSB_IDX           2       ///< Index of LSB LENGTH byte
-#define XB_FRAMETYPE_IDX        3       ///< Index of FRAMETYPE byte
+#define XB_START_IDX            0       ///< START byte Index
+#define XB_START_VAL            0x7e    ///< START byte value
 
-#define XB_FRAMETYPE_DEFAULT    0x00    ///< This value written to Frame Type field for unrecognized frame types
+#define XB_LENMSB_IDX           1       ///< MSB LENGTH byte Index
+#define XB_LENLSB_IDX           2       ///< LSB LENGTH byte Index
+#define XB_FRAMETYPE_IDX        3       ///< FRAMETYPE byte Index
 
 #define XB_MIN_PAYLOADSIZE      0       ///< Min size of payload (for frames that have a payload)
 #define XB_MAX_PAYLOADSIZE      65536   ///< Max size of payload (for frames that have a payload) CLS: a little large, yes?
@@ -62,10 +63,10 @@
 #define TXS_FRAMETYPE_ENUM      0x8B    ///< Value written to FRAMETYPE field for TxStatus frames
 #define TXS_BASEFRAME_SIZE      7       ///< Value of LEN field NOT including payload (if any)
 
-#define TXS_MIN_LENVALUE    (TXS_BASEFRAME_SIZE)                    ///< Minimum value of LENGTH field for TxStatus frames
-#define TXS_MAX_LENVALUE    (TXS_BASEFRAME_SIZE)                    ///< Maximum value of LENGTH field for TxStatus frames
-#define TXS_MIN_TOTALSIZE   (XB_FRAME_LENGTH + TXS_MIN_LENVALUE)    ///< Minimum total frame size for TxStatus frames
-#define TXS_MAX_TOTALSIZE   (XB_FRAME_LENGTH + TXS_MAX_LENVALUE)    ///< Maximum total frame size for TxStatus frames
+#define TXS_MIN_LENVALUE        (TXS_BASEFRAME_SIZE)    ///< Minimum value of LENGTH field for TxStatus frames
+#define TXS_MAX_LENVALUE        (TXS_BASEFRAME_SIZE)    ///< Maximum value of LENGTH field for TxStatus frames
+#define TXS_MIN_TOTALSIZE       (XB_BASEFRAME_SIZE + TXS_MIN_LENVALUE)    ///< Minimum total frame size for TxStatus frames
+#define TXS_MAX_TOTALSIZE       (XB_BASEFRAME_SIZE + TXS_MAX_LENVALUE)    ///< Maximum total frame size for TxStatus frames
 
 #define TXS_RTRYCOUNT_IDX       7       ///< Retry Count Field Index
 
@@ -96,12 +97,12 @@
 #define RXP_FRAMETYPE_ENUM      0x90    ///< Value written to FRAMETYPE field for RxPacket frames
 #define RXP_BASEFRAME_SIZE      12      ///< Value of LEN field NOT including payload. (e.g. LEN = BASE_SIZE + PAYLOAD_SIZE)
 
-#define RXP_MIN_LENVALUE    (RXP_BASEFRAME_SIZE + XB_MIN_PAYLOADSIZE)   ///< Min value of LENGTH field for RxPacket frames
-#define RXP_MAX_LENVALUE    (RXP_BASEFRAME_SIZE + XB_MAX_PAYLOADSIZE)   ///< Max value of LENGTH field for RxPacket frames
-#define RXP_MIN_TOTALSIZE   (XB_FRAME_LENGTH + RXP_MIN_LENVALUE)    ///< Min total frame size for RxPacket frames
-#define RXP_MAX_TOTALSIZE   (XB_FRAME_LENGTH + RXP_MAX_LENVALUE)    ///< Max total frame size for RxPacket frames
+#define RXP_MIN_LENVALUE        (RXP_BASEFRAME_SIZE + XB_MIN_PAYLOADSIZE)   ///< Min value of LENGTH field for RxPacket frames
+#define RXP_MAX_LENVALUE        (RXP_BASEFRAME_SIZE + XB_MAX_PAYLOADSIZE)   ///< Max value of LENGTH field for RxPacket frames
+#define RXP_MIN_TOTALSIZE       (XB_BASEFRAME_SIZE + RXP_MIN_LENVALUE)    ///< Min total frame size for RxPacket frames
+#define RXP_MAX_TOTALSIZE       (XB_BASEFRAME_SIZE + RXP_MAX_LENVALUE)    ///< Max total frame size for RxPacket frames
 
-#define RXP_DESTADDR_IDX        4       ///< Destination Address Field Index
+#define RXP_SOURCEADDR_IDX        4     ///< Source Address Field Index
 
 #define RXP_RESERVED_IDX        12      ///< Reserved Field Index
 

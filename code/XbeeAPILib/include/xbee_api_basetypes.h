@@ -6,6 +6,7 @@
 #endif
 
 #include <stdint.h>
+#include "xbee_frame_enums.h"
 
 /** @file */
 
@@ -14,55 +15,45 @@
  */
 namespace XbeeAPI
 {
-    namespace Frame
-    {
-        /**
-         * @brief The Type enum lists each Xbee frame type
-         */
-        enum Type
-        {
-            UnknownFrameType,
-            TransmitRequest,
-            TransmitStatus,
-            ReceivePacket
-        };
-    }
 
-    /**
-     * @brief CalcFrameSpecificLength
-     * @param FrameType
-     * @param PayloadLength
-     * @return length if valid type, 0 if unrecognized type
-     */
-    uint16_t CalcFrameSpecificLength(const Frame::Type& FrameType, const uint16_t& PayloadLength);
+/**
+ * @brief CalcFrameSpecificLength
+ * @param FrameType
+ * @param PayloadLength
+ * @return length if valid type, 0 if unrecognized type
+ */
+uint16_t CalcFrameSpecificLength(const XBFrame::Type& FrameType, const uint16_t& PayloadLength);
 
-    /**
-     * @brief CalcChecksum calculates the value of the checksum.
-     * @param Size is the size of the array
-     * @param Start is the start of the array
-     * @return checksum value
-     */
-    uint8_t CalcChecksum(const int& Size, char* Start);
+/**
+ * @brief CalcChecksum calculates the value of the checksum.
+ * @param SizeWOChecksum is the size of the array not including the checksum byte
+ * @param Start is the start of the array
+ * @return checksum value
+ */
+uint8_t CalcChecksum(const int& SizeWOChecksum, uint8_t* Start);
 
-    /**
-     * @brief CalcFrameChecksum calculates the checksum for a frame
-     * @param FrameSize is the final size of XBee frame
-     * @param FrameStart points to the start of the XBee frame
-     * @return checksum value
-     */
-    uint8_t CalcFrameChecksum(const int& FrameSize, char* FrameStart);
+/**
+ * @brief CalcFrameChecksum calculates the checksum for a frame
+ * @param FrameSize is the final size of XBee frame
+ * @param FrameStart points to the start of the XBee frame
+ * @return checksum value
+ */
+uint8_t CalcFrameChecksum(const XBFrame::FrameByteArray& Frame);
 
-    /**
-     * @brief WriteXbeeFrameHeader writes start byte, length, and type fields to the beginning of the frame
-     * @param FrameStart points to the start of the XBee frame (Frame[0] will be 0x7E)
-     * @param LengthField is the value of the 16 bit length field in the XBee frame
-     * @param FrameType is the type of the XBee frame
-     */
-    void WriteXbeeFrameHeader(char* FrameStart, const uint16_t& LengthField, const Frame::Type& FrameType);
+/**
+ * @brief WriteXbeeFrameHeader writes start byte, length, and type fields to the beginning of the frame
+ * @param FrameStart points to the start of the XBee frame (Frame[0] will be 0x7E)
+ * @param FrameLen is the available size of the XBee frame (size of the array we are writing to)
+ * @param LengthField is the value of the 16 bit length field in the XBee frame
+ * @param FrameType is the type of the XBee frame
+ */
+XBFrame::WriteResult WriteXbeeFrameHeader(const XBFrame::FrameByteArray &Frame, const uint16_t &LENGTH_field,
+                                          const XBFrame::Type& FrameType);
 
-    void WriteXbeeDestAddress(char* DestAddressStart, uint64_t DestAddress);
-    void WriteFrameTypeField(const Frame::Type& FrameType, char* FrameTypeByte);
-}
+void WriteXbeeDestAddress(uint8_t* DestAddressStart, uint64_t DestAddress);
+bool WriteFrameTypeField(const XBFrame::Type& FrameType, uint8_t *FrameTypeByte);
+
+}   // XbeeAPI
 
 #endif // XBEE_API_H
 

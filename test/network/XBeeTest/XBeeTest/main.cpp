@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
 
-    qDebug() << XbeeAPI::Frame::TransmitRequest;
+    qDebug() << XbeeAPI::XBFrame::TransmitRequest;
 
     return a.exec();
 }

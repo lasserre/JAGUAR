@@ -3,47 +3,52 @@
 
 namespace XbeeAPI {
 
-uint16_t CalcFrameSpecificLength(const Frame::Type &FrameType, const uint16_t &PayloadLength)
+uint16_t CalcFrameSpecificLength(const XBFrame::Type &FrameType, const uint16_t &PayloadLength)
 {
     switch (FrameType)
     {
-    case Frame::TransmitRequest:
+    case XBFrame::TransmitRequest:
         return PayloadLength + TXR_BASEFRAME_SIZE;
-    case Frame::ReceivePacket:
+    case XBFrame::ReceivePacket:
         return PayloadLength + RXP_BASEFRAME_SIZE;
     default:
         return 0;
     }
 }
 
-uint8_t CalcChecksum(const int& Size, char *Start)
+uint8_t CalcChecksum(const int& SizeWOChecksum, uint8_t *Start)
 {
     uint8_t sum = 0;
 
-    for (int i = 0; i < Size; i++)
+    for (int i = 0; i < SizeWOChecksum; i++)
         sum += Start[i];
 
     return (0xff - sum);
 }
 
-uint8_t CalcFrameChecksum(const int& FrameSize, char* FrameStart)
+uint8_t CalcFrameChecksum(const XBFrame::FrameByteArray &Frame)
 {
-    return CalcChecksum(FrameSize - XB_FRAME_LENGTH, FrameStart + XB_HEADER_LENGTH);
+    return CalcChecksum(Frame.FrameSize() - XB_BASEFRAME_SIZE, Frame.FrameStart + XB_HEADER_SIZE);
 }
 
-void WriteXbeeFrameHeader(char *FrameStart, const uint16_t &LengthField, const Frame::Type& FrameType)
+XBFrame::WriteResult WriteXbeeFrameHeader(const XBFrame::FrameByteArray& Frame, const uint16_t& LENGTH_field,
+                                          const XBFrame::Type& FrameType)
 {
-    FrameStart[XB_START_IDX] = 0x7e;   // Start byte
+    if (Frame.FrameSize() < XB_HEADER_SIZE)     // Not even enough space to write the header!
+        return XBFrame::WR_XBHeader_NIB;
 
-    FrameStart[XB_LENMSB_IDX] = ((LengthField >> 8) & 0x00ff);  // Length MSB
-    FrameStart[XB_LENLSB_IDX] = (LengthField & 0x00ff);         // Length LSB
+    Frame.FrameStart[XB_START_IDX] = XB_START_VAL;   // Start byte
 
-    WriteFrameTypeField(FrameType, &FrameStart[XB_FRAMETYPE_IDX]); // Frame Type
+    Frame.FrameStart[XB_LENMSB_IDX] = ((LENGTH_field >> 8) & 0x00ff);  // Length MSB
+    Frame.FrameStart[XB_LENLSB_IDX] = (LENGTH_field & 0x00ff);         // Length LSB
 
-    return;
+    if (!WriteFrameTypeField(FrameType, &Frame.FrameStart[XB_FRAMETYPE_IDX])) // Frame Type
+        return XBFrame::WR_FRAMETYPE_NIB;
+
+    return XBFrame::WR_WriteSuccess;
 }
 
-void WriteXbeeDestAddress(char* DestAddressStart, uint64_t DestAddress)
+void WriteXbeeDestAddress(uint8_t* DestAddressStart, uint64_t DestAddress)
 {
     for (int j = 7; j >= 0; j--)
     {
@@ -52,20 +57,21 @@ void WriteXbeeDestAddress(char* DestAddressStart, uint64_t DestAddress)
     }
 }
 
-void WriteFrameTypeField(const Frame::Type &FrameType, char* FrameTypeByte)
+bool WriteFrameTypeField(const XBFrame::Type &FrameType, uint8_t* FrameTypeByte)
 {
     switch (FrameType)
     {
-    case Frame::TransmitRequest:
+    case XBFrame::TransmitRequest:
         *FrameTypeByte = TXR_FRAMETYPE_ENUM;
         break;
-    case Frame::ReceivePacket:
+    case XBFrame::ReceivePacket:
         *FrameTypeByte = RXP_FRAMETYPE_ENUM;
         break;
     default:
-        *FrameTypeByte = XB_FRAMETYPE_DEFAULT;
-        break;
+        return false;   // Unable to write FRAMETYPE field
     }
+
+    return true;
 }
 
-}
+}   // XbeeAPI

@@ -1,6 +1,7 @@
 #ifndef XBEE_FRAMEPARSER_H
 #define XBEE_FRAMEPARSER_H
 
+#include <string>
 #include "xbee_api_basetypes.h"
 
 /** @file */
@@ -13,39 +14,38 @@ struct RxPacket;
 namespace FrameParser {
 
 /**
- * @brief The ParseResult enum specifies the possible return values for each of the parse functions
+ * @brief GetParseResultString translates a ParseResult code into a readable string
+ * @param Result is the ParseResult to translate
+ * @return std::string corresponding to Result
  */
-enum ParseResult
-{
-    Success     ///< Parse successful
-};
+std::string GetParseResultString(const XBFrame::ParseResult& Result);
 
 /**
  * @brief ParseFrameType parses the type field of an Xbee frame
  * @param FrameStart points to the start of the Xbee frame
  * @param FrameLen is the length of the received frame
  * @param FrameType is set to the type of the frame that is parsed
- * @return ParseResult result
+ * @return ParseResult result of parse attempt
  */
-ParseResult ParseFrameType(char* FrameStart, const int &FrameLen, Frame::Type &FrameType);
+XBFrame::ParseResult ParseFrameType(const XBFrame::FrameByteArray& Frame, XBFrame::Type &FrameType);
 
 /**
  * @brief ParseTxRequest parses an Xbee frame known to be of type Transmit Request.
  * @param FrameStart points to the start byte of the Xbee Transmit Request frame to be parsed
  * @param FrameLen is the length of the received frame
  * @param Status is set to the field values parsed from the frame
- * @return True if frame parsing was successful, false otherwise
+ * @return ParseResult result of parse attempt
  */
-ParseResult ParseTxStatus(char* FrameStart, const int &FrameLen, TxStatus& Status);
+XBFrame::ParseResult ParseTxStatus(const XBFrame::FrameByteArray& Frame, TxStatus& Status);
 
 /**
  * @brief ParseRxPacket parses an Xbee frame known to be of type Receive Packet
  * @param FrameStart points to the start byte of the Xbee Receive Packet frame to be parsed
  * @param FrameLen is the length of the received frame
  * @param Packet is set to the field values parsed from the frame
- * @return True if frame parsing was successful, false otherwise
+ * @return ParseResult result of parse attempt
  */
-ParseResult ParseRxPacket(char* FrameStart, const int& FrameLen, RxPacket& Packet);
+XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray &Frame, RxPacket& Packet);
 
 } // FrameParser
 

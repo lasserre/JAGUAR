@@ -2,6 +2,7 @@
 #define XBEE_FRAMECONSTRUCTOR_H
 
 #include "xbee_api_basetypes.h"
+#include <string>
 
 /** @file */
 
@@ -12,7 +13,14 @@ namespace XbeeAPI {
 
 struct TxRequest;
 
-namespace FrameConstructor {
+namespace FrameWriter {
+
+/**
+ * @brief GetWriteResultString translates a WriteResult into a readable string
+ * @param Result is the WriteResult to translate
+ * @return std::string corresponding to Result
+ */
+std::string GetWriteResultString(const XBFrame::WriteResult& Result);
 
 /**
  * @brief GetTxRequestFrameSize
@@ -25,8 +33,9 @@ uint16_t GetTxRequestFrameSize(const TxRequest& Options);
  * @brief WriteTxRequestFrame
  * @param Options
  * @param FrameStart
+ * @param FrameLen
  */
-void WriteTxRequestFrame(const TxRequest& Options, char* FrameStart);
+void WriteTxRequestFrame(const TxRequest& Options, const XBFrame::FrameByteArray &Frame);
 
 } // FrameConstructor
 
