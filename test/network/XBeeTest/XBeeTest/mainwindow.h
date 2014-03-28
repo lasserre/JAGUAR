@@ -28,6 +28,7 @@ private:
 
     QByteArray GetTxReqXBFrame();
 
+    void LogMessage(const QString& Message);
     void DebugQByteArray(const QByteArray& Array);
 };
 

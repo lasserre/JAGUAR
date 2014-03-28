@@ -137,8 +137,8 @@ std::string GetParseResultString(const XBFrame::ParseResult &Result)
         return "Length field not in bounds";
     case XBFrame::PR_ADDRESS_NIB:
         return "Address field not in bounds";
-    case XBFrame::PR_FRAMETYPE_UNR:
-        return "Unrecognized FRAMETYPE value";
+    case XBFrame::PR_FRAMETYPE_INV:
+        return "Invalid FRAMETYPE value";
     case XBFrame::PR_FRAMETYPE_NIB:
         return "FRAMETYPE byte not in bounds";
     case XBFrame::PR_RCVOPTS_NIB:
@@ -150,6 +150,23 @@ std::string GetParseResultString(const XBFrame::ParseResult &Result)
     default:
         return "Unrecognized ParseResult";
     }
+}
+
+XBFrame::ParseResCategory GetParseResultCategory(const XBFrame::ParseResult &Result)
+{
+    // Check the categories in order, since first match will return the category
+
+    if (Result < XBFrame::PR_ERROR_CATEGORY_BEGIN)
+        return XBFrame::PRC_UnknownCategory;        // No known category before this!
+
+    if (Result < XBFrame::PR_NIB_CATEGORY_BEGIN)
+        return XBFrame::PRC_Error;
+
+    if (Result < XBFrame::PR_SUCCESS_CATEGORY_BEGIN)
+        return XBFrame::PRC_NIB;
+
+    else
+        return XBFrame::PRC_Success;
 }
 
 XBFrame::ParseResult ParseFrameType(const XBFrame::FrameByteArray& Frame, XBFrame::Type& FrameType)
@@ -177,7 +194,7 @@ XBFrame::ParseResult ParseFrameType(const XBFrame::FrameByteArray& Frame, XBFram
         break;
     default:
         FrameType = XBFrame::UnknownFrameType;
-        return XBFrame::PR_FRAMETYPE_UNR;
+        return XBFrame::PR_FRAMETYPE_INV;
     }
 
     return XBFrame::PR_ParseSuccess;

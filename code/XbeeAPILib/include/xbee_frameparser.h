@@ -21,6 +21,15 @@ namespace FrameParser {
 std::string GetParseResultString(const XBFrame::ParseResult& Result);
 
 /**
+ * @brief GetParseResultCategory allows client code to look up the result category for the given result,
+ * to make further processing more straightforward. (e.g. you don't have to handle EVERY result type if
+ * you don't need to!)
+ * @param Result is the ParseResult to look up
+ * @return The ParseResCategory for Result
+ */
+XBFrame::ParseResCategory GetParseResultCategory(const XBFrame::ParseResult& Result);
+
+/**
  * @brief ParseFrameType parses the type field of an Xbee frame
  * @param FrameStart points to the start of the Xbee frame
  * @param FrameLen is the length of the received frame

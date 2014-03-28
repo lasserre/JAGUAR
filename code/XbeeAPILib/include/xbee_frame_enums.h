@@ -31,7 +31,10 @@ struct FrameByteArray
      */
     uint32_t FrameSize() const
     {
-        return XBLength + XB_BASEFRAME_SIZE;
+        if (XBLength != 0)
+            return XBLength + XB_BASEFRAME_SIZE;
+        else
+            return 0;       // Return 0 if XBLength is 0...we have no frame-specific data! (unrealistic scenario)
     }
 
     /**
@@ -40,7 +43,10 @@ struct FrameByteArray
      */
     void SetFrameSize(const uint32_t& FrameSize)
     {
-        XBLength = (uint16_t) (FrameSize - XB_BASEFRAME_SIZE);
+        if (FrameSize >= (uint32_t)XB_BASEFRAME_SIZE)
+            XBLength = (uint16_t) (FrameSize - XB_BASEFRAME_SIZE);
+        else
+            XBLength = 0;   // Make sure we don't set it to a huge # (since this is unsigned...)
     }
 };
 
@@ -58,6 +64,16 @@ enum Type
 /**
  ** @brief The WriteResult enum specifies the possible return values for each of the write functions
  **
+ ** Write Result Categories
+ ** --
+ ** Each WriteResult is placed in a category, all of which are enumerated in the WriteResCategory type.
+ ** The meaning of the categories is given below.
+ **
+ ** - NIB (Not in bounds) - One or more of the fields that needs to be written falls outside of the given length
+ ** - Success - The frame was written successfully.
+ **
+ ** Naming conventions
+ ** --
  ** The convention for the WriteResult enum names is as follows:
  **
  ** - ResultDescription --- Generic result description
@@ -73,17 +89,40 @@ enum Type
  */
 enum WriteResult
 {
-    // Generic
-    WR_WriteSuccess,               ///< Write successful
+    WR_NIB_CATEGORY_BEGIN,      ///< Marks beginning of NIB result category (do not return this as a result!)
 
-    // Section/Byte-specific
+    // Not in bounds results
     WR_XBHeader_NIB,               ///< Xbee-generic header is not in bounds
-    WR_FRAMETYPE_NIB               ///< FRAMETYPE byte is not in bounds
+    WR_FRAMETYPE_NIB,              ///< FRAMETYPE byte is not in bounds
+    //----------------------
+
+    WR_SUCCESS_CATEGORY_BEGIN,  ///< Marks beginning of SUCCESS result category (do not return this as a result!)
+
+    // Success results
+    WR_WriteSuccess                ///< Write successful
+};
+
+enum WriteResCategory
+{
+    WRC_NIB,
+    WRC_Success
 };
 
 /**
  ** @brief The ParseResult enum specifies the possible return values for each of the parse functions
  **
+ ** Parse Result Categories
+ ** --
+ ** Each ParseResult is placed in a category, all of which are enumerated in the ParseResCategory type.
+ ** The meaning of the categories is given below.
+ **
+ ** - Error - There is no way to continue parsing. Either clear the buffer, or try to find a valid start byte
+ ** - NIB (Not in bounds) - One or more of the fields has not been received yet (or at least was not in the buffer)
+ ** - Success - The frame was parsed successfully. However, there may be extra data in the buffer (the
+ ** beginning of the next frame)
+ **
+ ** Naming conventions
+ ** --
  ** The convention for the ParseResult enum names is as follows:
  **
  ** - PR_ResultDescription --- Generic result description
@@ -93,27 +132,56 @@ enum WriteResult
  **
  ** - NIB --- Byte is not in bounds (e.g. does not fall within the bounds set by FrameLength)
  ** - INV --- Byte has invalid value
- ** - UNR --- Unrecognized
  **
  ** @note the PR_ prefix is used to distinguish possible naming clashes with the WriteResult enum type
  ** which is in the same namespace (similarly prefixed with WR_)
+ **
+ ** @note enum values with names of format PR_X_CATEGORY_BEGIN are not valid return results. These are simply
+ ** used to allow us to classify result values into categories
  */
 enum ParseResult
 {
-    // Generic
-    PR_ParseSuccess,               ///< Parse successful
-    PR_MinLenNIB,                  ///< The min # of bytes for the given frametype is not in bounds
-    PR_XtraBytes,                  ///< The size of the frame passed in to be parsed was larger than the frame actually parsed
+    PR_ERROR_CATEGORY_BEGIN,    ///< Marks beginning of ERROR result category (do not return this as a result!)
 
-    // Byte-specific
+    // Error results
     PR_START_INV,                  ///< START byte is invalid
+    PR_FRAMETYPE_INV,              ///< FRAMETYPE byte value is invalid (unrecognized)
+    //----------------
+
+    PR_NIB_CATEGORY_BEGIN,      ///< Marks beginning of NIB result category (do not return this as a result)
+
+    // Not in bounds results
+    PR_MinLenNIB,                  ///< The min # of bytes for the given frametype is not in bounds
     PR_LENGTH_NIB,                 ///< LENGTH byte is not in bounds
     PR_ADDRESS_NIB,                ///< ADDRESS bytes are not in bounds
-    PR_FRAMETYPE_UNR,              ///< FRAMETYPE byte value is unrecognized
     PR_FRAMETYPE_NIB,              ///< FRAMETYPE byte is not in bounds
     PR_RCVOPTS_NIB,                ///< RCVOPTS byte is not in bounds (Receive Packet frame)
     PR_PAYLOAD_NIB,                ///< PAYLOAD bytes are not in bounds
-    PR_CHECKSUM_NIB                ///< CHECKSUM byte is not in bounds
+    PR_CHECKSUM_NIB,               ///< CHECKSUM byte is not in bounds
+    //----------------
+
+    PR_SUCCESS_CATEGORY_BEGIN,  ///< Marks beginning of SUCCESS result category (do not return this as a result!)
+
+    // Success results
+    PR_ParseSuccess,               ///< Parse successful
+    PR_XtraBytes                   ///< The size of the frame passed in to be parsed was larger than the frame actually parsed
+    //----------------
+};
+
+/**
+ ** @brief The ParseResCategory enum specifies the possible categories of ParseResults to make processing ParseResults easier
+ ** on client code.
+ **
+ ** @note The convention is to order the PRC_ values in alphabetical order, to make category checking
+ ** straightforward
+ **
+ */
+enum ParseResCategory
+{
+    PRC_Error,
+    PRC_NIB,
+    PRC_Success,
+    PRC_UnknownCategory
 };
 
 }   // Frame

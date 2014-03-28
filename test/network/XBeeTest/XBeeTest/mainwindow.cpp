@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     connect(ui->selectButton, SIGNAL(clicked()), this, SLOT(SelectPort()));
     connect(ui->sendButton, SIGNAL(clicked()), this, SLOT(SendFrame()));
+    connect(ui->clearMsgsButton, SIGNAL(clicked()), ui->messageDisplay, SLOT(clear()));
 }
 
 MainWindow::~MainWindow()
@@ -41,13 +42,13 @@ void MainWindow::SelectPort()
             port->setBaudRate(BAUD);
 
             connect(this->port, SIGNAL(readyRead()), this, SLOT(ReceiveFrame()));
-            qDebug() << "Connected to: " << port->portName();
+            LogMessage("Connected to: " + port->portName());
         }
         else
-            qDebug() << "Unable to connect to " << ui->listWidget->selectedItems().at(0)->text();
+            LogMessage("Unable to connect to " + ui->listWidget->selectedItems().at(0)->text());
     }
     else
-        qDebug() << "Unable to connect: No items selected!";
+        LogMessage("Unable to connect: No items selected!");
     return;
 }
 
@@ -55,16 +56,16 @@ void MainWindow::SendFrame()
 {
     QByteArray data = GetTxReqXBFrame();
 
-    qDebug() << "ATTEMPTING TO SEND:";
+    LogMessage("ATTEMPTING TO SEND:");
     DebugQByteArray(data);
 
     if (port->write(data) > 0)
     {
-        qDebug() << "Sent " << data.count() << " bytes. Data: ";
+        LogMessage("Sent " + QString::number(data.count()) + " bytes. Data: ");
         DebugQByteArray(data);
     }
     else
-        qDebug() << "Unable to send data";
+        LogMessage("Unable to send data");
     return;
 }
 
@@ -74,7 +75,7 @@ void MainWindow::ReceiveFrame()
 
     frameBuffer.append(ReceivedBytes);    // Add received bytes to buffer
 
-    qDebug() << "Received data: ";
+    LogMessage("\nReceived data");
     DebugQByteArray(ReceivedBytes);
 
     XBFrame::FrameByteArray frame;
@@ -82,38 +83,42 @@ void MainWindow::ReceiveFrame()
     frame.SetFrameSize(frameBuffer.size());                 // Set Frame size appropriately
 
     XBFrame::Type type;
-    XBFrame::ParseResult res;
+    XBFrame::ParseResult res = FrameParser::ParseFrameType(frame, type);
 
-    if ((res = FrameParser::ParseFrameType(frame, type)) == XBFrame::PR_ParseSuccess)
+    XBFrame::ParseResCategory resCategory = FrameParser::GetParseResultCategory(res);
+
+    if (resCategory == XBFrame::PRC_Success)
     {
         if (type == XBFrame::TransmitStatus)
         {
-            qDebug() << "TransmitStatus frame received!";
+            LogMessage("TransmitStatus frame received!");
 
             TxStatus status;
             res = FrameParser::ParseTxStatus(frame, status);
+            resCategory = FrameParser::GetParseResultCategory(res);
 
-            if (res == XBFrame::PR_ParseSuccess)
+            if (resCategory == XBFrame::PRC_Success)
             {
-                qDebug() << "TxRetryCount: " << status.TxRetryCount;
-                qDebug() << "DelivStatus: " << status.DelivStat;
-                qDebug() << "DiscvStatus: " << status.DiscvStat;
+                LogMessage("TxRetryCount: " + QString::number(status.TxRetryCount));
+                LogMessage("DelivStatus: " + QString::number(status.DelivStat));
+                LogMessage("DiscvStatus: " + QString::number(status.DiscvStat));
 
-                frameBuffer.clear();
+                if (res == XBFrame::PR_ParseSuccess)
+                    frameBuffer.clear();
+                else
+                    frameBuffer.remove(0, frame.FrameSize());
             }
             else
-            {
-                qDebug() << QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
-                // frameBuffer.clear();
-            }
+                LogMessage("ParseTxStatus ERROR: " +
+                           QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res)));
         }
         else
-            qDebug() << "Unhandled frame type of: " << type;
+            LogMessage("Unhandled frame type of: " + QString::number(type));
     }
     else
     {
-        qDebug() << "ParseFrameType res = " <<
-                    QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
+        LogMessage("ParseFrameType res = " +
+                    QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res)));
     }
 
     return;
@@ -122,12 +127,14 @@ void MainWindow::ReceiveFrame()
 QByteArray MainWindow::GetTxReqXBFrame()
 {
 
+    // Construct payload ------
     XbeeAPI::TxRequest options;
     options.DestAddress = BROADCAST_ADDRESS;
     options.PayloadLength = 10;
     options.PayloadStart = new uint8_t[options.PayloadLength];
     strcpy((char*)options.PayloadStart, "HELLOWORLD");
 
+    // Construct frame ---------
     XbeeAPI::XBFrame::FrameByteArray frame;
 
     frame.SetFrameSize(XbeeAPI::FrameWriter::GetTxRequestFrameSize(options));   // Set size for TxRequest frame
@@ -147,7 +154,7 @@ QByteArray MainWindow::GetTxReqXBFrame()
 
 void MainWindow::DebugQByteArray(const QByteArray &Array)
 {
-    QString out;
+    QString out = "||---------------->\n";
 
     for (int i = 0; i < 2*Array.count(); i++)
     {
@@ -156,7 +163,15 @@ void MainWindow::DebugQByteArray(const QByteArray &Array)
       out += " ";
     }
 
-    qDebug() << out;
+    out += "\n<----------------||";
 
+    LogMessage(out);
+
+    return;
+}
+
+void MainWindow::LogMessage(const QString &Message)
+{
+    ui->messageDisplay->append(Message);
     return;
 }
