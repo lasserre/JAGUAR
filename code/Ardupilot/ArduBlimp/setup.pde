@@ -406,6 +406,7 @@ setup_accel(uint8_t argc, const Menu::arg *argv)
 static int8_t
 setup_flightmodes(uint8_t argc, const Menu::arg *argv)
 {
+#if 0 //TODO: enable if needed
     uint8_t _switchPosition = 0;
     uint8_t _oldSwitchPosition = 0;
     int8_t mode = 0;
@@ -473,6 +474,9 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
             return (0);
         }
     }
+#else
+    cliSerial->printf("Multiple flight modes not supported on ArduBlimp\n");
+#endif // #if 0
 }
 
 #if OPTFLOW == ENABLED

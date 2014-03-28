@@ -1,8 +1,8 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduBlimp V0.2.0"
+#define THISFIRMWARE "ArduBlimp v0.3.0"
 /*
- *  ArduBlimp Version 0.2
+ *  ArduBlimp Version 0.3
  *  Creators:       Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
  *  Based on code and ideas from the Arducopter team: Pat Hickey, Jose Julio, Jani Hirvinen, Andrew Tridgell, Justin Beech, Adam Rivera, Jean-Louis Naudin, Roberto Navoni
  *
@@ -1083,10 +1083,10 @@ static void medium_loop()
     case 2:
         medium_loopCounter++;
 
-#if 0 // TODO: enable if needed - JBW
-        // check ch7 and ch8 aux switches
+        // check aux switches
         read_aux_switches();
 
+#if 0 // TODO: enable if needed - JBW
         if(control_mode == TOY_A) {
             update_toy_throttle();
 

@@ -139,6 +139,13 @@ static void init_ardupilot()
     pinMode(AN0, OUTPUT);
     digitalWrite(AN0, LOW);
 
+    // config pins for docking apparatus control
+    pinMode(DOCKING_CONTROL_1, OUTPUT);
+    pinMode(DOCKING_CONTROL_2, OUTPUT);
+    pinMode(DOCKING_CONTROL_3, OUTPUT);
+
+    enterDockMode();
+
     relay.init();
 
 #if BLIMP_LEDS == ENABLED
@@ -256,10 +263,11 @@ static void init_ardupilot()
     // -------------------
     init_commands();
 
+#if 0 //TODO: enable when multiple flight modes are supported - JBW
     // set the correct flight mode
     // ---------------------------
     reset_control_switch();
-
+#endif // #if 0
 
     startup_ground();
 

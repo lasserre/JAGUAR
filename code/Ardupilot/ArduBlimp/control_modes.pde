@@ -1,6 +1,19 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 #define CONTROL_SWITCH_COUNTER  10  // 10 iterations at 100hz (i.e. 1/10th of a second) at a new switch position will cause flight mode change
+
+#define DOCK_DEPLOY_SWITCH_COUNTER       8  ///< debounce to ensure deploy switch has changed before dropping the rotorcraft
+#define DOCK_SWITCH_TRIGGER           1100  ///< PWM value to dock rotorcraft
+#define DEPLOY_SWITCH_TRIGGER         1900  ///< PWM value to deploy rotorcraft
+#define DOCK_DEPLOY_SWITCH_TOLERANCE   100  ///< tolerance around triggers to dock or deploy rotorcraft
+
+enum DockDeployMode
+{
+    DOCK,
+    DEPLOY
+};
+
+#if 0 //TODO: for the blimp, channel 5 is being used to drop the rotorcraft instead of choosing flight mode
 static void read_control_switch()
 {
     static uint8_t switch_counter = 0;
@@ -47,21 +60,15 @@ static void reset_control_switch()
     oldSwitchPosition = -1;
     read_control_switch();
 }
+#endif // #if 0
 
 // read_aux_switches - checks aux switch positions and invokes configured actions
-// JBW - TODO: Should the RC Channel we are using for lift be removed from this function?
 static void read_aux_switches()
 {
-    // check for camera switch
-    if (g.rc_6.radio_in >= AUX_SWITCH_PWM_TRIGGER)
-    {
-        digitalWrite(AN0, HIGH);
-    }
-    else
-    {
-        digitalWrite(AN0, LOW);
-    }
+    // check dock/deploy control
+    dock_deploy_control();
 
+#if 0 //TODO:enable if needed - JBW
     // check if ch7 switch has changed position
     if (ap_system.CH7_flag != (g.rc_7.radio_in >= AUX_SWITCH_PWM_TRIGGER)) {
         // set the ch7 flag
@@ -83,6 +90,7 @@ static void read_aux_switches()
         // invoke the appropriate function
         do_aux_switch_function(g.ch8_option, ap_system.CH8_flag);
     }
+#endif // #if 0
 }
 
 // do_aux_switch_function - implement the function invoked by the ch7 or ch8 switch
@@ -254,3 +262,69 @@ static void auto_trim()
     }
 }
 
+/**
+ * @brief set pins to put docking apparatus into dock mode
+ */
+void enterDockMode()
+{
+    hal.console->printf("enterDockMode\n");//TODO:remove
+    digitalWrite(DOCKING_CONTROL_1, LOW);
+    digitalWrite(DOCKING_CONTROL_2, LOW);
+    digitalWrite(DOCKING_CONTROL_3, HIGH);
+}
+
+/**
+ * @brief set pins to put docking apparatus into deploy mode
+ */
+void enterDeployMode()
+{
+    hal.console->printf("enterDeployMode\n");//TODO:remove
+    digitalWrite(DOCKING_CONTROL_1, HIGH);
+    digitalWrite(DOCKING_CONTROL_2, HIGH);
+    digitalWrite(DOCKING_CONTROL_3, LOW);
+}
+
+/**
+ * @brief dock/deploy rotorcraft based on switch input from radio controller
+ */
+void dock_deploy_control()
+{
+    static uint8_t switch_counter = 0;
+    static DockDeployMode mode = DOCK;
+
+    if (isRcControlled())
+    {
+        // check if we've switch to dock mode
+        if (mode != DOCK && g.rc_5.radio_in > DOCK_SWITCH_TRIGGER - DOCK_DEPLOY_SWITCH_TOLERANCE && g.rc_5.radio_in < DOCK_SWITCH_TRIGGER + DOCK_DEPLOY_SWITCH_TOLERANCE)
+        {
+            if (switch_counter < DOCK_DEPLOY_SWITCH_COUNTER)
+            {
+                ++switch_counter;
+            }
+            else
+            {
+                mode = DOCK;
+                switch_counter = 0;
+                enterDockMode();
+            }
+        }
+        // check if we've switched to deploy mode
+        else if (mode != DEPLOY && g.rc_5.radio_in > DEPLOY_SWITCH_TRIGGER - DOCK_DEPLOY_SWITCH_TOLERANCE && g.rc_5.radio_in < DEPLOY_SWITCH_TRIGGER + DOCK_DEPLOY_SWITCH_TOLERANCE)
+        {
+            if (switch_counter < DOCK_DEPLOY_SWITCH_COUNTER)
+            {
+                ++switch_counter;
+            }
+            else
+            {
+                mode = DEPLOY;
+                switch_counter = 0;
+                enterDeployMode();
+            }
+        }
+        else
+        {
+            switch_counter = 0;
+        }
+    }
+}

@@ -190,12 +190,9 @@ static void blimp_leds_init(void)
 {
     pinMode(BLIMP_LED_1, OUTPUT);              //Motor LED
     pinMode(BLIMP_LED_2, OUTPUT);              //Motor LED
-    pinMode(BLIMP_LED_3, OUTPUT);              //Motor LED
-    pinMode(BLIMP_LED_4, OUTPUT);              //Motor LED
-    pinMode(BLIMP_LED_5, OUTPUT);              //Motor or Aux LED
-    pinMode(BLIMP_LED_6, OUTPUT);              //Motor or Aux LED
-    pinMode(BLIMP_LED_7, OUTPUT);              //Motor or GPS LED
-    pinMode(BLIMP_LED_8, OUTPUT);              //Motor or GPS LED
+    // pinMode(BLIMP_LED_3, OUTPUT);              //Motor LED
+    // pinMode(BLIMP_LED_4, OUTPUT);              //Motor LED
+    // pinMode(BLIMP_LED_5, OUTPUT);              //Motor or Aux LED
 
     if (!(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_BEEPER)) {
         piezo_beep();
@@ -280,12 +277,9 @@ static void update_blimp_leds(void)
 static void blimp_leds_reset(void) {
     digitalWrite(BLIMP_LED_1, BLIMP_LED_OFF);
     digitalWrite(BLIMP_LED_2, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_4, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_5, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_6, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_7, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_8, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_4, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_5, BLIMP_LED_OFF);
 }
 
 static void blimp_leds_on(void) {
@@ -299,14 +293,11 @@ static void blimp_leds_on(void) {
  #else
     digitalWrite(BLIMP_LED_2, BLIMP_LED_ON);
  #endif
-    if (!(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS) ) {
-        digitalWrite(BLIMP_LED_3, BLIMP_LED_ON);
-    }
-    digitalWrite(BLIMP_LED_4, BLIMP_LED_ON);
-    digitalWrite(BLIMP_LED_5, BLIMP_LED_ON);
-    digitalWrite(BLIMP_LED_6, BLIMP_LED_ON);
-    digitalWrite(BLIMP_LED_7, BLIMP_LED_ON);
-    digitalWrite(BLIMP_LED_8, BLIMP_LED_ON);
+    // if (!(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS) ) {
+    //     digitalWrite(BLIMP_LED_3, BLIMP_LED_ON);
+    // }
+    // digitalWrite(BLIMP_LED_4, BLIMP_LED_ON);
+    // digitalWrite(BLIMP_LED_5, BLIMP_LED_ON);
 }
 
 static void blimp_leds_off(void) {
@@ -320,14 +311,14 @@ static void blimp_leds_off(void) {
  #else
     digitalWrite(BLIMP_LED_2, BLIMP_LED_OFF);
  #endif
-    if (!(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS)) {
-        digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
-    }
-    digitalWrite(BLIMP_LED_4, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_5, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_6, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_7, BLIMP_LED_OFF);
-    digitalWrite(BLIMP_LED_8, BLIMP_LED_OFF);
+    // if (!(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS)) {
+    //     digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
+    // }
+    // digitalWrite(BLIMP_LED_4, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_5, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_6, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_7, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_8, BLIMP_LED_OFF);
 }
 
 static void blimp_leds_slow_blink(void) {
@@ -371,14 +362,14 @@ static void blimp_leds_oscillate(void) {
  #else
         digitalWrite(BLIMP_LED_2, BLIMP_LED_ON);
  #endif
-        if ( !(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS)) {
-            digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
-        }
-        digitalWrite(BLIMP_LED_4, BLIMP_LED_OFF);
-        digitalWrite(BLIMP_LED_5, BLIMP_LED_ON);
-        digitalWrite(BLIMP_LED_6, BLIMP_LED_ON);
-        digitalWrite(BLIMP_LED_7, BLIMP_LED_OFF);
-        digitalWrite(BLIMP_LED_8, BLIMP_LED_OFF);
+        // if ( !(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS)) {
+        //     digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
+        // }
+        // digitalWrite(BLIMP_LED_4, BLIMP_LED_OFF);
+        // digitalWrite(BLIMP_LED_5, BLIMP_LED_ON);
+        // digitalWrite(BLIMP_LED_6, BLIMP_LED_ON);
+        // digitalWrite(BLIMP_LED_7, BLIMP_LED_OFF);
+        // digitalWrite(BLIMP_LED_8, BLIMP_LED_OFF);
     }else if (2 < blimp_leds_motor_blink && blimp_leds_motor_blink < 5) {
         if ( !(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_AUX)) {
             digitalWrite(BLIMP_LED_1, BLIMP_LED_OFF);
@@ -390,25 +381,25 @@ static void blimp_leds_oscillate(void) {
  #else
         digitalWrite(BLIMP_LED_2, BLIMP_LED_OFF);
  #endif
-        if ( !(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS) ) {
-            digitalWrite(BLIMP_LED_3, BLIMP_LED_ON);
-        }
-        digitalWrite(BLIMP_LED_4, BLIMP_LED_ON);
-        digitalWrite(BLIMP_LED_5, BLIMP_LED_OFF);
-        digitalWrite(BLIMP_LED_6, BLIMP_LED_OFF);
-        digitalWrite(BLIMP_LED_7, BLIMP_LED_ON);
-        digitalWrite(BLIMP_LED_8, BLIMP_LED_ON);
+        // if ( !(g.blimp_leds_mode & BLIMP_LEDS_BITMASK_GPS) ) {
+        //     digitalWrite(BLIMP_LED_3, BLIMP_LED_ON);
+        // }
+        // digitalWrite(BLIMP_LED_4, BLIMP_LED_ON);
+        // digitalWrite(BLIMP_LED_5, BLIMP_LED_OFF);
+        // digitalWrite(BLIMP_LED_6, BLIMP_LED_OFF);
+        // digitalWrite(BLIMP_LED_7, BLIMP_LED_ON);
+        // digitalWrite(BLIMP_LED_8, BLIMP_LED_ON);
     }else{
         blimp_leds_motor_blink = 0;                                            // start blink cycle again
     }
 }
 
 static void blimp_leds_GPS_on(void) {
-    digitalWrite(BLIMP_LED_3, BLIMP_LED_ON);
+    // digitalWrite(BLIMP_LED_3, BLIMP_LED_ON);
 }
 
 static void blimp_leds_GPS_off(void) {
-    digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
+    // digitalWrite(BLIMP_LED_3, BLIMP_LED_OFF);
 }
 
 static void blimp_leds_GPS_slow_blink(void) {

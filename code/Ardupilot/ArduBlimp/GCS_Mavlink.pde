@@ -6,8 +6,8 @@
 #define JOYSTICK_AXIS_MAX   1000   ///< maximum value input from a joystick axis
 #define JOYSTICK_AXIS_MID  (JOYSTICK_AXIS_MIN + JOYSTICK_AXIS_MAX) / 2 ///< joystick axis value halfway between min and max
 
-#define ANTI_LIFT_AXIS_DEAD_ZONE 20 ///< offset around JOYSTICK_AXIS_MID where anti-lift motor input will not have an effect
-#define ANTI_LEFT_SPEED_MAX_INC      10 ///< value to increment anti-lift motor speed by
+#define ANTI_LIFT_AXIS_DEAD_ZONE    20 ///< offset around JOYSTICK_AXIS_MID where anti-lift motor input will not have an effect
+#define ANTI_LEFT_SPEED_MAX_INC     10 ///< value to increment anti-lift motor speed by
 
 // buttons
 #define JOYSTICK_BUTTON0   0x0001
