@@ -5,9 +5,12 @@
 #define JOYSTICK_AXIS_MIN  -1000   ///< minimum value input from a joystick axis
 #define JOYSTICK_AXIS_MAX   1000   ///< maximum value input from a joystick axis
 #define JOYSTICK_AXIS_MID  (JOYSTICK_AXIS_MIN + JOYSTICK_AXIS_MAX) / 2 ///< joystick axis value halfway between min and max
+#define JOYSTICK_AXIS_FULL_RANGE  (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)
+#define JOYSTICK_AXIS_UPPER_RANGE (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MID)
+#define JOYSTICK_AXIS_LOWER_RANGE (JOYSTICK_AXIS_MID - JOYSTICK_AXIS_MIN)
 
-#define ANTI_LIFT_AXIS_DEAD_ZONE    20 ///< offset around JOYSTICK_AXIS_MID where anti-lift motor input will not have an effect
-#define ANTI_LEFT_SPEED_MAX_INC     10 ///< value to increment anti-lift motor speed by
+#define THROTTLE_AXIS_DEAD_ZONE    20 ///< offset around JOYSTICK_AXIS_MID where throttle motor input will not have an effect
+#define THROTTLE_SPEED_MAX_INC     20 ///< maximum value to increment throttle motor speed by
 
 // buttons
 #define JOYSTICK_BUTTON0   0x0001
@@ -26,6 +29,8 @@
 #define JOYSTICK_BUTTON13  0x2000
 #define JOYSTICK_BUTTON14  0x4000
 #define JOYSTICK_BUTTON15  0x8000
+
+#define JOYSTICK_ARM_DISARM_COMBO   (JOYSTICK_BUTTON0 | JOYSTICK_BUTTON1)    ///< button combination to arm/disarm blimp
 
 // use this to prevent recursion during sensor init
 static bool in_mavlink_delay;
@@ -1933,7 +1938,7 @@ mission_failed:
         mavlink_manual_control_t packet;
         mavlink_msg_manual_control_decode(msg, &packet);
 
-        // ManualControlUpdate(packet.x, packet.y, packet.z, packet.r, packet.buttons);
+        ManualControlUpdate(packet.x, packet.y, packet.z, packet.r, packet.buttons);
         break;
     }
 
@@ -2139,69 +2144,65 @@ void GCS_MAVLINK::ManualControlUpdate(int16_t x, int16_t y, int16_t z, int16_t r
     // only send output to motors if the radio controller does not have control
     if (!isRcControlled())
     {
-        // set throttle
-        int16_t throttle_high_out = g.rc_3.get_high_out();
-        int16_t throttle_low_out = g.rc_3.get_low_out();
-        int32_t throttle_range = throttle_high_out - throttle_low_out;
-        int32_t throttle_offset = z - JOYSTICK_AXIS_MIN;
-        g.rc_3.servo_out = ((int32_t)(throttle_offset * throttle_range) / (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)) + throttle_low_out;
-
-        // set pitch
-        int16_t pitch_high_out = g.rc_2.get_high_out();
-        int16_t pitch_low_out = g.rc_2.get_low_out();
-        int32_t pitch_range = pitch_high_out - pitch_low_out;
-        int32_t pitch_offset = x - JOYSTICK_AXIS_MIN;
-        g.rc_2.servo_out = ((int32_t)(pitch_offset * pitch_range) / (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)) + pitch_low_out;
-
-        // set yaw
-        int16_t yaw_high_out = g.rc_4.get_high_out();
-        int16_t yaw_low_out = g.rc_4.get_low_out();
-        int32_t yaw_range = yaw_high_out - yaw_low_out;
-        int32_t yaw_offset = r - JOYSTICK_AXIS_MIN;
-        g.rc_4.servo_out = ((int32_t)(yaw_offset * yaw_range) / (JOYSTICK_AXIS_MAX - JOYSTICK_AXIS_MIN)) + yaw_low_out;
-
-        // set anti-lift
-        // anti-lift uses the roll input (y-axis)
+        /***** set thrust *****/
         // axis input:
         //   centered - motor speed does not change
         //   positive - motor speed increases
         //   negative - motor speed decreases
-        int16_t anti_lift_high_out = g.rc_6.get_high_out();
-        int16_t anti_lift_low_out = g.rc_6.get_low_out();
-        int32_t anti_lift_range = anti_lift_high_out - anti_lift_low_out;
-        
-        // Debug...
-        gcs_send_text_fmt(PSTR("current rc_6.servo_out: %d"), g.rc_6.servo_out);
+        int16_t throttle_high_out = g.rc_3.get_high_out();
+        int16_t throttle_low_out = g.rc_3.get_low_out();
 
         // Initially set new_speed to current speed
         if (firstTimeThrough)
         {
-            new_speed = g.rc_6.get_low_out();
+            new_speed = g.rc_3.get_low_out();
             firstTimeThrough = false;
         }
 
-        //int16_t new_speed = g.rc_6.servo_out;
-        
         // decrease motor speed
-        if (y < JOYSTICK_AXIS_MID - ANTI_LIFT_AXIS_DEAD_ZONE)
+        if (z < JOYSTICK_AXIS_MID - THROTTLE_AXIS_DEAD_ZONE)
         {
-
-            new_speed -= ANTI_LEFT_SPEED_MAX_INC;
+            new_speed -= ((JOYSTICK_AXIS_MID - z) * THROTTLE_SPEED_MAX_INC) / JOYSTICK_AXIS_LOWER_RANGE;
         }
         // increase motor speed
-        else if (y > JOYSTICK_AXIS_MID + ANTI_LIFT_AXIS_DEAD_ZONE)
+        else if (z > JOYSTICK_AXIS_MID + THROTTLE_AXIS_DEAD_ZONE)
         {
-            // Add dynamic increments....
-            new_speed += ANTI_LEFT_SPEED_MAX_INC;
+            new_speed += ((z - JOYSTICK_AXIS_MID) * THROTTLE_SPEED_MAX_INC) / JOYSTICK_AXIS_UPPER_RANGE;
         }
+
         // ensure new speed is within the bounds of the min and max speed
-        new_speed = constrain_int16(new_speed, anti_lift_low_out, anti_lift_high_out);
-        static int loopCtr = 0;
-        if (loopCtr++ == 100)
-            loopCtr = 0;
-        gcs_send_text_fmt(PSTR("old speed:%d, new speed:%d, loopctr: %d"), g.rc_6.servo_out, new_speed, loopCtr);//TODO:remove
-        gcs_send_text_fmt(PSTR("ALmin: %d, ALmax: %d, ALspeed: %d"), anti_lift_low_out, anti_lift_high_out, new_speed);
-        g.rc_6.servo_out = new_speed;
+        new_speed = constrain_int16(new_speed, throttle_low_out, throttle_high_out);
+        g.rc_3.servo_out = new_speed;
+
+        /***** set pitch *****/
+        int16_t pitch_high_out = g.rc_2.get_high_out();
+        int16_t pitch_low_out = g.rc_2.get_low_out();
+        int32_t pitch_range = pitch_high_out - pitch_low_out;
+        int32_t pitch_offset = x - JOYSTICK_AXIS_MIN;
+        g.rc_2.servo_out = ((int32_t)(pitch_offset * pitch_range) / JOYSTICK_AXIS_FULL_RANGE) + pitch_low_out;
+
+        /***** set yaw *****/
+        int16_t yaw_high_out = g.rc_4.get_high_out();
+        int16_t yaw_low_out = g.rc_4.get_low_out();
+        int32_t yaw_range = yaw_high_out - yaw_low_out;
+        int32_t yaw_offset = r - JOYSTICK_AXIS_MIN;
+        g.rc_4.servo_out = ((int32_t)(yaw_offset * yaw_range) / JOYSTICK_AXIS_FULL_RANGE) + yaw_low_out;
+
+        /***** set anti-lift *****/
+        // anti-lift uses the roll input (y-axis)
+        int16_t anti_lift_high_out = g.rc_6.get_high_out();
+        int16_t anti_lift_low_out = g.rc_6.get_low_out();
+        int32_t anti_lift_range = anti_lift_high_out - anti_lift_low_out;
+        int32_t anti_lift_offset = y - JOYSTICK_AXIS_MIN;
+        g.rc_6.servo_out = ((int32_t)(anti_lift_offset * anti_lift_range) / JOYSTICK_AXIS_FULL_RANGE) + anti_lift_low_out;
+
+        /***** buttons *****/
+        // arming/disarming
+        if ((buttons & JOYSTICK_ARM_DISARM_COMBO) == JOYSTICK_ARM_DISARM_COMBO)
+        {
+            //TODO:arm/disarm
+            gcs_send_text_fmt(PSTR("arm/disarm"));//TODO:remove
+        }
     }
 }
 
