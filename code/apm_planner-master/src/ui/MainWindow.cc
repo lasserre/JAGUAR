@@ -1592,7 +1592,7 @@ void MainWindow::connectCommonActions()
     // unless it is actually used
     // so no ressources spend on this.
     //Joystick is disabled until we can ensure it's operational.
-    ui.actionJoystickSettings->setVisible(false);
+    ui.actionJoystickSettings->setVisible(true);
 
     // Configuration
     // Joystick
