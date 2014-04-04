@@ -13,7 +13,8 @@ CONFIG += staticlib
 SOURCES += \
     src/xbee_api_basetypes.cpp \
     src/xbee_frameparser.cpp \
-    src/xbee_framewriter.cpp
+    src/xbee_framewriter.cpp \
+    src/xbee_frame_structs.cpp
 
 HEADERS += \
     include/xbee_api_basetypes.h \

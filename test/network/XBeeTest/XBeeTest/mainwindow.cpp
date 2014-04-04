@@ -2,9 +2,6 @@
 #include "ui_mainwindow.h"
 #include <QtSerialPort>
 #include <QDebug>
-#include "xbee_framewriter.h"
-#include "xbee_frameparser.h"
-#include "xbee_frame_structs.h"
 
 const int BAUD = 9600;
 
@@ -89,36 +86,24 @@ void MainWindow::ReceiveFrame()
 
     if (resCategory == XBFrame::PRC_Success)
     {
-        if (type == XBFrame::TransmitStatus)
+        switch (type)
         {
-            LogMessage("TransmitStatus frame received!");
+        case XBFrame::TransmitStatus:
+            HandleTxStatus(&frame);
+            break;
 
-            TxStatus status;
-            res = FrameParser::ParseTxStatus(frame, status);
-            resCategory = FrameParser::GetParseResultCategory(res);
+        case XBFrame::ReceivePacket:
+            HandleRxPacket(&frame);
+            break;
 
-            if (resCategory == XBFrame::PRC_Success)
-            {
-                LogMessage("TxRetryCount: " + QString::number(status.TxRetryCount));
-                LogMessage("DelivStatus: " + QString::number(status.DelivStat));
-                LogMessage("DiscvStatus: " + QString::number(status.DiscvStat));
-
-                if (res == XBFrame::PR_ParseSuccess)
-                    frameBuffer.clear();
-                else
-                    frameBuffer.remove(0, frame.FrameSize());
-            }
-            else
-                LogMessage("ParseTxStatus ERROR: " +
-                           QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res)));
-        }
-        else
+        default:
             LogMessage("Unhandled frame type of: " + QString::number(type));
+        }
     }
     else
     {
-        LogMessage("ParseFrameType res = " +
-                    QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res)));
+        QString resString = QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
+        LogMessage("ParseFrameType res = " + resString);
     }
 
     return;
@@ -174,4 +159,65 @@ void MainWindow::LogMessage(const QString &Message)
 {
     ui->messageDisplay->append(Message);
     return;
+}
+
+void MainWindow::HandleTxStatus(XBFrame::FrameByteArray *TxStatusFrame)
+{
+    LogMessage("TransmitStatus frame received!");
+
+    TxStatus status;
+    XBFrame::ParseResult res = FrameParser::ParseTxStatus(*TxStatusFrame, status);
+    XBFrame::ParseResCategory resCategory = FrameParser::GetParseResultCategory(res);
+
+    switch (resCategory)
+    {
+    case XBFrame::PRC_Success:
+
+        LogMessage("TxRetryCount: " + QString::number(status.TxRetryCount));
+        LogMessage("DelivStatus: " + QString::fromStdString(status.GetDelivStatString()));
+        LogMessage("DiscvStatus: " + QString::fromStdString(status.GetDiscvStatString()));
+
+        if (res == XBFrame::PR_ParseSuccess)
+            frameBuffer.clear();
+        else
+            frameBuffer.remove(0, TxStatusFrame->FrameSize());   // We might have extra bytes at the end!
+        break;
+
+    default:
+        QString resString = QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
+        LogMessage("ParseTxStatus ERROR: " + resString);
+    }
+}
+
+void MainWindow::HandleRxPacket(XBFrame::FrameByteArray *RxPacketFrame)
+{
+    LogMessage("ReceivePacket frame received!");
+
+    RxPacket packet;
+
+    XBFrame::ParseResult res = FrameParser::ParseRxPacket(*RxPacketFrame, packet);
+    XBFrame::ParseResCategory resCategory = FrameParser::GetParseResultCategory(res);
+
+    switch (resCategory)
+    {
+    case XBFrame::PRC_Success:
+
+        LogMessage("RxPacketFrame Frame Size: " + QString::number(RxPacketFrame->FrameSize()));
+        LogMessage("Actual Frame Size: " + QString::number(packet.ActualFrameSize));
+        LogMessage("Expected Payload Length: " + QString::number(packet.ExpctdPayloadLen));
+        LogMessage("Source address: " + QString::number(packet.SourceAddress));
+        LogMessage("Payload: " + QByteArray((char*)packet.PayloadStart, packet.ExpctdPayloadLen));
+        LogMessage("Receive Options: " + QString::fromStdString(packet.GetRcvOptsString()));
+
+        if (res == XBFrame::PR_ParseSuccess)
+            frameBuffer.clear();
+        else
+            frameBuffer.remove(0, RxPacketFrame->FrameSize());
+
+        break;
+
+    default:
+        QString resString = QString::fromStdString(FrameParser::GetParseResultString(res));
+        LogMessage("ParseRxPacket ERROR: " + resString);
+    }
 }

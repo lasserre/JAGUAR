@@ -84,7 +84,7 @@ inline bool Read64BitAddrField(const XBFrame::FrameByteArray& Frame, const uint3
     {
         AddressField = 0;
 
-        for (int i = 0; i < sizeof(AddressField); i++)
+        for (uint8_t i = 0; i < sizeof(AddressField); i++)
         {
             // Assign AddressField
             AddressField <<= 8;
