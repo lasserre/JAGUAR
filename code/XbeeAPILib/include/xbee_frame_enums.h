@@ -170,8 +170,17 @@ enum ParseResult
 
     // Success results
     PR_ParseSuccess,               ///< Parse successful
-    PR_XtraBytes                   ///< The size of the frame passed in to be parsed was larger than the frame actually parsed
+    PR_XtraBytes,                  ///< The size of the frame passed in to be parsed was larger than the frame actually parsed
     //----------------
+
+    PR_LINK_TEST_CATEGORY_BEGIN,
+
+    // Link Test results
+
+    PR_LT_Success,
+    PR_LT_XtraBytes,
+    PR_LT_PLDLenDNM,                ///< Payload length does not match LTR_PAYLOAD_SIZE
+    PR_LT_Fail
 };
 
 /**
@@ -187,6 +196,7 @@ enum ParseResCategory
     PRC_Error,
     PRC_NIB,
     PRC_Success,
+    PRC_LinkTestResult,
     PRC_UnknownCategory
 };
 

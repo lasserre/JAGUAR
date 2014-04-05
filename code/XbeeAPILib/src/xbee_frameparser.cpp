@@ -76,60 +76,74 @@ inline bool ReadLengthField(const XBFrame::FrameByteArray& Frame, uint16_t& LENG
     }
 }
 
-inline bool Read_uint16_t(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint16_t& Field)
+inline bool Read_uint16_t(uint8_t* Source, const uint32_t& Idx, uint16_t& Field)
+{
+    Field = 0;
+
+    for (uint8_t i = 0; i < sizeof(Field); i++)
+    {
+        //Assign Field
+        Field <<= 8;
+        Field |= (0x00000000000000ff & Source[Idx + i]);
+    }
+
+    return true;
+}
+
+inline bool Read_uint16_tFrame(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint16_t& Field)
 {
     if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
         return false;
     else
     {
-        Field = 0;
-
-        for (uint8_t i = 0; i < sizeof(Field); i++)
-        {
-            //Assign Field
-            Field <<= 8;
-            Field |= (0x00000000000000ff & Frame.FrameStart[Idx + i]);
-        }
-
-        return true;
+        return Read_uint16_t(Frame.FrameStart, Idx, Field);
     }
 }
 
-inline bool Read_uint32_t(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint32_t& Field)
+inline bool Read_uint32_t(uint8_t* Source, const uint32_t& Idx, uint32_t& Field)
 {
-    if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
-        return false;
-    else
+    Field = 0;
+
+    for (uint8_t i = 0; i < sizeof(Field); i++)
     {
-        Field = 0;
-
-        for (uint8_t i = 0; i < sizeof(Field); i++)
-        {
-            //Assign Field
-            Field <<= 8;
-            Field |= (0x00000000000000ff & Frame.FrameStart[Idx + i]);
-        }
-
-        return true;
+        //Assign Field
+        Field <<= 8;
+        Field |= (0x00000000000000ff & Source[Idx + i]);
     }
+
+    return true;
 }
 
-inline bool Read_uint64_t(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint64_t& Field)
+inline bool Read_uint32_tFrame(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint32_t& Field)
+{
+    if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
+        return false;
+    else
+        return Read_uint32_t(Frame.FrameStart, Idx, Field);
+}
+
+inline bool Read_uint64_t(uint8_t* Source, const uint32_t& Idx, uint64_t& Field)
+{
+    Field = 0;
+
+    for (uint8_t i = 0; i < sizeof(Field); i++)
+    {
+        //Assign Field
+        Field <<= 8;
+        Field |= (0x00000000000000ff & Source[Idx + i]);
+    }
+
+    return true;
+}
+
+inline bool Read_uint64_tFrame(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint64_t& Field)
 {
     if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
         return false;
     else
     {
-        Field = 0;
-
-        for (uint8_t i = 0; i < sizeof(Field); i++)
-        {
-            //Assign Field
-            Field <<= 8;
-            Field |= (0x00000000000000ff & Frame.FrameStart[Idx + i]);
-        }
-
-        return true;
+        uint8_t* ptr = Frame.FrameStart;
+        return Read_uint64_t(ptr, Idx, Field);
     }
 }
 
@@ -195,6 +209,14 @@ std::string GetParseResultString(const XBFrame::ParseResult &Result)
         return "Profile ID not in bounds";
     case XBFrame::PR_CHECKSUM_NIB:
         return "Checksum not in bounds";
+    case XBFrame::PR_LT_Success:
+        return "Link test result parsed successfully";
+    case XBFrame::PR_LT_XtraBytes:
+        return "Link test result parsed successfully, with xtra bytes";
+    case XBFrame::PR_LT_PLDLenDNM:
+        return "Link test payload does not match expected size";
+    case XBFrame::PR_LT_Fail:
+        return "Link test result parsing failed";
     default:
         return "Unrecognized ParseResult";
     }
@@ -213,8 +235,11 @@ XBFrame::ParseResCategory GetParseResultCategory(const XBFrame::ParseResult &Res
     if (Result < XBFrame::PR_SUCCESS_CATEGORY_BEGIN)
         return XBFrame::PRC_NIB;
 
-    else
+    if (Result < XBFrame::PR_LINK_TEST_CATEGORY_BEGIN)
         return XBFrame::PRC_Success;
+
+    else
+        return XBFrame::PRC_LinkTestResult;
 }
 
 std::string GetRcvOptsString(const uint8_t& ReceiveOpts)
@@ -295,7 +320,7 @@ XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray& Frame, RxPacke
             return XBFrame::PR_LENGTH_NIB;      // Length field not in bounds
 
         // Read 64-bit source address
-        if (!Utils::Read_uint64_t(Frame, RXP_SOURCEADDR_IDX, Packet.SourceAddress))
+        if (!Utils::Read_uint64_tFrame(Frame, RXP_SOURCEADDR_IDX, Packet.SourceAddress))
             return XBFrame::PR_ADDRESS_NIB;     // Address field not in bounds
 
         // Read Receive Options field
@@ -326,8 +351,11 @@ XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray& Frame, RxPacke
         return XBFrame::PR_MinLenNIB;
 }
 
-XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, ExRxIndicator &Indicator)
+XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, ExRxIndicator &Indicator,
+                                        LinkTestResult& TestResult)
 {
+    bool LinkTestDetected = false;
+
     if (ERI_MIN_TOTALSIZE <= Frame.FrameSize())
     {
         // Min length received
@@ -340,7 +368,7 @@ XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, Ex
             return XBFrame::PR_LENGTH_NIB;      // Length field not in bounds
 
         // Read 64-bit source address
-        if (!Utils::Read_uint64_t(Frame, ERI_SOURCEADDR_IDX, Indicator.SourceAddress))
+        if (!Utils::Read_uint64_tFrame(Frame, ERI_SOURCEADDR_IDX, Indicator.SourceAddress))
             return XBFrame::PR_ADDRESS_NIB;     // Address field not in bounds
 
         // Read source endpoint
@@ -352,11 +380,14 @@ XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, Ex
             return XBFrame::PR_DSTENDPT_NIB;    // Destination endpoint field not in bounds
 
         // Read cluster ID
-        if (!Utils::Read_uint16_t(Frame, ERI_CLUSTERID_IDX, Indicator.ClusterID))
+        if (!Utils::Read_uint16_tFrame(Frame, ERI_CLUSTERID_IDX, Indicator.ClusterID))
             return XBFrame::PR_CLUSTERID_NIB;   // Cluster ID field not in bounds
 
+        if (Indicator.ClusterID == LTR_CLUSTERID_VAL)
+            LinkTestDetected = true;    // This is a link test result!
+
         // Read profile ID
-        if (!Utils::Read_uint16_t(Frame, ERI_PROFILEID_IDX, Indicator.ProfileID))
+        if (!Utils::Read_uint16_tFrame(Frame, ERI_PROFILEID_IDX, Indicator.ProfileID))
             return XBFrame::PR_PROFILEID_NIB;   // Profile ID field not in bounds
 
         // Read Receive Options field
@@ -376,12 +407,48 @@ XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, Ex
         // Check expected size vs. received size
         Indicator.ActualFrameSize = Utils::CalcExpctdFrameSize(XBLength);
 
-        if (Indicator.ActualFrameSize < Frame.FrameSize())
-            return XBFrame::PR_XtraBytes;
-        else if (Indicator.ActualFrameSize == Frame.FrameSize())
-            return XBFrame::PR_ParseSuccess;
+        if (!LinkTestDetected)
+        {
+            if (Indicator.ActualFrameSize < Frame.FrameSize())
+                return XBFrame::PR_XtraBytes;
+            else if (Indicator.ActualFrameSize == Frame.FrameSize())
+                return XBFrame::PR_ParseSuccess;
+            else
+                return XBFrame::PR_CHECKSUM_NIB;
+        }
         else
-            return XBFrame::PR_CHECKSUM_NIB;
+        {
+            // Fill out TestResult if this is a link test result
+
+            if (Indicator.ExpctdPayloadLen == LTR_PAYLOAD_SIZE)
+            {
+                TestResult.TestNodeA_Addr = Indicator.SourceAddress;    // Get nodeA addr from indicator struct
+
+                // We have entire payload, so read them all now
+
+                uint8_t* PLD = Indicator.PayloadStart;
+
+                Utils::Read_uint64_t(PLD, LTR_DESTADDR_PLDIDX, TestResult.TestNodeB_Addr);
+                Utils::Read_uint16_t(PLD, LTR_PLDSIZE_PLDIDX, TestResult.TestPayloadSize);
+                Utils::Read_uint16_t(PLD, LTR_NUMITER_PLDIDX, TestResult.NumTestIterations);
+                Utils::Read_uint16_t(PLD, LTR_SUCCESS_PLDIDX, TestResult.NumSuccessPackets);
+                Utils::Read_uint16_t(PLD, LTR_RETRIES_PLDIDX, TestResult.NumRetries);
+                TestResult.Result = PLD[LTR_RESULT_PLDIDX];
+                TestResult.MaxAllowedMACRetries = PLD[LTR_MAXRETR_PLDIDX];
+                TestResult.MaxRSSI = PLD[LTR_MAXRSSI_PLDIDX];
+                TestResult.MinRSSI = PLD[LTR_MINRSSI_PLDIDX];
+                TestResult.AvgRSSI = PLD[LTR_AVGRSSI_PLDIDX];
+            }
+            else
+                return XBFrame::PR_LT_PLDLenDNM;    // Payload len does not match
+
+            if (Indicator.ActualFrameSize < Frame.FrameSize())
+                return XBFrame::PR_LT_XtraBytes;
+            else if (Indicator.ActualFrameSize == Frame.FrameSize())
+                return XBFrame::PR_LT_Success;
+            else
+                return XBFrame::PR_CHECKSUM_NIB;
+        }
     }
     else
         return XBFrame::PR_MinLenNIB;

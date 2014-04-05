@@ -280,9 +280,10 @@ void MainWindow::HandleExRxIndicator(XBFrame::FrameByteArray *ExRxIndFrame)
     LogMessage("ExRxIndicator frame received!");
 
     ExRxIndicator indicator;
+    LinkTestResult testResult;
     QByteArray payload;
 
-    XBFrame::ParseResult res = FrameParser::ParseExRxIndicator(*ExRxIndFrame, indicator);
+    XBFrame::ParseResult res = FrameParser::ParseExRxIndicator(*ExRxIndFrame, indicator, testResult);
     XBFrame::ParseResCategory resCategory = FrameParser::GetParseResultCategory(res);
 
     switch (resCategory)
@@ -307,8 +308,21 @@ void MainWindow::HandleExRxIndicator(XBFrame::FrameByteArray *ExRxIndFrame)
 
         break;
 
+    case XBFrame::PRC_LinkTestResult:
+        HandleLinkTestResult(testResult);
+        break;
+
     default:
         QString resString = QString::fromStdString(FrameParser::GetParseResultString(res));
-        LogMessage("ParseRxPacket ERROR: " + resString);
+        LogMessage("ParseExRxIndicator ERROR: " + resString);
     }
+}
+
+void MainWindow::HandleLinkTestResult(const LinkTestResult &TestResult)
+{
+    LogMessage("------------ Link Test Result ------------");
+
+    LogMessage("Result: " + QString::number(TestResult.Result));
+    LogMessage("NumSuccessPackets: " + QString::number(TestResult.NumSuccessPackets));
+    LogMessage("NumRetries: " + QString::number(TestResult.NumRetries));
 }

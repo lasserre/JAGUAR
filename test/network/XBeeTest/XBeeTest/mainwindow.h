@@ -11,6 +11,8 @@ namespace Ui {
 class MainWindow;
 }
 
+struct XbeeAPI::LinkTestResult;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -38,6 +40,7 @@ private:
     void HandleTxStatus(XbeeAPI::XBFrame::FrameByteArray* TxStatusFrame);
     void HandleRxPacket(XbeeAPI::XBFrame::FrameByteArray* RxPacketFrame);
     void HandleExRxIndicator(XbeeAPI::XBFrame::FrameByteArray* ExRxIndFrame);
+    void HandleLinkTestResult(const XbeeAPI::LinkTestResult& TestResult);
 };
 
 #endif // MAINWINDOW_H

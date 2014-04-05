@@ -11,6 +11,7 @@ namespace XbeeAPI {
 struct TxStatus;
 struct RxPacket;
 struct ExRxIndicator;
+struct LinkTestResult;
 
 namespace FrameParser {
 
@@ -70,7 +71,8 @@ XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray &Frame, RxPacke
  * @param Indicator
  * @return
  */
-XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, ExRxIndicator& Indicator);
+XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, ExRxIndicator& Indicator,
+                                        LinkTestResult& TestResult);
 
 } // FrameParser
 

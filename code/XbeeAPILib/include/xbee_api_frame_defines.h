@@ -111,17 +111,25 @@
 /** *********************************************************************
  ** @defgroup LINK_TEST_REQUEST LinkTestRequest (Explicit Addressing Frame) Definitions
  **
- ** @brief The LTR_X definitions are to be used to interpret the fields of the Xbee Explicit Addressing Command Frame
+ ** @brief The LTQ_X definitions are to be used to interpret the fields of the Xbee Explicit Addressing Command Frame
  ** for the specific case of a link test request packet
  **
  ** @{
  **/
 
-#define LTR_PAYLOAD_SIZE        12      ///< Length of Link Test Request payload
+// Link test generic
 
-#define LTR_DESTADDR_PLDIDX     0       ///< Destination Address Field Index (w.r.t. the payload of ExAddCmd frame)
-#define LTR_PLDSIZE_PLDIDX      8       ///< Payload Size Field Index (w.r.t. the payload of ExAddCmd frame)
-#define LTR_NUMITER_PLDIDX      10      ///< Number of Iterations Field Index (w.r.t. the payload of ExAddCmd frame)
+#define LT_SRCENDPT_VAL         0xe6    ///< Value of src endpoint in link test
+#define LT_DSTENDPT_VAL         0xe6    ///< Value of dst endpoint in link test
+
+// Link test request-specific
+
+#define LTQ_PAYLOAD_SIZE        12      ///< Length of Link Test Request payload
+
+#define LTQ_DESTADDR_PLDIDX     0       ///< Destination Address Field Index (w.r.t. the payload of ExAddCmd frame)
+#define LTQ_PLDSIZE_PLDIDX      8       ///< Payload Size Field Index (w.r.t. the payload of ExAddCmd frame)
+#define LTQ_NUMITER_PLDIDX      10      ///< Number of Iterations Field Index (w.r.t. the payload of ExAddCmd frame)
+
 
 /**
  ** @}
@@ -162,6 +170,34 @@
 #define ERI_RCVOPTS_IDX         20      ///< Receive Options Field Index
 
 #define ERI_PAYLOAD_IDX         21      ///< Payload Field Index
+
+/**
+ ** @}
+ **/
+
+/** *********************************************************************
+ ** @defgroup LINK_TEST_RESULT LinkTestResult (Explicit Addressing Frame) Definitions
+ **
+ ** @brief The LTR_X definitions are to be used to interpret the fields of the Xbee Explicit Addressing Command Frame
+ ** for the specific case of a link test request packet
+ **
+ ** @{
+ **/
+
+#define LTR_PAYLOAD_SIZE        21      ///< Size of Link Test Result payload
+
+#define LTR_CLUSTERID_VAL       0x0094  ///< Value of Cluster ID return in Link Test Result
+
+#define LTR_DESTADDR_PLDIDX     0       ///< Destination address Field Index (wrt payload)
+#define LTR_PLDSIZE_PLDIDX      8       ///< Payload size Field Index "
+#define LTR_NUMITER_PLDIDX      10      ///< Number of iterations Field Index "
+#define LTR_SUCCESS_PLDIDX      12      ///< Success Field Index "
+#define LTR_RETRIES_PLDIDX      14      ///< Retries Field Index "
+#define LTR_RESULT_PLDIDX       16      ///< Result Field Index "
+#define LTR_MAXRETR_PLDIDX      17      ///< RR (max MAC retries) Field Index "
+#define LTR_MAXRSSI_PLDIDX      18      ///< maxRSSI Field Index "
+#define LTR_MINRSSI_PLDIDX      19      ///< minRSSI Field Index "
+#define LTR_AVGRSSI_PLDIDX      20      ///< avgRSSI Field Index "
 
 /**
  ** @}

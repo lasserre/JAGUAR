@@ -99,8 +99,8 @@ XBFrame::WriteResult WriteTestLinkRequestFrame(const LinkTestRequest &Options, X
     DerivedOptions.BroadcastRadius = 0;
     DerivedOptions.ClusterID = 0x0014;
     DerivedOptions.ProfileID = 0xc105;
-    DerivedOptions.SourceEP = 0xe6;
-    DerivedOptions.DestEP = 0xe6;
+    DerivedOptions.SourceEP = LT_SRCENDPT_VAL;
+    DerivedOptions.DestEP = LT_DSTENDPT_VAL;
     DerivedOptions.FrameID = 1;
     DerivedOptions.TxOptions = Options.TxOptions;
     DerivedOptions.PayloadLength = 12;
@@ -109,9 +109,9 @@ XBFrame::WriteResult WriteTestLinkRequestFrame(const LinkTestRequest &Options, X
     DerivedOptions.PayloadStart = &Frame.FrameStart[EXA_PAYLOAD_IDX];
 
     // Go ahead and write payload (WriteExAddr...() call won't write payload 2x if we specify LinkTest = true)
-    Write_uint64_t(Options.TestNodeB_Addr, &DerivedOptions.PayloadStart[LTR_DESTADDR_PLDIDX]);
-    Write_uint16_t(Options.TestPayloadSize, &DerivedOptions.PayloadStart[LTR_PLDSIZE_PLDIDX]);
-    Write_uint16_t(Options.NumTestIterations, &DerivedOptions.PayloadStart[LTR_NUMITER_PLDIDX]);
+    Write_uint64_t(Options.TestNodeB_Addr, &DerivedOptions.PayloadStart[LTQ_DESTADDR_PLDIDX]);
+    Write_uint16_t(Options.TestPayloadSize, &DerivedOptions.PayloadStart[LTQ_PLDSIZE_PLDIDX]);
+    Write_uint16_t(Options.NumTestIterations, &DerivedOptions.PayloadStart[LTQ_NUMITER_PLDIDX]);
 
     return WriteExAddressingCmdFrame(DerivedOptions, Frame, true);
 }

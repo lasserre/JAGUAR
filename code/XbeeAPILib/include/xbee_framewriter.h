@@ -43,7 +43,7 @@ uint16_t CalcEntireFrameLength(const XBFrame::Type& Type, const uint16_t& Payloa
  * @brief CalcLinkTestFrameLength
  * @return
  */
-inline uint16_t CalcLinkTestFrameLength() { return EXA_MIN_TOTALSIZE + LTR_PAYLOAD_SIZE; }
+inline uint16_t CalcLinkTestFrameLength() { return EXA_MIN_TOTALSIZE + LTQ_PAYLOAD_SIZE; }
 
 /**
  * @brief WriteTxRequestFrame

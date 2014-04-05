@@ -97,6 +97,26 @@ struct ExRxIndicator
     uint32_t ActualFrameSize;
 };
 
+/**
+ * @brief The LinkTestResult struct
+ */
+struct LinkTestResult
+{
+    uint64_t TestNodeA_Addr;        ///< @brief TestNodeA_Addr is the address of the first link endpoint (src)
+    uint64_t TestNodeB_Addr;        ///< @brief TestNodeB_Addr is the address of the second link endpoint (dst)
+    uint16_t TestPayloadSize;       ///< @brief TestPayloadSize is the size of the test payload used to test the link
+    uint16_t NumTestIterations;     ///< @brief NumTestIterations is the number of times the test payload should be transmitted
+    uint16_t NumSuccessPackets;     ///< @brief NumSuccessPackets is the number of packets successfully acknowledged
+    uint16_t NumRetries;
+    uint8_t Result;
+    uint8_t MaxAllowedMACRetries;
+    uint8_t MaxRSSI;                ///< @brief MaxRSSI is max value Received Signal Strength Indicator (-dBm)
+    uint8_t MinRSSI;
+    uint8_t AvgRSSI;
+
+    uint8_t RxOptions;              ///< @brief RxOptions
+};
+
 
 } // XbeeAPI
 
