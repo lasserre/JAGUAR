@@ -51,7 +51,8 @@ void MainWindow::SelectPort()
 
 void MainWindow::SendFrame()
 {
-    QByteArray data = GetTxReqXBFrame();
+    QByteArray data = GetExAddrXBFrame();
+    //QByteArray data = GetTxReqXBFrame();
 
     LogMessage("ATTEMPTING TO SEND:");
     DebugQByteArray(data);
@@ -96,6 +97,10 @@ void MainWindow::ReceiveFrame()
             HandleRxPacket(&frame);
             break;
 
+        case XBFrame::ExRxIndicator:
+            HandleExRxIndicator(&frame);
+            break;
+
         default:
             LogMessage("Unhandled frame type of: " + QString::number(type));
         }
@@ -104,7 +109,18 @@ void MainWindow::ReceiveFrame()
     {
         QString resString = QString::fromStdString(XbeeAPI::FrameParser::GetParseResultString(res));
         LogMessage("ParseFrameType res = " + resString);
+
+        if (resCategory == XBFrame::PRC_Error)
+        {
+            if (res == XBFrame::PR_START_INV)
+            {
+
+            }
+        }
     }
+
+    LogMessage("Current frameBuffer: ");
+    DebugQByteArray(frameBuffer);
 
     return;
 }
@@ -122,7 +138,7 @@ QByteArray MainWindow::GetTxReqXBFrame()
     // Construct frame ---------
     XbeeAPI::XBFrame::FrameByteArray frame;
 
-    frame.SetFrameSize(XbeeAPI::FrameWriter::GetTxRequestFrameSize(options));   // Set size for TxRequest frame
+    frame.SetFrameSize(FrameWriter::CalcEntireFrameLength(XBFrame::TransmitRequest, options.PayloadLength));   // Set size for TxRequest frame
     frame.FrameStart = new uint8_t[frame.FrameSize()];      // Allocate memory for frame
 
     XbeeAPI::FrameWriter::WriteTxRequestFrame(options, frame);
@@ -135,6 +151,41 @@ QByteArray MainWindow::GetTxReqXBFrame()
     delete [] options.PayloadStart;
 
     return result;
+}
+
+QByteArray MainWindow::GetExAddrXBFrame()
+{
+    uint64_t A1 = 0x13a200409178e0;      // H5YL
+    uint64_t A2 = 0x13a200409a2d64;
+    uint64_t A3 = 0x13a200408dd526;      // H647
+
+    uint64_t Addr1 = A1;
+    uint64_t Addr2 = A3;
+
+    LinkTestRequest LTR;
+    LTR.TestNodeA_Addr = Addr1;
+    LTR.TestNodeB_Addr = Addr2;
+    LTR.NumTestIterations = 10;
+    LTR.TestPayloadSize = 16;
+    LTR.TxOptions = 0;
+
+    // Construct frame ---------
+    XbeeAPI::XBFrame::FrameByteArray frame;
+
+    frame.SetFrameSize(FrameWriter::CalcLinkTestFrameLength());   // Set size for link test frame
+    frame.FrameStart = new uint8_t[frame.FrameSize()];      // Allocate memory for frame
+
+    XBFrame::WriteResult res = XbeeAPI::FrameWriter::WriteTestLinkRequestFrame(LTR, frame);
+    LogMessage("WriteResult: " + QString::fromStdString(FrameWriter::GetWriteResultString(res)));
+
+    // Platform-specific code
+    QByteArray result((char*)frame.FrameStart, frame.FrameSize());
+    /////////////////////////
+
+    delete [] frame.FrameStart;
+
+    return result;
+
 }
 
 void MainWindow::DebugQByteArray(const QByteArray &Array)
@@ -177,10 +228,7 @@ void MainWindow::HandleTxStatus(XBFrame::FrameByteArray *TxStatusFrame)
         LogMessage("DelivStatus: " + QString::fromStdString(status.GetDelivStatString()));
         LogMessage("DiscvStatus: " + QString::fromStdString(status.GetDiscvStatString()));
 
-        if (res == XBFrame::PR_ParseSuccess)
-            frameBuffer.clear();
-        else
-            frameBuffer.remove(0, TxStatusFrame->FrameSize());   // We might have extra bytes at the end!
+        frameBuffer.remove(0, status.ActualFrameSize);   // We might have extra bytes at the end!
         break;
 
     default:
@@ -194,6 +242,7 @@ void MainWindow::HandleRxPacket(XBFrame::FrameByteArray *RxPacketFrame)
     LogMessage("ReceivePacket frame received!");
 
     RxPacket packet;
+    QByteArray payload;
 
     XBFrame::ParseResult res = FrameParser::ParseRxPacket(*RxPacketFrame, packet);
     XBFrame::ParseResCategory resCategory = FrameParser::GetParseResultCategory(res);
@@ -202,17 +251,59 @@ void MainWindow::HandleRxPacket(XBFrame::FrameByteArray *RxPacketFrame)
     {
     case XBFrame::PRC_Success:
 
+        payload = QByteArray((char*)packet.PayloadStart, packet.ExpctdPayloadLen);
+
         LogMessage("RxPacketFrame Frame Size: " + QString::number(RxPacketFrame->FrameSize()));
         LogMessage("Actual Frame Size: " + QString::number(packet.ActualFrameSize));
         LogMessage("Expected Payload Length: " + QString::number(packet.ExpctdPayloadLen));
-        LogMessage("Source address: " + QString::number(packet.SourceAddress));
-        LogMessage("Payload: " + QByteArray((char*)packet.PayloadStart, packet.ExpctdPayloadLen));
-        LogMessage("Receive Options: " + QString::fromStdString(packet.GetRcvOptsString()));
+        LogMessage("Source address: 0x" + QString::number(packet.SourceAddress, 16).toUpper());
+        LogMessage("Payload (Hex): " );
+        DebugQByteArray(payload);
+        LogMessage("Payload (ASCII): " + payload);
+        LogMessage("Receive Options: " + QString::fromStdString(FrameParser::GetRcvOptsString(packet.ReceiveOpts)));
 
         if (res == XBFrame::PR_ParseSuccess)
             frameBuffer.clear();
         else
             frameBuffer.remove(0, RxPacketFrame->FrameSize());
+
+        break;
+
+    default:
+        QString resString = QString::fromStdString(FrameParser::GetParseResultString(res));
+        LogMessage("ParseRxPacket ERROR: " + resString);
+    }
+}
+
+void MainWindow::HandleExRxIndicator(XBFrame::FrameByteArray *ExRxIndFrame)
+{
+    LogMessage("ExRxIndicator frame received!");
+
+    ExRxIndicator indicator;
+    QByteArray payload;
+
+    XBFrame::ParseResult res = FrameParser::ParseExRxIndicator(*ExRxIndFrame, indicator);
+    XBFrame::ParseResCategory resCategory = FrameParser::GetParseResultCategory(res);
+
+    switch (resCategory)
+    {
+    case XBFrame::PRC_Success:
+
+        payload = QByteArray((char*)indicator.PayloadStart, indicator.ExpctdPayloadLen);
+
+        LogMessage("ExRxIndicator Frame Size: " + QString::number(ExRxIndFrame->FrameSize()));
+        LogMessage("Actual Frame Size: " + QString::number(indicator.ActualFrameSize));
+        LogMessage("Expected Payload Length: " + QString::number(indicator.ExpctdPayloadLen));
+        LogMessage("Source address: 0x" + QString::number(indicator.SourceAddress, 16).toUpper());
+        LogMessage("Payload (Hex): " );
+        DebugQByteArray(payload);
+        LogMessage("Payload (ASCII): " + payload);
+        LogMessage("Receive Options: " + QString::fromStdString(FrameParser::GetRcvOptsString(indicator.RxOptions)));
+
+        if (res == XBFrame::PR_ParseSuccess)
+            frameBuffer.clear();
+        else
+            frameBuffer.remove(0, ExRxIndFrame->FrameSize());
 
         break;
 

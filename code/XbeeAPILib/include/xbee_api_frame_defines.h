@@ -33,6 +33,12 @@
 #define XB_MIN_PAYLOADSIZE      0       ///< Min size of payload (for frames that have a payload)
 #define XB_MAX_PAYLOADSIZE      65536   ///< Max size of payload (for frames that have a payload) CLS: a little large, yes?
 
+// Globally-used values
+
+#define RCV_OPTS_ACK            0x01    ///< Receive Options Field - Packet Acknowledged
+#define RCV_OPTS_BCP            0x02    ///< Receive Options Field - Packet was a broadcast packet
+
+
 /**
  ** @}
  **/
@@ -45,8 +51,117 @@
  * @{
  */
 
+// Basic frame values
+
 #define TXR_FRAMETYPE_ENUM      0x10     ///< Value written to Frame Type field for TxRequest frames
 #define TXR_BASEFRAME_SIZE      14       ///< Value of LEN field NOT including payload. (e.g. LEN = BASE_SIZE + PAYLOAD_SIZE)
+
+/**
+ ** @}
+ **/
+
+/** *********************************************************************
+ ** @defgroup EXPLICIT_ADDR_COMMAND ExplicitAddressingCommand Frame Definitions
+ **
+ ** @brief The EXA_X definitions are to be used to interpret the fields of the Xbee Explicit Addressing Command Frame
+ **
+ ** @{
+ **/
+
+// Basic frame values
+
+#define EXA_FRAMETYPE_ENUM      0x11    ///< Value written to Frame Type field for ExAddrCmd frames
+#define EXA_BASEFRAME_SIZE      20      ///< Value of LEN field NOT including payload (if any)
+
+#define EXA_MIN_LENVALUE        (EXA_BASEFRAME_SIZE)    ///< Min value of LENGTH field for ExAddrCmd frames
+#define EXA_MAX_LENVALUE        (XB_MAX_PAYLOADSIZE)    ///< Max value of LENGTH field for ExAddrCmd frames
+#define EXA_MIN_TOTALSIZE       (XB_BASEFRAME_SIZE + EXA_MIN_LENVALUE)  ///< Min total frame size for ExAddrCmd frames
+#define EXA_MAX_TOTALSIZE       (XB_BASEFRAME_SIZE + EXA_MAX_LENVALUE)  ///< Max total frame size for ExAddrCmd frames
+
+// Field-specific
+
+#define EXA_FRAMEID_IDX         4       ///< Frame ID Field Index
+
+#define EXA_DESTADDR_IDX        5       ///< Destination Address Field Index
+
+#define EXA_RESERVED_IDX        13      ///< Reserved Field Index
+
+#define EXA_SRCENDPT_IDX        15      ///< Source Endpoint Field Index
+
+#define EXA_DSTENDPT_IDX        16      ///< Destination Endpoint Field Index
+
+#define EXA_CLUSTERID_IDX       17      ///< Cluster ID Field Index
+
+#define EXA_PROFILEID_IDX       19      ///< Profile ID Field Index
+
+#define EXA_BCSTRAD_IDX         21      ///< Broadcast Radius Field Index
+
+#define EXA_TXOPTIONS_IDX       22      ///< Transmit Options Field Index
+#define EXA_TXOPTIONS_NONE      0x00    ///< Transmit Options Field - No options specified
+#define EXA_TXOPTIONS_DACK      0x01    ///< Transmit Options Field - Disable ACK
+#define EXA_TXOPTIONS_NDSC      0x02    ///< Transmit Options Field - Don't attempt route discovery
+#define EXA_TXOPTIONS_BOTH      0x03    ///< Transmit Options Field - Disable ACK & Don't attempt route discovery
+
+#define EXA_PAYLOAD_IDX         23      ///< Payload Field Index
+
+/**
+ ** @}
+ **/
+
+/** *********************************************************************
+ ** @defgroup LINK_TEST_REQUEST LinkTestRequest (Explicit Addressing Frame) Definitions
+ **
+ ** @brief The LTR_X definitions are to be used to interpret the fields of the Xbee Explicit Addressing Command Frame
+ ** for the specific case of a link test request packet
+ **
+ ** @{
+ **/
+
+#define LTR_PAYLOAD_SIZE        12      ///< Length of Link Test Request payload
+
+#define LTR_DESTADDR_PLDIDX     0       ///< Destination Address Field Index (w.r.t. the payload of ExAddCmd frame)
+#define LTR_PLDSIZE_PLDIDX      8       ///< Payload Size Field Index (w.r.t. the payload of ExAddCmd frame)
+#define LTR_NUMITER_PLDIDX      10      ///< Number of Iterations Field Index (w.r.t. the payload of ExAddCmd frame)
+
+/**
+ ** @}
+ **/
+
+/** *********************************************************************
+ ** @defgroup EX_RX_INDICATOR Explicit Rx Indicator Frame Definitions
+ **
+ ** @brief The ERI_X definitions are to be used to interpret the fields of the Xbee Explicit Rx Indicator Frame
+ **
+ ** @{
+ **/
+
+// Basic frame values
+
+#define ERI_FRAMETYPE_ENUM      0x91    ///< Value written to FRAMETYPE field for ExRxIndicator frames
+#define ERI_BASEFRAME_SIZE      18      ///< Value of LEN field NOT including payload (if any)
+
+#define ERI_MIN_LENVALUE        (ERI_BASEFRAME_SIZE)    ///< Min value of LEN field for ExRxIndicator frames
+#define ERI_MAX_LENVALUE        (XB_MAX_PAYLOADSIZE)    ///< Max value of LEN field for ExRxIndicator frames
+#define ERI_MIN_TOTALSIZE       (XB_BASEFRAME_SIZE + ERI_MIN_LENVALUE)  ///< Min total frame size for ExRxIndicator frames
+#define ERI_MAX_TOTALSIZE       (XB_BASEFRAME_SIZE + ERI_MAX_LENVALUE)  ///< Max total frame size for ExRxIndicator frames
+
+// Field-specific
+
+#define ERI_SOURCEADDR_IDX      4       ///< Source Address Field Index
+
+#define ERI_RESERVED_IDX        12      ///< Reserved Field Index
+
+#define ERI_SRCENDPT_IDX        14      ///< Source Endpoint Field Index
+
+#define ERI_DSTENDPT_IDX        15      ///< Destination Endpoint Field Index
+
+#define ERI_CLUSTERID_IDX       16      ///< Cluster ID Field Index
+
+#define ERI_PROFILEID_IDX       18      ///< Profile ID Field Index
+
+#define ERI_RCVOPTS_IDX         20      ///< Receive Options Field Index
+
+#define ERI_PAYLOAD_IDX         21      ///< Payload Field Index
 
 /**
  ** @}
@@ -60,6 +175,8 @@
  * @{
  */
 
+// Basic frame values
+
 #define TXS_FRAMETYPE_ENUM      0x8B    ///< Value written to FRAMETYPE field for TxStatus frames
 #define TXS_BASEFRAME_SIZE      7       ///< Value of LEN field NOT including payload (if any)
 
@@ -67,6 +184,8 @@
 #define TXS_MAX_LENVALUE        (TXS_BASEFRAME_SIZE)    ///< Maximum value of LENGTH field for TxStatus frames
 #define TXS_MIN_TOTALSIZE       (XB_BASEFRAME_SIZE + TXS_MIN_LENVALUE)    ///< Minimum total frame size for TxStatus frames
 #define TXS_MAX_TOTALSIZE       (XB_BASEFRAME_SIZE + TXS_MAX_LENVALUE)    ///< Maximum total frame size for TxStatus frames
+
+// Field-specific
 
 #define TXS_RTRYCOUNT_IDX       7       ///< Retry Count Field Index
 
@@ -107,8 +226,6 @@
 #define RXP_RESERVED_IDX        12      ///< Reserved Field Index
 
 #define RXP_RCV_OPTS_IDX        14      ///< Receive Options Field Index
-#define RXP_RCV_OPTS_ACK        0x01    ///< Receive Options Field - Packet Acknowledged
-#define RXP_RCV_OPTS_BCP        0x02    ///< Receive Options Field - Packet was a broadcast packet
 
 #define RXP_PAYLOAD_IDX         15      ///< Payload Field Index
 

@@ -37,17 +37,4 @@ std::string TxStatus::GetDiscvStatString() const
     }
 }
 
-std::string RxPacket::GetRcvOptsString() const
-{
-    switch (ReceiveOpts)
-    {
-    case RXP_RCV_OPTS_ACK:
-        return "PacketAcknowledged";
-    case RXP_RCV_OPTS_BCP:
-        return "PacketWasBroadcast";
-    default:
-        return "UnrecognizedReceiveOption";
-    }
-}
-
 }

@@ -12,6 +12,8 @@
 namespace XbeeAPI {
 
 struct TxRequest;
+struct ExAddressingCmd;
+struct LinkTestRequest;
 
 namespace FrameWriter {
 
@@ -23,19 +25,48 @@ namespace FrameWriter {
 std::string GetWriteResultString(const XBFrame::WriteResult& Result);
 
 /**
- * @brief GetTxRequestFrameSize
- * @param Options
+ * @brief GetParseResultCategory
+ * @param Result
  * @return
  */
-uint16_t GetTxRequestFrameSize(const TxRequest& Options);
+XBFrame::WriteResCategory GetWriteResultCategory(const XBFrame::WriteResult &Result);
+
+/**
+ * @brief CalcEntireFrameLength
+ * @param Type
+ * @param PayloadLength
+ * @return
+ */
+uint16_t CalcEntireFrameLength(const XBFrame::Type& Type, const uint16_t& PayloadLength);
+
+/**
+ * @brief CalcLinkTestFrameLength
+ * @return
+ */
+inline uint16_t CalcLinkTestFrameLength() { return EXA_MIN_TOTALSIZE + LTR_PAYLOAD_SIZE; }
 
 /**
  * @brief WriteTxRequestFrame
  * @param Options
- * @param FrameStart
- * @param FrameLen
+ * @param Frame is the fully allocated frame object that will be written to
  */
-void WriteTxRequestFrame(const TxRequest& Options, const XBFrame::FrameByteArray &Frame);
+void WriteTxRequestFrame(const TxRequest& Options, XBFrame::FrameByteArray &Frame);
+
+/**
+ * @brief WriteExAddressingCmdFrame
+ * @param Options
+ * @param Frame
+ */
+XBFrame::WriteResult WriteExAddressingCmdFrame(const ExAddressingCmd& Options, XBFrame::FrameByteArray &Frame,
+                                               const bool &LinkTest = false);
+
+/**
+ * @brief WriteTestLinkRequestFrame
+ * @param Options
+ * @param Frame
+ * @return
+ */
+XBFrame::WriteResult WriteTestLinkRequestFrame(const LinkTestRequest& Options, XBFrame::FrameByteArray &Frame);
 
 } // FrameConstructor
 

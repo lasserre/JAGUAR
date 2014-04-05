@@ -76,19 +76,57 @@ inline bool ReadLengthField(const XBFrame::FrameByteArray& Frame, uint16_t& LENG
     }
 }
 
-inline bool Read64BitAddrField(const XBFrame::FrameByteArray& Frame, const uint32_t& AddressIdx, uint64_t& AddressField)
+inline bool Read_uint16_t(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint16_t& Field)
 {
-    if (!CanSafelyReadBytes(Frame, AddressIdx, sizeof(AddressField)))
+    if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
         return false;
     else
     {
-        AddressField = 0;
+        Field = 0;
 
-        for (uint8_t i = 0; i < sizeof(AddressField); i++)
+        for (uint8_t i = 0; i < sizeof(Field); i++)
         {
-            // Assign AddressField
-            AddressField <<= 8;
-            AddressField |= (0x00000000000000ff & Frame.FrameStart[AddressIdx + i]);
+            //Assign Field
+            Field <<= 8;
+            Field |= (0x00000000000000ff & Frame.FrameStart[Idx + i]);
+        }
+
+        return true;
+    }
+}
+
+inline bool Read_uint32_t(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint32_t& Field)
+{
+    if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
+        return false;
+    else
+    {
+        Field = 0;
+
+        for (uint8_t i = 0; i < sizeof(Field); i++)
+        {
+            //Assign Field
+            Field <<= 8;
+            Field |= (0x00000000000000ff & Frame.FrameStart[Idx + i]);
+        }
+
+        return true;
+    }
+}
+
+inline bool Read_uint64_t(const XBFrame::FrameByteArray& Frame, const uint32_t& Idx, uint64_t& Field)
+{
+    if (!CanSafelyReadBytes(Frame, Idx, sizeof(Field)))
+        return false;
+    else
+    {
+        Field = 0;
+
+        for (uint8_t i = 0; i < sizeof(Field); i++)
+        {
+            //Assign Field
+            Field <<= 8;
+            Field |= (0x00000000000000ff & Frame.FrameStart[Idx + i]);
         }
 
         return true;
@@ -108,6 +146,8 @@ inline uint16_t CalcExpctdPayloadSize(const XBFrame::Type& FrameType, const uint
     {
     case XBFrame::ReceivePacket:
         return XBLength - RXP_BASEFRAME_SIZE;
+    case XBFrame::ExRxIndicator:
+        return XBLength - ERI_BASEFRAME_SIZE;
     default:
         return -1;
     }
@@ -145,6 +185,14 @@ std::string GetParseResultString(const XBFrame::ParseResult &Result)
         return "Receive options field not in bounds";
     case XBFrame::PR_PAYLOAD_NIB:
         return "Payload not fully in bounds";
+    case XBFrame::PR_SRCENDPT_NIB:
+        return "Source endpoint not in bounds";
+    case XBFrame::PR_DSTENDPT_NIB:
+        return "Destination endpoint not in bounds";
+    case XBFrame::PR_CLUSTERID_NIB:
+        return "Cluster ID not in bounds";
+    case XBFrame::PR_PROFILEID_NIB:
+        return "Profile ID not in bounds";
     case XBFrame::PR_CHECKSUM_NIB:
         return "Checksum not in bounds";
     default:
@@ -169,6 +217,20 @@ XBFrame::ParseResCategory GetParseResultCategory(const XBFrame::ParseResult &Res
         return XBFrame::PRC_Success;
 }
 
+std::string GetRcvOptsString(const uint8_t& ReceiveOpts)
+{
+    switch (ReceiveOpts)
+    {
+    case RCV_OPTS_ACK:
+        return "PacketAcknowledged";
+    case RCV_OPTS_BCP:
+        return "PacketWasBroadcast";
+    default:
+        return "UnrecognizedReceiveOption";
+    }
+}
+
+
 XBFrame::ParseResult ParseFrameType(const XBFrame::FrameByteArray& Frame, XBFrame::Type& FrameType)
 {
     FrameType = XBFrame::UnknownFrameType;    // Set FrameType to unknown in case we return an error before parsing type
@@ -191,6 +253,9 @@ XBFrame::ParseResult ParseFrameType(const XBFrame::FrameByteArray& Frame, XBFram
         break;
     case RXP_FRAMETYPE_ENUM:
         FrameType = XBFrame::ReceivePacket;
+        break;
+    case ERI_FRAMETYPE_ENUM:
+        FrameType = XBFrame::ExRxIndicator;
         break;
     default:
         FrameType = XBFrame::UnknownFrameType;
@@ -230,7 +295,7 @@ XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray& Frame, RxPacke
             return XBFrame::PR_LENGTH_NIB;      // Length field not in bounds
 
         // Read 64-bit source address
-        if (!Utils::Read64BitAddrField(Frame, RXP_SOURCEADDR_IDX, Packet.SourceAddress))
+        if (!Utils::Read_uint64_t(Frame, RXP_SOURCEADDR_IDX, Packet.SourceAddress))
             return XBFrame::PR_ADDRESS_NIB;     // Address field not in bounds
 
         // Read Receive Options field
@@ -253,6 +318,67 @@ XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray& Frame, RxPacke
         if (Packet.ActualFrameSize < Frame.FrameSize())
             return XBFrame::PR_XtraBytes;
         else if (Packet.ActualFrameSize == Frame.FrameSize())
+            return XBFrame::PR_ParseSuccess;
+        else
+            return XBFrame::PR_CHECKSUM_NIB;
+    }
+    else
+        return XBFrame::PR_MinLenNIB;
+}
+
+XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, ExRxIndicator &Indicator)
+{
+    if (ERI_MIN_TOTALSIZE <= Frame.FrameSize())
+    {
+        // Min length received
+
+        /* ---------- Read fields ---------- */
+
+        // Read Length
+        uint16_t XBLength;
+        if (!Utils::ReadLengthField(Frame, XBLength))
+            return XBFrame::PR_LENGTH_NIB;      // Length field not in bounds
+
+        // Read 64-bit source address
+        if (!Utils::Read_uint64_t(Frame, ERI_SOURCEADDR_IDX, Indicator.SourceAddress))
+            return XBFrame::PR_ADDRESS_NIB;     // Address field not in bounds
+
+        // Read source endpoint
+        if (!Utils::SafeReadByte(Frame, ERI_SRCENDPT_IDX, Indicator.SourceEP))
+            return XBFrame::PR_SRCENDPT_NIB;    // Source endpoint field not in bounds
+
+        // Read destination endpoint
+        if (!Utils::SafeReadByte(Frame, ERI_DSTENDPT_IDX, Indicator.DestEP))
+            return XBFrame::PR_DSTENDPT_NIB;    // Destination endpoint field not in bounds
+
+        // Read cluster ID
+        if (!Utils::Read_uint16_t(Frame, ERI_CLUSTERID_IDX, Indicator.ClusterID))
+            return XBFrame::PR_CLUSTERID_NIB;   // Cluster ID field not in bounds
+
+        // Read profile ID
+        if (!Utils::Read_uint16_t(Frame, ERI_PROFILEID_IDX, Indicator.ProfileID))
+            return XBFrame::PR_PROFILEID_NIB;   // Profile ID field not in bounds
+
+        // Read Receive Options field
+        if (!Utils::SafeReadByte(Frame, ERI_RCVOPTS_IDX, Indicator.RxOptions))
+            return XBFrame::PR_RCVOPTS_NIB;     // RxOptions field not in bounds
+
+        // Calculate payload size
+        Indicator.ExpctdPayloadLen = Utils::CalcExpctdPayloadSize(XBFrame::ExRxIndicator, XBLength);
+
+        if (!Utils::CanSafelyReadBytes(Frame, ERI_PAYLOAD_IDX, Indicator.ExpctdPayloadLen))
+            return XBFrame::PR_PAYLOAD_NIB;     // Payload not fully in bounds
+        else
+            Indicator.PayloadStart = &Frame.FrameStart[ERI_PAYLOAD_IDX];    // Set payload index
+
+        /* ---------- End Read fields ---------- */
+
+        // Check expected size vs. received size
+        Indicator.ActualFrameSize = Utils::CalcExpctdFrameSize(XBLength);
+
+        if (Indicator.ActualFrameSize < Frame.FrameSize())
+            return XBFrame::PR_XtraBytes;
+        else if (Indicator.ActualFrameSize == Frame.FrameSize())
             return XBFrame::PR_ParseSuccess;
         else
             return XBFrame::PR_CHECKSUM_NIB;

@@ -10,6 +10,7 @@ namespace XbeeAPI {
 
 struct TxStatus;
 struct RxPacket;
+struct ExRxIndicator;
 
 namespace FrameParser {
 
@@ -28,6 +29,13 @@ std::string GetParseResultString(const XBFrame::ParseResult& Result);
  * @return The ParseResCategory for Result
  */
 XBFrame::ParseResCategory GetParseResultCategory(const XBFrame::ParseResult& Result);
+
+/**
+ * @brief GetRcvOptsString
+ * @param ReceiveOpts
+ * @return
+ */
+std::string GetRcvOptsString(const uint8_t& ReceiveOpts);
 
 /**
  * @brief ParseFrameType parses the type field of an Xbee frame
@@ -55,6 +63,14 @@ XBFrame::ParseResult ParseTxStatus(const XBFrame::FrameByteArray& Frame, TxStatu
  * @return ParseResult result of parse attempt
  */
 XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray &Frame, RxPacket& Packet);
+
+/**
+ * @brief ParseExRxIndicator
+ * @param Frame
+ * @param Indicator
+ * @return
+ */
+XBFrame::ParseResult ParseExRxIndicator(const XBFrame::FrameByteArray &Frame, ExRxIndicator& Indicator);
 
 } // FrameParser
 

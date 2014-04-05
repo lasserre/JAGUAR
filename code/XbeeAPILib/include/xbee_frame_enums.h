@@ -55,10 +55,12 @@ struct FrameByteArray
  */
 enum Type
 {
-    UnknownFrameType,
-    TransmitRequest,
-    TransmitStatus,
-    ReceivePacket
+    UnknownFrameType,       ///< @brief UnknownFrameType is returned for types not (yet) supported, or invalid types
+    TransmitRequest,        ///< @brief TransmitRequest represents the Transmit Request frame
+    TransmitStatus,         ///< @brief TransmitStatus represents the Transmit Status frame
+    ReceivePacket,          ///< @brief ReceivePacket represents the Receive Packet frame
+    ExAddrCmd,              ///< @brief ExAddrCmd represents the Explicit Addressing Command frame
+    ExRxIndicator           ///< @brief ExRxIndicator represents the Explicit Rx Indicator frame
 };
 
 /**
@@ -157,6 +159,10 @@ enum ParseResult
     PR_FRAMETYPE_NIB,              ///< FRAMETYPE byte is not in bounds
     PR_RCVOPTS_NIB,                ///< RCVOPTS byte is not in bounds (Receive Packet frame)
     PR_PAYLOAD_NIB,                ///< PAYLOAD bytes are not in bounds
+    PR_SRCENDPT_NIB,               ///< SRCENDPT byte is not in bounds
+    PR_DSTENDPT_NIB,               ///< DSTENDPT byte is not in bounds
+    PR_CLUSTERID_NIB,              ///< CLUSTERID byte is not in bounds
+    PR_PROFILEID_NIB,              ///< PROFILEID byte is not in bounds
     PR_CHECKSUM_NIB,               ///< CHECKSUM byte is not in bounds
     //----------------
 

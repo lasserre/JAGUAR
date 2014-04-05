@@ -21,12 +21,22 @@ std::string GetWriteResultString(const XBFrame::WriteResult &Result)
     }
 }
 
-uint16_t GetTxRequestFrameSize(const TxRequest& Options)
+XBFrame::WriteResCategory GetWriteResultCategory(const XBFrame::WriteResult &Result)
 {
-    return CalcFrameSpecificLength(XBFrame::TransmitRequest, Options.PayloadLength) + XB_BASEFRAME_SIZE;
+    // Check the categories in order, since first match will return the category
+
+    if (Result < XBFrame::WR_SUCCESS_CATEGORY_BEGIN)
+        return XBFrame::WRC_NIB;        // No known category before this!
+    else
+        return XBFrame::WRC_Success;
 }
 
-void WriteTxRequestFrame(const TxRequest &Options, const XBFrame::FrameByteArray& Frame)
+uint16_t CalcEntireFrameLength(const XBFrame::Type& Type, const uint16_t& PayloadLength)
+{
+    return CalcFrameSpecificLength(Type, PayloadLength) + XB_BASEFRAME_SIZE;
+}
+
+void WriteTxRequestFrame(const TxRequest &Options, XBFrame::FrameByteArray& Frame)
 {
     uint16_t frameSpecLen = CalcFrameSpecificLength(XBFrame::TransmitRequest, Options.PayloadLength);
 
@@ -35,18 +45,75 @@ void WriteTxRequestFrame(const TxRequest &Options, const XBFrame::FrameByteArray
     Frame.FrameStart[4] = 0x01;   // Frame ID
 
     WriteXbeeDestAddress(&Frame.FrameStart[5], Options.DestAddress);
+    WriteReservedField(&Frame.FrameStart[13]);  // Reserved field
 
-    Frame.FrameStart[13] = 0xff;  // Reserved
-    Frame.FrameStart[14] = 0xfe;
     Frame.FrameStart[15] = 0x00;  // Broadcast Radius (0 = max)
     Frame.FrameStart[16] = 0x00;  // Tx Options (bitfield)
 
     memcpy(&Frame.FrameStart[17], Options.PayloadStart, Options.PayloadLength);
 
-    uint16_t frameLength = GetTxRequestFrameSize(Options);
-    Frame.FrameStart[frameLength - 1] = CalcFrameChecksum(Frame);
+    WriteChecksum(&Frame);
 
     return;
+}
+
+XBFrame::WriteResult WriteExAddressingCmdFrame(const ExAddressingCmd &Options, XBFrame::FrameByteArray &Frame,
+                                               const bool& LinkTest /*= false*/)
+{
+    XBFrame::WriteResult result;
+
+    uint16_t frameSpecLen = CalcFrameSpecificLength(XBFrame::ExAddrCmd, Options.PayloadLength);
+
+    result = WriteXbeeFrameHeader(Frame, frameSpecLen, XBFrame::ExAddrCmd);
+
+    if (GetWriteResultCategory(result) != XBFrame::WRC_Success)
+        return result;
+
+    Frame.FrameStart[EXA_FRAMEID_IDX] = Options.FrameID;
+
+    WriteXbeeDestAddress(&Frame.FrameStart[EXA_DESTADDR_IDX], Options.DestAddress);
+    WriteReservedField(&Frame.FrameStart[EXA_RESERVED_IDX]);    // Reserved
+
+    Frame.FrameStart[EXA_SRCENDPT_IDX] = Options.SourceEP;
+    Frame.FrameStart[EXA_DSTENDPT_IDX] = Options.DestEP;
+
+    Write_uint16_t(Options.ClusterID, &Frame.FrameStart[EXA_CLUSTERID_IDX]);
+    Write_uint16_t(Options.ProfileID, &Frame.FrameStart[EXA_PROFILEID_IDX]);
+
+    Frame.FrameStart[EXA_BCSTRAD_IDX] = Options.BroadcastRadius;
+    Frame.FrameStart[EXA_TXOPTIONS_IDX] = Options.TxOptions;
+
+    // If LinkTest, the payload has already been written to!
+    if (!LinkTest)
+        memcpy(&Frame.FrameStart[EXA_PAYLOAD_IDX], Options.PayloadStart, Options.PayloadLength);
+
+    WriteChecksum(&Frame);
+
+    return XBFrame::WR_WriteSuccess;
+}
+
+XBFrame::WriteResult WriteTestLinkRequestFrame(const LinkTestRequest &Options, XBFrame::FrameByteArray &Frame)
+{
+    ExAddressingCmd DerivedOptions;
+    DerivedOptions.DestAddress = Options.TestNodeA_Addr;
+    DerivedOptions.BroadcastRadius = 0;
+    DerivedOptions.ClusterID = 0x0014;
+    DerivedOptions.ProfileID = 0xc105;
+    DerivedOptions.SourceEP = 0xe6;
+    DerivedOptions.DestEP = 0xe6;
+    DerivedOptions.FrameID = 1;
+    DerivedOptions.TxOptions = Options.TxOptions;
+    DerivedOptions.PayloadLength = 12;
+
+    // Point PayloadStart to beginning of payload in Frame
+    DerivedOptions.PayloadStart = &Frame.FrameStart[EXA_PAYLOAD_IDX];
+
+    // Go ahead and write payload (WriteExAddr...() call won't write payload 2x if we specify LinkTest = true)
+    Write_uint64_t(Options.TestNodeB_Addr, &DerivedOptions.PayloadStart[LTR_DESTADDR_PLDIDX]);
+    Write_uint16_t(Options.TestPayloadSize, &DerivedOptions.PayloadStart[LTR_PLDSIZE_PLDIDX]);
+    Write_uint16_t(Options.NumTestIterations, &DerivedOptions.PayloadStart[LTR_NUMITER_PLDIDX]);
+
+    return WriteExAddressingCmdFrame(DerivedOptions, Frame, true);
 }
 
 } // FrameConstructor

@@ -30,12 +30,14 @@ private:
     QByteArray frameBuffer;
 
     QByteArray GetTxReqXBFrame();
+    QByteArray GetExAddrXBFrame();
 
     void LogMessage(const QString& Message);
     void DebugQByteArray(const QByteArray& Array);
 
     void HandleTxStatus(XbeeAPI::XBFrame::FrameByteArray* TxStatusFrame);
     void HandleRxPacket(XbeeAPI::XBFrame::FrameByteArray* RxPacketFrame);
+    void HandleExRxIndicator(XbeeAPI::XBFrame::FrameByteArray* ExRxIndFrame);
 };
 
 #endif // MAINWINDOW_H

@@ -50,8 +50,13 @@ uint8_t CalcFrameChecksum(const XBFrame::FrameByteArray& Frame);
 XBFrame::WriteResult WriteXbeeFrameHeader(const XBFrame::FrameByteArray &Frame, const uint16_t &LENGTH_field,
                                           const XBFrame::Type& FrameType);
 
-void WriteXbeeDestAddress(uint8_t* DestAddressStart, uint64_t DestAddress);
+void WriteXbeeDestAddress(uint8_t* DestAddressStart, const uint64_t &DestAddress);
 bool WriteFrameTypeField(const XBFrame::Type& FrameType, uint8_t *FrameTypeByte);
+void WriteReservedField(uint8_t* ReservedStartByte);
+void WriteChecksum(XBFrame::FrameByteArray *Frame);
+void Write_uint16_t(uint16_t Bytes, uint8_t* DestStart);
+void Write_uint32_t(uint32_t Bytes, uint8_t* DestStart);
+void Write_uint64_t(uint64_t Bytes, uint8_t* DestStart);
 
 }   // XbeeAPI
 
