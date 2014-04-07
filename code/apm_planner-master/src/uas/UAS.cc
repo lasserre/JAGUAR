@@ -2663,8 +2663,8 @@ void UAS::setManualControlCommands(double roll, double pitch, double yaw, double
     manualYawAngle = yaw * yawScaling;
     manualThrust = thrust * thrustScaling;
 
-    // If system has manual inputs enabled and is armed
-    if(((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL) && (mode & MAV_MODE_FLAG_DECODE_POSITION_SAFETY)) || (mode & MAV_MODE_FLAG_HIL_ENABLED))
+    // If system has manual inputs enabled
+    if(((mode & MAV_MODE_FLAG_DECODE_POSITION_MANUAL)) || (mode & MAV_MODE_FLAG_HIL_ENABLED))
     {
         mavlink_message_t message;
         mavlink_msg_manual_control_pack(mavlink->getSystemId(), mavlink->getComponentId(), &message, this->uasId, (float)manualPitchAngle, (float)manualRollAngle, (float)manualThrust, (float)manualYawAngle, buttons);
