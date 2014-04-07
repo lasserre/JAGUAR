@@ -267,7 +267,6 @@ static void auto_trim()
  */
 void enterDockMode()
 {
-    hal.console->printf("enterDockMode\n");//TODO:remove
     digitalWrite(DOCKING_CONTROL_1, LOW);
     digitalWrite(DOCKING_CONTROL_2, LOW);
     digitalWrite(DOCKING_CONTROL_3, HIGH);
@@ -278,7 +277,6 @@ void enterDockMode()
  */
 void enterDeployMode()
 {
-    hal.console->printf("enterDeployMode\n");//TODO:remove
     digitalWrite(DOCKING_CONTROL_1, HIGH);
     digitalWrite(DOCKING_CONTROL_2, HIGH);
     digitalWrite(DOCKING_CONTROL_3, LOW);
@@ -292,7 +290,8 @@ void dock_deploy_control()
     static uint8_t switch_counter = 0;
     static DockDeployMode mode = DOCK;
 
-    if (isRcControlled())
+    // ensure radio controller has control and we are armed
+    if (isRcControlled() && motors.armed())
     {
         // check if we've switch to dock mode
         if (mode != DOCK && g.rc_5.radio_in > DOCK_SWITCH_TRIGGER - DOCK_DEPLOY_SWITCH_TOLERANCE && g.rc_5.radio_in < DOCK_SWITCH_TRIGGER + DOCK_DEPLOY_SWITCH_TOLERANCE)

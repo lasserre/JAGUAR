@@ -30,7 +30,14 @@
 #define JOYSTICK_BUTTON14  0x4000
 #define JOYSTICK_BUTTON15  0x8000
 
-#define JOYSTICK_ARM_DISARM_COMBO   (JOYSTICK_BUTTON0 | JOYSTICK_BUTTON1)    ///< button combination to arm/disarm blimp
+#define JOYSTICK_ARM                (JOYSTICK_BUTTON0 | JOYSTICK_BUTTON11)  ///< button combination to arm blimp
+#define JOYSTICK_DISARM             JOYSTICK_BUTTON3                        ///< button to disarm the blimp
+#define JOYSTICK_ROTORCRAFT_DEPLOY  (JOYSTICK_BUTTON0 | JOYSTICK_BUTTON1)   ///< button combination to deploy the rotorcraft
+#define JOYSTICK_THRUST_PRESET_OFF  JOYSTICK_BUTTON6                        ///< button to turn thrust motors off
+#define JOYSTICK_THRUST_PRESET_1    JOYSTICK_BUTTON5                        ///< button to set thrust motors to preset speed 1
+#define JOYSTICK_THRUST_PRESET_2    JOYSTICK_BUTTON4                        ///< button to set thrust motors to preset speed 2
+
+#define DEPLOY_HOLD_TIME    3000 ///< time to hold buttons to deploy rotorcraft (in ms)
 
 // use this to prevent recursion during sensor init
 static bool in_mavlink_delay;
@@ -1256,15 +1263,10 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         case MAV_CMD_COMPONENT_ARM_DISARM:
             if (packet.target_component == MAV_COMP_ID_SYSTEM_CONTROL) {
                 if (packet.param1 == 1.0f) {
-                    // run pre-arm-checks and display failures
-                    pre_arm_checks(true);
-                    //TODO: ensure motor outputs are at a min before arming - JBW
-                    if(ap.pre_arm_check) {
-                        init_arm_motors();
-                    }
+                    armMotors();
                     result = MAV_RESULT_ACCEPTED;
                 } else if (packet.param1 == 0.0f)  {
-                    init_disarm_motors();
+                    disarmMotors();
                     result = MAV_RESULT_ACCEPTED;
                 } else {
                     result = MAV_RESULT_UNSUPPORTED;
@@ -2138,72 +2140,133 @@ mission_failed:
 
 void GCS_MAVLINK::ManualControlUpdate(int16_t x, int16_t y, int16_t z, int16_t r, uint16_t buttons)
 {
-    static int16_t new_speed = 0;
     static bool firstTimeThrough = true;
+    static int16_t new_speed = 0;
+    static uint32_t deployHoldStart = 0;
+
+    // Initially set new_speed to current speed
+    if (firstTimeThrough)
+    {
+        // set new_speed to minimum speed
+        new_speed = g.rc_3.get_low_out();
+
+        // set deployHoldStart to current time
+        deployHoldStart = millis();
+
+        firstTimeThrough = false;
+    }
+
+    // set new_speed to min and reset deploy hold time if we are controlled by the radio controller or we are not armed
+    if (isRcControlled() || !motors.armed())
+    {
+        new_speed = g.rc_3.get_low_out();
+        deployHoldStart = millis();
+    }
+
+    // reset deploy hold start time, NOTE: this needs to happen outside of the
+    // !isRcControlled() and motors.armed() if statements!
+    if ((buttons & JOYSTICK_ROTORCRAFT_DEPLOY) != JOYSTICK_ROTORCRAFT_DEPLOY)
+    {
+        deployHoldStart = millis();
+    }
 
     // only send output to motors if the radio controller does not have control
     if (!isRcControlled())
     {
-        /***** set thrust *****/
-        // axis input:
-        //   centered - motor speed does not change
-        //   positive - motor speed increases
-        //   negative - motor speed decreases
-        int16_t throttle_high_out = g.rc_3.get_high_out();
-        int16_t throttle_low_out = g.rc_3.get_low_out();
-
-        // Initially set new_speed to current speed
-        if (firstTimeThrough)
+        if (motors.armed())
         {
-            new_speed = g.rc_3.get_low_out();
-            firstTimeThrough = false;
+            /***** set thrust *****/
+            // axis input:
+            //   centered - motor speed does not change
+            //   positive - motor speed increases
+            //   negative - motor speed decreases
+            int16_t throttle_high_out = g.rc_3.get_high_out();
+            int16_t throttle_low_out = g.rc_3.get_low_out();
+
+            // decrease motor speed
+            if (z < JOYSTICK_AXIS_MID - THROTTLE_AXIS_DEAD_ZONE)
+            {
+                new_speed -= ((JOYSTICK_AXIS_MID - z) * THROTTLE_SPEED_MAX_INC) / JOYSTICK_AXIS_LOWER_RANGE;
+            }
+            // increase motor speed
+            else if (z > JOYSTICK_AXIS_MID + THROTTLE_AXIS_DEAD_ZONE)
+            {
+                new_speed += ((z - JOYSTICK_AXIS_MID) * THROTTLE_SPEED_MAX_INC) / JOYSTICK_AXIS_UPPER_RANGE;
+            }
+
+            // ensure new speed is within the bounds of the min and max speed
+            new_speed = constrain_int16(new_speed, throttle_low_out, throttle_high_out);
+            g.rc_3.servo_out = new_speed;
+
+            /***** set pitch *****/
+            int16_t pitch_high_out = g.rc_2.get_high_out();
+            int16_t pitch_low_out = g.rc_2.get_low_out();
+            int32_t pitch_range = pitch_high_out - pitch_low_out;
+            int32_t pitch_offset = x - JOYSTICK_AXIS_MIN;
+            g.rc_2.servo_out = ((int32_t)(pitch_offset * pitch_range) / JOYSTICK_AXIS_FULL_RANGE) + pitch_low_out;
+
+            /***** set yaw *****/
+            int16_t yaw_high_out = g.rc_4.get_high_out();
+            int16_t yaw_low_out = g.rc_4.get_low_out();
+            int32_t yaw_range = yaw_high_out - yaw_low_out;
+            int32_t yaw_offset = r - JOYSTICK_AXIS_MIN;
+            g.rc_4.servo_out = ((int32_t)(yaw_offset * yaw_range) / JOYSTICK_AXIS_FULL_RANGE) + yaw_low_out;
+
+            /***** set anti-lift *****/
+            // anti-lift uses the roll input (y-axis)
+            int16_t anti_lift_high_out = g.rc_6.get_high_out();
+            int16_t anti_lift_low_out = g.rc_6.get_low_out();
+            int32_t anti_lift_range = anti_lift_high_out - anti_lift_low_out;
+            int32_t anti_lift_offset = y - JOYSTICK_AXIS_MIN;
+            g.rc_6.servo_out = ((int32_t)(anti_lift_offset * anti_lift_range) / JOYSTICK_AXIS_FULL_RANGE) + anti_lift_low_out;
+
+            /***** buttons *****/
+            gcs_send_text_fmt(PSTR("%04x"), buttons);//TODO:remove
+
+            // thrust speed presets
+            if ((buttons & JOYSTICK_THRUST_PRESET_OFF) == JOYSTICK_THRUST_PRESET_OFF)
+            {
+                new_speed = throttle_low_out;
+                g.rc_3.servo_out = new_speed;
+            }
+            else if ((buttons & JOYSTICK_THRUST_PRESET_1) == JOYSTICK_THRUST_PRESET_1)
+            {
+                new_speed = throttle_high_out / 4;
+                g.rc_3.servo_out = new_speed;
+            }
+            else if ((buttons & JOYSTICK_THRUST_PRESET_2) == JOYSTICK_THRUST_PRESET_2)
+            {
+                new_speed = throttle_high_out / 2;
+                g.rc_3.servo_out = new_speed;
+            }
+/*
+            // rotorcraft deploy
+            if ((buttons & JOYSTICK_ROTORCRAFT_DEPLOY) == JOYSTICK_ROTORCRAFT_DEPLOY)
+            {
+                if (millis() - deployHoldStart >= DEPLOY_HOLD_THRESHOLD)
+                {
+                    enterDeployMode();
+                }
+            }
+*/
+            // rotorcraft charge
+            // TODO: implement charge functionality
+        } // end if (motors.armed())
+
+        // arm motors
+        if ((buttons & JOYSTICK_ARM) == JOYSTICK_ARM)
+        {
+            armMotors();
+            gcs_send_text_P(SEVERITY_LOW, PSTR("Armed from joystck"));//TODO:remove
         }
 
-        // decrease motor speed
-        if (z < JOYSTICK_AXIS_MID - THROTTLE_AXIS_DEAD_ZONE)
+        // disarm motors
+        if ((buttons & JOYSTICK_DISARM) == JOYSTICK_DISARM)
         {
-            new_speed -= ((JOYSTICK_AXIS_MID - z) * THROTTLE_SPEED_MAX_INC) / JOYSTICK_AXIS_LOWER_RANGE;
+            disarmMotors();
+            gcs_send_text_P(SEVERITY_LOW, PSTR("Disarmed from joystick"));//TODO:remove
         }
-        // increase motor speed
-        else if (z > JOYSTICK_AXIS_MID + THROTTLE_AXIS_DEAD_ZONE)
-        {
-            new_speed += ((z - JOYSTICK_AXIS_MID) * THROTTLE_SPEED_MAX_INC) / JOYSTICK_AXIS_UPPER_RANGE;
-        }
-
-        // ensure new speed is within the bounds of the min and max speed
-        new_speed = constrain_int16(new_speed, throttle_low_out, throttle_high_out);
-        g.rc_3.servo_out = new_speed;
-
-        /***** set pitch *****/
-        int16_t pitch_high_out = g.rc_2.get_high_out();
-        int16_t pitch_low_out = g.rc_2.get_low_out();
-        int32_t pitch_range = pitch_high_out - pitch_low_out;
-        int32_t pitch_offset = x - JOYSTICK_AXIS_MIN;
-        g.rc_2.servo_out = ((int32_t)(pitch_offset * pitch_range) / JOYSTICK_AXIS_FULL_RANGE) + pitch_low_out;
-
-        /***** set yaw *****/
-        int16_t yaw_high_out = g.rc_4.get_high_out();
-        int16_t yaw_low_out = g.rc_4.get_low_out();
-        int32_t yaw_range = yaw_high_out - yaw_low_out;
-        int32_t yaw_offset = r - JOYSTICK_AXIS_MIN;
-        g.rc_4.servo_out = ((int32_t)(yaw_offset * yaw_range) / JOYSTICK_AXIS_FULL_RANGE) + yaw_low_out;
-
-        /***** set anti-lift *****/
-        // anti-lift uses the roll input (y-axis)
-        int16_t anti_lift_high_out = g.rc_6.get_high_out();
-        int16_t anti_lift_low_out = g.rc_6.get_low_out();
-        int32_t anti_lift_range = anti_lift_high_out - anti_lift_low_out;
-        int32_t anti_lift_offset = y - JOYSTICK_AXIS_MIN;
-        g.rc_6.servo_out = ((int32_t)(anti_lift_offset * anti_lift_range) / JOYSTICK_AXIS_FULL_RANGE) + anti_lift_low_out;
-
-        /***** buttons *****/
-        // arming/disarming
-        if ((buttons & JOYSTICK_ARM_DISARM_COMBO) == JOYSTICK_ARM_DISARM_COMBO)
-        {
-            //TODO:arm/disarm
-            gcs_send_text_fmt(PSTR("arm/disarm"));//TODO:remove
-        }
-    }
+    } // end if (!isRcControlled())
 }
 
 uint16_t

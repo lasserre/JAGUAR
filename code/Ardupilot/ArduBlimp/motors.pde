@@ -6,6 +6,44 @@
 #define YAW_ARMING_TOLERANCE         15
 
 /**
+ * @brief arm the motors if checks pass
+ * @return true if there was an error in attempting to arm the motors
+ */
+bool armMotors()
+{
+    bool error = false;
+
+    if (!motors.armed())
+    {
+        // run pre-arm-checks and display failures
+        pre_arm_checks(true);
+        if (ap.pre_arm_check && check_rc_values())
+        {
+            init_arm_motors();
+        }
+        else
+        {
+            // set arming error flag if checks fail
+            error = true;
+        }
+    }
+
+    return error;
+}
+
+/**
+ * @brief disarm the motors
+ */
+void disarmMotors()
+{
+    if (motors.armed())
+    {
+        // disarm the motors
+        init_disarm_motors();
+    }
+}
+
+/**
  * @brief ensure RC inputs are positioned for motors to be off
  * @return true if RC inputs are positioned for motors to be off
  */
@@ -14,14 +52,14 @@ bool check_rc_values()
     // ensure thrust control is at its minimum value
     if (g.rc_3.radio_in > g.rc_3.radio_min + THRUST_ARMING_TOLERANCE)
     {
-        hal.console->printf("rc_3:%i\n", g.rc_3.radio_in);//TODO:remove
+        gcs_send_text_P(SEVERITY_HIGH, PSTR("PreArm: The throttle is not at zero"));
         return false;
     }
 
     // ensure anti-lift control is at its minimum value
     if (g.rc_6.radio_in > g.rc_6.radio_min + ANTI_LIFT_ARMING_TOLERANCE)
     {
-        hal.console->printf("rc_6:%i\n", g.rc_6.radio_in);//TODO:remove
+        gcs_send_text_P(SEVERITY_HIGH, PSTR("PreArm: The weight compensation control is not at zero"));
         return false;
     }
 
@@ -29,7 +67,7 @@ bool check_rc_values()
     int16_t pitch_radio_mid = (g.rc_2.radio_min + g.rc_2.radio_max) / 2;
     if (g.rc_2.radio_in < pitch_radio_mid - PITCH_ARMING_TOLERANCE || g.rc_2.radio_in > pitch_radio_mid + PITCH_ARMING_TOLERANCE)
     {
-        hal.console->printf("rc_2:%i\n", g.rc_2.radio_in);//TODO:remove
+        gcs_send_text_P(SEVERITY_HIGH, PSTR("PreArm: The pitch control stick is not centered"));
         return false;
     }
 
@@ -37,7 +75,7 @@ bool check_rc_values()
     int16_t yaw_radio_mid = (g.rc_4.radio_min + g.rc_4.radio_max) / 2;
     if (g.rc_4.radio_in < yaw_radio_mid - YAW_ARMING_TOLERANCE || g.rc_4.radio_in > yaw_radio_mid + YAW_ARMING_TOLERANCE)
     {
-        hal.console->printf("rc_4:%i\n", g.rc_4.radio_in);//TODO:remove
+        gcs_send_text_P(SEVERITY_HIGH, PSTR("PreArm: The yaw control stick is not centered"));
         return false;
     }
 
@@ -53,7 +91,6 @@ static void arm_motors_check()
     // return if we are being controlled by the joystick
     if (!isRcControlled())
     {
-        hal.console->printf("Joystick controlled\n");//TODO:remove
         return;
     }
 
@@ -68,35 +105,15 @@ static void arm_motors_check()
     // check if switch is in the armed position
     if (g.rc_7.radio_in > radio_mid)
     {
-        if (!motors.armed())
+        if (!armingError)
         {
-            if (!armingError)
-            {
-                // run pre-arm-checks and display failures
-                pre_arm_checks(true);
-                if (ap.pre_arm_check && check_rc_values())
-                {
-                    hal.console->printf("armed\n");//TODO:remove
-                    init_arm_motors();
-                }
-                else
-                {
-                    hal.console->printf("arming error\n");//TODO:remove
-                    // set arming error flag if pre-arm checks fail
-                    armingError = true;
-                }
-            }
+            armingError = armMotors();
         }
     }
     else // switch is in the disarm position
     {
         armingError = false; // reset arming error flag
-
-        if (motors.armed())
-        {
-            // disarm the motors
-            init_disarm_motors();
-        }
+        disarmMotors();
     }
 }
 
@@ -150,11 +167,9 @@ static void init_arm_motors()
     // mid-flight, so set the serial ports non-blocking once we arm
     // the motors
     hal.uartA->set_blocking_writes(false);
-#if 0 //TODO:remove
     if (gcs3.initialised) {
         hal.uartC->set_blocking_writes(false);
     }
-#endif // #if 0
 
 #if BLIMP_LEDS == ENABLED
     piezo_beep_twice();
@@ -237,9 +252,7 @@ static void pre_arm_checks(bool display_failure)
     pre_arm_rc_checks();
     if(!ap.pre_arm_rc_check) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: RC not calibrated"));
-#endif // #if 0
         }
         return;
     }
@@ -250,9 +263,7 @@ static void pre_arm_checks(bool display_failure)
     // check accelerometers have been calibrated
     if(!ins.calibrated()) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: INS not calibrated"));
-#endif // #if 0
         }
         return;
     }
@@ -260,9 +271,7 @@ static void pre_arm_checks(bool display_failure)
     // check the compass is healthy
     if(!compass.healthy) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not healthy"));
-#endif // #if 0
         }
         return;
     }
@@ -271,9 +280,7 @@ static void pre_arm_checks(bool display_failure)
     Vector3f offsets = compass.get_offsets();
     if(!compass._learn && offsets.length() == 0) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass not calibrated"));
-#endif // #if 0
         }
         return;
     }
@@ -281,9 +288,7 @@ static void pre_arm_checks(bool display_failure)
     // check for unreasonable compass offsets
     if(offsets.length() > 500) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Compass offsets too high"));
-#endif // #if 0
         }
         return;
     }
@@ -292,9 +297,7 @@ static void pre_arm_checks(bool display_failure)
     float mag_field = pythagorous3(compass.mag_x, compass.mag_y, compass.mag_z);
     if (mag_field > COMPASS_MAGFIELD_EXPECTED*1.65 || mag_field < COMPASS_MAGFIELD_EXPECTED*0.35) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check mag field"));
-#endif // #if 0
         }
         return;
     }
@@ -302,9 +305,7 @@ static void pre_arm_checks(bool display_failure)
     // barometer health check
     if(!barometer.healthy) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Baro not healthy"));
-#endif // #if 0
         }
         return;
     }
@@ -313,9 +314,7 @@ static void pre_arm_checks(bool display_failure)
     // check fence is initialised
     if(!fence.pre_arm_check()) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: No GPS Lock"));
-#endif // #if 0
         }
         return;
     }
@@ -325,9 +324,7 @@ static void pre_arm_checks(bool display_failure)
     // check board voltage
     if(board_voltage() < BOARD_VOLTAGE_MIN || board_voltage() > BOARD_VOLTAGE_MAX) {
         if (display_failure) {
-#if 0 //TODO: enable when enabling GCS code - JBW
             gcs_send_text_P(SEVERITY_HIGH,PSTR("PreArm: Check Board Voltage"));
-#endif // #if 0
         }
         return;
     }

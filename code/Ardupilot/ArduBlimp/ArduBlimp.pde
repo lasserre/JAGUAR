@@ -791,7 +791,7 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = { /****** JBW - comm
     { gcs_check_input,       2,     700 },
     { gcs_send_heartbeat,  100,     700 },
     { gcs_data_stream_send,  2,    1500 },
-    // { gcs_send_deferred,     2,    1200 },
+    { gcs_send_deferred,     2,    1200 },
     { compass_accumulate,    2,     700 },
     { barometer_accumulate,  2,     900 }//,
     // { super_slow_loop,     100,    1100 },
