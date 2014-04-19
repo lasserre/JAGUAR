@@ -473,7 +473,7 @@ void PrimaryFlightDisplay::drawTextCenter (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter |  Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text, &bounds);
 }
 
 void PrimaryFlightDisplay::drawTextLeftCenter (
@@ -489,7 +489,7 @@ void PrimaryFlightDisplay::drawTextLeftCenter (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignLeft | Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/, y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x /*+bounds.x()*/, y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text, &bounds);
 }
 
 void PrimaryFlightDisplay::drawTextRightCenter (
@@ -505,7 +505,7 @@ void PrimaryFlightDisplay::drawTextRightCenter (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignRight | Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/ -bounds.width(), y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x /*+bounds.x()*/ -bounds.width(), y /*+bounds.y()*/ -bounds.height()/2, bounds.width(), bounds.height(), flags, text, &bounds);
 }
 
 void PrimaryFlightDisplay::drawTextCenterTop (
@@ -521,7 +521,7 @@ void PrimaryFlightDisplay::drawTextCenterTop (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter | Qt::TextDontClip; // For some reason the bounds rect is too small!
-    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y+bounds.height() /*+bounds.y()*/, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y+bounds.height() /*+bounds.y()*/, bounds.width(), bounds.height(), flags, text, &bounds);
 }
 
 void PrimaryFlightDisplay::drawTextCenterBottom (
@@ -537,7 +537,7 @@ void PrimaryFlightDisplay::drawTextCenterBottom (
     QFontMetrics metrics = QFontMetrics(font);
     QRect bounds = metrics.boundingRect(text);
     int flags = Qt::AlignCenter;
-    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y /*+bounds.y()*/, bounds.width(), bounds.height(), flags, text);
+    painter.drawText(x /*+bounds.x()*/ -bounds.width()/2, y /*+bounds.y()*/, bounds.width(), bounds.height(), flags, text, &bounds);
 }
 
 void PrimaryFlightDisplay::drawInstrumentBackground(QPainter& painter, QRectF edge) {
