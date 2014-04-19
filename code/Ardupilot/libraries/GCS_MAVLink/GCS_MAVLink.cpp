@@ -19,6 +19,11 @@ version 2.1 of the License, or (at your option) any later version.
 #include "include/mavlink/v1.0/mavlink_helpers.h"
 #endif
 
+#if XBEE_API_MODE == ENABLED
+#include <xbee_framewriter.h>
+#include <xbee_frame_structs.h>
+#endif // XBEE_API_MODE == ENABLED
+
 
 AP_HAL::BetterStream	*mavlink_comm_0_port;
 AP_HAL::BetterStream	*mavlink_comm_1_port;
@@ -56,6 +61,32 @@ uint8_t mav_var_type(enum ap_var_type t)
  */
 void comm_send_buffer(mavlink_channel_t chan, const uint8_t *buf, uint8_t len)
 {
+#if XBEE_API_MODE == ENABLED
+    XbeeAPI::TxRequest options;
+    XbeeAPI::XBFrame::FrameByteArray frame;
+    uint16_t frameLen;
+
+    options.DestAddress = BROADCAST_ADDRESS; //TODO: set this to the GCS address
+    options.PayloadStart = buf;
+    options.PayloadLength = len;
+    frameLen = XbeeAPI::FrameWriter::CalcEntireFrameLength(XbeeAPI::XBFrame::TransmitRequest, len);
+    frame.FrameStart = new uint8_t[frameLen];
+    XbeeAPI::FrameWriter::WriteTxRequestFrame(options, frame);
+
+    switch(chan) {
+    case MAVLINK_COMM_0:
+        mavlink_comm_0_port->write(frame.FrameStart, frameLen);
+        break;
+    case MAVLINK_COMM_1:
+        mavlink_comm_1_port->write(frame.FrameStart, frameLen);
+        break;
+    default:
+        break;
+    }
+
+    delete [] frame.FrameStart;
+    frame.FrameStart = 0;
+#else
     switch(chan) {
 	case MAVLINK_COMM_0:
 		mavlink_comm_0_port->write(buf, len);
@@ -66,6 +97,7 @@ void comm_send_buffer(mavlink_channel_t chan, const uint8_t *buf, uint8_t len)
 	default:
 		break;
 	}
+#endif
 }
 
 static const uint8_t mavlink_message_crc_progmem[256] PROGMEM = MAVLINK_MESSAGE_CRCS;

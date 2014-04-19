@@ -1,8 +1,8 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduBlimp v0.4.0"
+#define THISFIRMWARE "ArduBlimp v0.5.0"
 /*
- *  ArduBlimp Version 0.4
+ *  ArduBlimp Version 0.5
  *  Creators:       Wesley Eledui, Kyle Johnson, Caleb Stewart, John Wilkes
  *  Based on code and ideas from the Arducopter team: Pat Hickey, Jose Julio, Jani Hirvinen, Andrew Tridgell, Justin Beech, Adam Rivera, Jean-Louis Naudin, Roberto Navoni
  *
@@ -23,6 +23,12 @@
 #include <AP_Progmem.h>
 #include <AP_Menu.h>
 #include <AP_Param.h>
+
+#if XBEE_API_MODE == ENABLED
+#include <xbee_framewriter.h>
+#include <xbee_frame_structs.h>
+#endif // XBEE_API_MODE == ENABLED
+
 // AP_HAL
 #include <AP_HAL.h>
 #include <AP_HAL_AVR.h>
