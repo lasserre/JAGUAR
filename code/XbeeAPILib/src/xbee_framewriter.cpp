@@ -1,6 +1,6 @@
 #include "xbee_frame_structs.h"
 #include "xbee_framewriter.h"
-#include <cstring>
+#include <string.h>
 
 namespace XbeeAPI {
 
