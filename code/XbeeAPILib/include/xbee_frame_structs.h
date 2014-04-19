@@ -15,7 +15,7 @@ namespace XbeeAPI {
 struct TxRequest
 {
     uint64_t DestAddress;
-    uint8_t* PayloadStart;
+    const uint8_t* PayloadStart;
     uint16_t PayloadLength;
 };
 
