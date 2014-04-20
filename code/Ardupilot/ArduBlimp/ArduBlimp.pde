@@ -24,10 +24,9 @@
 #include <AP_Menu.h>
 #include <AP_Param.h>
 
-#if XBEE_API_MODE == ENABLED
+// XBee API mode
 #include <xbee_framewriter.h>
 #include <xbee_frame_structs.h>
-#endif // XBEE_API_MODE == ENABLED
 
 // AP_HAL
 #include <AP_HAL.h>

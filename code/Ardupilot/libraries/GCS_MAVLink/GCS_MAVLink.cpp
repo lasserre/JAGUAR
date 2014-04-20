@@ -19,6 +19,8 @@ version 2.1 of the License, or (at your option) any later version.
 #include "include/mavlink/v1.0/mavlink_helpers.h"
 #endif
 
+#define XBEE_API_MODE  DISABLED
+
 #if XBEE_API_MODE == ENABLED
 #include <xbee_framewriter.h>
 #include <xbee_frame_structs.h>

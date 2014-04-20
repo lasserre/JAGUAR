@@ -64,6 +64,11 @@
 #include <AP_Progmem.h>
 #include <AP_Menu.h>
 #include <AP_Param.h>
+
+// XBee API mode
+#include <xbee_framewriter.h>
+#include <xbee_frame_structs.h>
+
 // AP_HAL
 #include <AP_HAL.h>
 #include <AP_HAL_AVR.h>
