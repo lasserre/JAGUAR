@@ -1,12 +1,12 @@
-#ifndef XBEE_FRAMECONSTRUCTOR_H
-#define XBEE_FRAMECONSTRUCTOR_H
+#ifndef XBEE_FRAMEWRITER_H
+#define XBEE_FRAMEWRITER_H
 
 #include "xbee_api_basetypes.h"
 #include <string>
 
 /** @file */
 
-// XBee broadcast address
+/// XBee broadcast address
 #define BROADCAST_ADDRESS 0x000000000000FFFF
 
 namespace XbeeAPI {
@@ -72,4 +72,4 @@ XBFrame::WriteResult WriteTestLinkRequestFrame(const LinkTestRequest& Options, X
 
 } // XbeeAPI
 
-#endif // XBEE_FRAMECONSTRUCTOR_H
+#endif // XBEE_FRAMEWRITER_H

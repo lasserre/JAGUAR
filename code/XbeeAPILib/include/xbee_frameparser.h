@@ -39,27 +39,24 @@ XBFrame::ParseResCategory GetParseResultCategory(const XBFrame::ParseResult& Res
 std::string GetRcvOptsString(const uint8_t& ReceiveOpts);
 
 /**
- * @brief ParseFrameType parses the type field of an Xbee frame
- * @param FrameStart points to the start of the Xbee frame
- * @param FrameLen is the length of the received frame
+ * @brief ParseFrameType parses the type field of an XBee frame
+ * @param Frame is the object containing the XBee frame to be parsed
  * @param FrameType is set to the type of the frame that is parsed
  * @return ParseResult result of parse attempt
  */
 XBFrame::ParseResult ParseFrameType(const XBFrame::FrameByteArray& Frame, XBFrame::Type &FrameType);
 
 /**
- * @brief ParseTxRequest parses an Xbee frame known to be of type Transmit Request.
- * @param FrameStart points to the start byte of the Xbee Transmit Request frame to be parsed
- * @param FrameLen is the length of the received frame
+ * @brief ParseTxRequest parses an XBee frame known to be of type Transmit Request.
+ * @param Frame is the object containing the XBee frame to be parsed
  * @param Status is set to the field values parsed from the frame
  * @return ParseResult result of parse attempt
  */
 XBFrame::ParseResult ParseTxStatus(const XBFrame::FrameByteArray& Frame, TxStatus& Status);
 
 /**
- * @brief ParseRxPacket parses an Xbee frame known to be of type Receive Packet
- * @param FrameStart points to the start byte of the Xbee Receive Packet frame to be parsed
- * @param FrameLen is the length of the received frame
+ * @brief ParseRxPacket parses an XBee frame known to be of type Receive Packet
+ * @param Frame is the object containing the XBee frame to be parsed
  * @param Packet is set to the field values parsed from the frame
  * @return ParseResult result of parse attempt
  */
@@ -67,7 +64,7 @@ XBFrame::ParseResult ParseRxPacket(const XBFrame::FrameByteArray &Frame, RxPacke
 
 /**
  * @brief ParseExRxIndicator
- * @param Frame
+ * @param Frame is the object containing the XBee frame to be parsed
  * @param Indicator
  * @return
  */
