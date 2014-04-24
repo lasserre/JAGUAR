@@ -11,7 +11,10 @@ namespace Ui {
 class MainWindow;
 }
 
-struct XbeeAPI::LinkTestResult;
+namespace XbeeAPI
+{
+struct LinkTestResult;
+}
 
 class MainWindow : public QMainWindow
 {
