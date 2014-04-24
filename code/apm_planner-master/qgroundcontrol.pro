@@ -108,6 +108,22 @@ DEFINES += _TTY_NOWARN_
 include (QsLog/QsLog.pri)
 
 #
+# XBee API Library
+#
+INCLUDEPATH += $$PWD/../XbeeAPILib/include
+DEPENDPATH += $$PWD/../XbeeAPILib/include
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../XbeeAPILib/lib/ -lXbeeAPILib
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../XbeeAPILib/lib/ -lXbeeAPILibd
+else:unix: LIBS += -L$$PWD/../XbeeAPILib/lib/ -lXbeeAPILib
+
+win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../XbeeAPILib/lib/libXbeeAPILib.a
+else:win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../XbeeAPILib/lib/libXbeeAPILibd.a
+else:win32:!win32-g++:CONFIG(release, debug|release): PRE_TARGETDEPS += $$PWD/../XbeeAPILib/lib/XbeeAPILib.lib
+else:win32:!win32-g++:CONFIG(debug, debug|release): PRE_TARGETDEPS += $$PWD/../XbeeAPILib/lib/XbeeAPILibd.lib
+else:unix: PRE_TARGETDEPS += $$PWD/../XbeeAPILib/lib/libXbeeAPILib.a
+
+#
 # OS Specific settings
 #
 

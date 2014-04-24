@@ -50,6 +50,9 @@ This file is part of the QGROUNDCONTROL project
 #endif
 #endif
 
+/// whether or not XBee API mode is enabled
+#define XBEE_API_MODE_ENABLED 0
+
 
 /**
  * @brief MAVLink micro air vehicle protocol reference implementation.
@@ -211,6 +214,10 @@ protected:
     int systemId;
 #if defined(QGC_PROTOBUF_ENABLED) && defined(QGC_USE_PIXHAWK_MESSAGES)
     mavlink::ProtobufManager protobufManager;
+#endif
+
+#if XBEE_API_MODE_ENABLED
+    void sendXBeeFrame(LinkInterface* link, const uint8_t* payload, uint16_t payloadLen);
 #endif
 
 signals:

@@ -39,6 +39,15 @@
 #include <google/protobuf/descriptor.h>
 #endif
 
+#if XBEE_API_MODE_ENABLED
+#include <xbee_frame_enums.h>
+#include <xbee_frame_structs.h>
+#include <xbee_frameparser.h>
+#include <xbee_framewriter.h>
+
+using namespace XbeeAPI;
+#endif
+
 
 /**
  * The default constructor will create a new MAVLink object sending heartbeats at
@@ -175,6 +184,35 @@ void MAVLinkProtocol::receiveBytes(LinkInterface* link, QByteArray b)
     static bool warnedUser = false;
     static bool checkedUserNonMavlink = false;
     static bool warnedUserNonMavlink = false;
+
+#if XBEE_API_MODE_ENABLED
+    // extract MAVLink message from XBee frame
+
+    RxPacket packet;
+    XBFrame::FrameByteArray frame((uint8_t *)b.data(), b.length());
+
+    // get frame type
+    XBFrame::Type type = XBFrame::UnknownFrameType;
+    XBFrame::ParseResult frameTypeRes = FrameParser::ParseFrameType(frame, type);
+
+    // return if there was an error or the packet was not a receive packet
+    if (FrameParser::GetParseResultCategory(frameTypeRes) != XBFrame::PRC_Success || type != XBFrame::ReceivePacket)
+    {
+        return;
+    }
+
+    // parse Rx frame
+    XBFrame::ParseResult parseRes = XbeeAPI::FrameParser::ParseRxPacket(frame, packet);
+
+    // return if there was an error
+    if (FrameParser::GetParseResultCategory(parseRes) != XBFrame::PRC_Success)
+    {
+        return;
+    }
+
+    b.clear();
+    b.append((const char *)packet.PayloadStart, packet.ExpctdPayloadLen);
+#endif
 
     for (int position = 0; position < b.size(); position++) {
         unsigned int decodeState = mavlink_parse_char(link->getId(), (uint8_t)(b[position]), &message, &status);
@@ -467,6 +505,32 @@ int MAVLinkProtocol::getComponentId()
     return QGC::defaultComponentId;
 }
 
+#if XBEE_API_MODE_ENABLED
+/**
+ * @param link is the link to send the frame out
+ * @param payload is the MAVLink message to send in the XBee frame
+ * @param payloadLen is the length of the payload
+ */
+void MAVLinkProtocol::sendXBeeFrame(LinkInterface* link, const uint8_t* payload, uint16_t payloadLen)
+{
+    XbeeAPI::TxRequest options;
+    XbeeAPI::XBFrame::FrameByteArray frame;
+    uint16_t frameLen;
+
+    options.DestAddress = BROADCAST_ADDRESS; //TODO: set this to the Airship or Quadrotor address
+    options.PayloadStart = payload;
+    options.PayloadLength = payloadLen;
+    frameLen = XbeeAPI::FrameWriter::CalcEntireFrameLength(XbeeAPI::XBFrame::TransmitRequest, payloadLen);
+    frame.FrameStart = new uint8_t[frameLen];
+    XbeeAPI::FrameWriter::WriteTxRequestFrame(options, frame);
+
+    link->writeBytes((const char*)frame.FrameStart, frameLen);
+
+    delete [] frame.FrameStart;
+    frame.FrameStart = 0;
+}
+#endif
+
 /**
  * @param message message to send
  */
@@ -500,8 +564,12 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
     // If link is connected
     if (link->isConnected())
     {
+#if XBEE_API_MODE_ENABLED
+        sendXBeeFrame(link, buffer, len);
+#else
         // Send the portion of the buffer now occupied by the message
         link->writeBytes((const char*)buffer, len);
+#endif
     }
 }
 
@@ -523,8 +591,12 @@ void MAVLinkProtocol::sendMessage(LinkInterface* link, mavlink_message_t message
     // If link is connected
     if (link->isConnected())
     {
+#if XBEE_API_MODE_ENABLED
+        sendXBeeFrame(link, buffer, len);
+#else
         // Send the portion of the buffer now occupied by the message
         link->writeBytes((const char*)buffer, len);
+#endif
     }
 }
 
