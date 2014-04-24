@@ -19,12 +19,12 @@ version 2.1 of the License, or (at your option) any later version.
 #include "include/mavlink/v1.0/mavlink_helpers.h"
 #endif
 
-#define XBEE_API_MODE  DISABLED
+#define XBEE_API_MODE_ENABLED  0
 
-#if XBEE_API_MODE == ENABLED
+#if XBEE_API_MODE_ENABLED == 1
 #include <xbee_framewriter.h>
 #include <xbee_frame_structs.h>
-#endif // XBEE_API_MODE == ENABLED
+#endif // XBEE_API_MODE_ENABLED == 1
 
 
 AP_HAL::BetterStream	*mavlink_comm_0_port;
@@ -63,7 +63,7 @@ uint8_t mav_var_type(enum ap_var_type t)
  */
 void comm_send_buffer(mavlink_channel_t chan, const uint8_t *buf, uint8_t len)
 {
-#if XBEE_API_MODE == ENABLED
+#if XBEE_API_MODE_ENABLED == 1
     XbeeAPI::TxRequest options;
     XbeeAPI::XBFrame::FrameByteArray frame;
     uint16_t frameLen;
