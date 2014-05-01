@@ -31,6 +31,7 @@ int isr_complete = 0;
 void serial_ISR(int status)
 {
 	int l;
+	printf("IN ISR");
 	int n = read (fd, buf, sizeof buf);  // read up to 100 characters if ready to read
 	printf("Recieved %s\n", buf);
 	for( l = 0; l < i; l++)
